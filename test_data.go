@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/png"
 	"math/rand"
 	"os"
@@ -17,73 +18,18 @@ func addTestDataToGrid(grid *Grid) {
 	if err != nil {
 		panic(err)
 	}
+	c := tcell.NewHexColor(int32(rand.Int() & 0xffffff))
 
-	grid.Children = []Child{
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
-		&Card{Title: "Foobar", Color: tcell.NewHexColor(int32(rand.Int() & 0xffffff)), Image: img},
+	grid.Children = []Child{}
+
+	for i := 0; i < 100; i++ {
+		grid.Children = append(
+			grid.Children,
+			&Card{
+				Title:         fmt.Sprintf("child: %d", i),
+				SelectedColor: c,
+				Image:         img,
+			},
+		)
 	}
-
 }

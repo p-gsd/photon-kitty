@@ -7,13 +7,13 @@ import (
 	"io"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/mattn/go-runewidth"
 	"github.com/mattn/go-sixel"
 	"golang.org/x/image/draw"
 )
 
 type Card struct {
 	Title         string
-	Color         tcell.Color
 	SelectedColor tcell.Color
 	Image         image.Image
 	selected      bool
@@ -22,14 +22,33 @@ type Card struct {
 }
 
 func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
-	for x := 0; x < ctx.Width; x++ {
-		for y := 0; y < ctx.Height; y++ {
-			color := c.Color
-			if c.selected {
-				color = c.SelectedColor
+	if c.selected {
+		for x := 0; x < ctx.Width; x++ {
+			for y := 0; y < ctx.Height; y++ {
+				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(c.SelectedColor))
 			}
-			s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(color))
 		}
+	}
+	var x int
+	for _, c := range c.Title {
+		if x > ctx.Width {
+			break
+		}
+		var comb []rune
+		w := runewidth.RuneWidth(c)
+		if w == 0 {
+			comb = []rune{c}
+			c = ' '
+			w = 1
+		}
+		s.SetContent(
+			x+ctx.X,
+			ctx.Height-1+ctx.Y,
+			c,
+			comb,
+			tcell.StyleDefault,
+		)
+		x += w
 	}
 	sw, sh := s.Size()
 	targetWidth := ctx.Width * int(ctx.XPixel) / sw

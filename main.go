@@ -27,6 +27,9 @@ func main() {
 		os.Exit(1)
 	}
 	defer s.Fini()
+	tcell.StyleDefault = tcell.StyleDefault.
+		Background(tcell.ColorBlack).
+		Foreground(tcell.ColorWhite)
 
 	ctx, quit := WithCancel(Background())
 	grid := &Grid{Columns: 5}

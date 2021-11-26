@@ -21,6 +21,7 @@ type Grid struct {
 	FirstChildIndex  int
 	FirstChildOffset int
 	LastChildIndex   int
+	LastChildOffset  int
 }
 
 type Selectable interface {
@@ -37,6 +38,7 @@ type Child interface {
 
 func (g *Grid) Draw(ctx Context, s tcell.Screen) *bytes.Buffer {
 	w, h := s.Size()
+	margin := (w % g.Columns) / 2
 	childWidth := w / g.Columns
 	childHeight := childWidth / 2
 	if g.selectedChild == nil && g.Children != nil {
@@ -52,16 +54,16 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) *bytes.Buffer {
 		child := g.Children[i]
 		chctx := Context{
 			WinSize: ctx.WinSize,
-			X:       (i % g.Columns) * childWidth,
+			X:       margin + (i%g.Columns)*childWidth,
 			Y:       g.FirstChildOffset + ((i-g.FirstChildIndex)/g.Columns)*childHeight,
 			Width:   childWidth,
 			Height:  childHeight,
 		}
-		g.LastChildIndex = i
 		if chctx.Y > h {
-			g.LastChildIndex = i - 1
 			break
 		}
+		g.LastChildIndex = i
+		g.LastChildOffset = childHeight - (h - chctx.Y)
 		child.Draw(chctx, s, &buf)
 	}
 	return &buf
@@ -156,15 +158,13 @@ func (g *Grid) SelectedChildMoveDown() {
 	if g.selectedChildPos.Y == maxRow {
 		g.selectedChildPos.X = min(g.selectedChildPos.X, len(g.Children)%g.Columns-1)
 	}
-	/*
-		if list.Position.First+list.Position.Count-1 == g.selectedChildPos.Y {
-			list.Position.Offset -= list.Position.OffsetLast
-			list.Position.OffsetLast = 0
-		}
-		if list.Position.First+list.Position.Count-1 < g.selectedChildPos.Y {
-			list.Position.First++
-		}
-	*/
+	if g.LastChildIndex/g.Columns == g.selectedChildPos.Y {
+		g.FirstChildOffset -= g.LastChildOffset
+		g.LastChildOffset = 0
+	}
+	if g.LastChildIndex/g.Columns < g.selectedChildPos.Y {
+		g.FirstChildIndex += g.Columns
+	}
 }
 
 func (g *Grid) SelectedChildMoveUp() {
@@ -176,14 +176,12 @@ func (g *Grid) SelectedChildMoveUp() {
 		return
 	}
 	g.selectedChildPos.Y--
-	/*
-		if list.Position.First == g.selectedChildPos.Y {
-			list.Position.Offset = 0
-		}
-		if list.Position.First > g.selectedChildPos.Y {
-			list.Position.First = g.selectedChildPos.Y
-		}
-	*/
+	if g.FirstChildIndex/g.Columns == g.selectedChildPos.Y {
+		g.FirstChildOffset = 0
+	}
+	if g.FirstChildIndex/g.Columns > g.selectedChildPos.Y {
+		g.FirstChildIndex = g.selectedChildPos.Y * g.Columns
+	}
 }
 
 func (g *Grid) selectedChildRefresh() {
