@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/gdamore/tcell/v2"
@@ -16,6 +17,11 @@ func redraw() {
 }
 
 func main() {
+	f, err := os.Create("photont.log")
+	if err != nil {
+		panic(err)
+	}
+	log.SetOutput(f)
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 	s, err := tcell.NewScreen()
 	if err != nil {

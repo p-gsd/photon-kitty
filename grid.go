@@ -2,11 +2,9 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"io"
 	"math"
-	"os"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -59,11 +57,11 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) *bytes.Buffer {
 			Width:   childWidth,
 			Height:  childHeight,
 		}
-		if chctx.Y > h {
+		if chctx.Y >= h {
 			break
 		}
 		g.LastChildIndex = i
-		g.LastChildOffset = childHeight - (h - chctx.Y)
+		g.LastChildOffset = chctx.Y + childHeight - h
 		child.Draw(chctx, s, &buf)
 	}
 	return &buf
@@ -73,34 +71,6 @@ func (g *Grid) ClearImages() {
 	for _, ch := range g.Children {
 		ch.ClearImage()
 	}
-}
-
-func (g *Grid) ScrollDown(s tcell.Screen, rows int) {
-	w, _ := s.Size()
-	childWidth := w / g.Columns
-	childHeight := childWidth / 2
-	if g.FirstChildOffset-rows+childHeight <= 0 {
-		g.FirstChildIndex += g.Columns
-		g.FirstChildOffset += -rows + childHeight
-		return
-	}
-	g.FirstChildOffset -= rows
-}
-
-func (g *Grid) ScrollUp(s tcell.Screen, rows int) {
-	w, _ := s.Size()
-	childWidth := w / g.Columns
-	childHeight := childWidth / 2
-	if g.FirstChildOffset+rows >= 0 {
-		if g.FirstChildIndex == 0 {
-			g.FirstChildOffset = 0
-			return
-		}
-		g.FirstChildIndex -= g.Columns
-		g.FirstChildOffset += rows - childHeight
-		return
-	}
-	g.FirstChildOffset += rows
 }
 
 func (g *Grid) SelectedChildMoveLeft() {
@@ -140,6 +110,13 @@ func (g *Grid) SelectedChildMoveRight() {
 	if g.selectedChildPos.X == g.Columns-1 {
 		g.selectedChildPos.Y++
 		g.selectedChildPos.X = 0
+		if g.LastChildIndex/g.Columns < g.selectedChildPos.Y {
+			g.FirstChildIndex += g.Columns
+		}
+		if g.LastChildIndex/g.Columns == g.selectedChildPos.Y {
+			g.FirstChildOffset -= g.LastChildOffset
+			g.LastChildOffset = 0
+		}
 		return
 	}
 	g.selectedChildPos.X++
@@ -221,21 +198,6 @@ func (g *Grid) EventKey(s tcell.Screen, ev *tcell.EventKey) {
 	case '=':
 		g.Columns += 1
 		g.ClearImages()
-		redraw()
-	case 'd':
-		fmt.Fprintln(os.Stderr, ev.Modifiers())
-		if ev.Modifiers() != tcell.ModCtrl {
-			return
-		}
-		_, h := s.Size()
-		g.ScrollDown(s, h/2)
-		redraw()
-	case 'u':
-		if ev.Modifiers() != tcell.ModCtrl {
-			return
-		}
-		_, h := s.Size()
-		g.ScrollUp(s, h/2)
 		redraw()
 	case 'h':
 		g.SelectedChildMoveLeft()

@@ -22,7 +22,7 @@ func addTestDataToGrid(grid *Grid) {
 
 	grid.Children = []Child{}
 
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 57; i++ {
 		grid.Children = append(
 			grid.Children,
 			&Card{
