@@ -1,14 +1,40 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"image/png"
 	"log"
 	"os"
+	"os/user"
+	"path/filepath"
+	"strings"
+	"unicode"
+	"unicode/utf8"
 
+	"git.sr.ht/~ghost08/libphoton"
+	"git.sr.ht/~ghost08/libphoton/keybindings"
+	"git.sr.ht/~ghost08/libphoton/states"
+
+	"github.com/alecthomas/kong"
 	"github.com/gdamore/tcell/v2"
+	"golang.design/x/clipboard"
 )
 
+var CLI struct {
+	Extractor    string       `optional:"" default:"youtube-dl --get-url %" help:"command for media link extraction (item link is substituted for %)" env:"PHOTON_EXTRACTOR"`
+	VideoCmd     string       `optional:"" default:"mpv $" help:"set default command for opening the item media link in a video player (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_VIDEOCMD"`
+	ImageCmd     string       `optional:"" default:"imv -" help:"set default command for opening the item media link in a image viewer (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_IMAGECMD"`
+	TorrentCmd   string       `optional:"" default:"mpv %" help:"set default command for opening the item media link in a torrent downloader (media link is substituted for %, if link is a torrent file, photon will download it, and substitute the torrent file path for %)" env:"PHOTON_TORRENTCMD"`
+	HTTPSettings HTTPSettings `embed:""`
+	Paths        []string     `arg:"" optional:"" help:"RSS/Atom urls, config path, or - for stdin"`
+	DownloadPath string       `optional:"" default:"$HOME/Downloads" help:"the default download path"`
+}
+
 var (
+	photon   *libphoton.Photon
+	cb       Callbacks
 	redrawCh = make(chan struct{})
 )
 
@@ -17,11 +43,55 @@ func redraw() {
 }
 
 func main() {
-	f, err := os.Create("photont.log")
-	if err != nil {
-		panic(err)
-	}
+	f, _ := os.Create("/tmp/photon.log")
 	log.SetOutput(f)
+	defer f.Close()
+	//args
+	kong.Parse(&CLI,
+		kong.Name("photon"),
+		kong.Description("Fast RSS reader as light as a photon"),
+		kong.UsageOnError(),
+		kong.ConfigureHelp(kong.HelpOptions{
+			Compact: true,
+			Summary: true,
+		}))
+
+	if len(CLI.Paths) == 0 {
+		usr, err := user.Current()
+		if err != nil {
+			log.Fatal(err)
+		}
+		defaultConf := filepath.Join(usr.HomeDir, ".config", "photon", "config")
+		if _, err := os.Stat(defaultConf); os.IsNotExist(err) {
+			log.Fatal(err)
+		}
+		CLI.Paths = []string{defaultConf}
+	}
+
+	//photon
+	grid := &Grid{Columns: 5}
+	cb = Callbacks{grid: grid}
+	var err error
+	photon, err = libphoton.New(
+		cb,
+		CLI.Paths,
+		libphoton.WithHTTPClient(CLI.HTTPSettings.Client()),
+		libphoton.WithMediaExtractor(CLI.Extractor),
+		libphoton.WithMediaVideoCmd(CLI.VideoCmd),
+		libphoton.WithMediaImageCmd(CLI.ImageCmd),
+		libphoton.WithMediaTorrentCmd(CLI.TorrentCmd),
+		libphoton.WithDownloadPath(CLI.DownloadPath),
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	go func() {
+		photon.RefreshFeed()
+		redraw()
+	}()
+
+	//tui
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 	s, err := tcell.NewScreen()
 	if err != nil {
@@ -38,26 +108,15 @@ func main() {
 		Foreground(tcell.ColorWhite)
 
 	ctx, quit := WithCancel(Background())
-	grid := &Grid{Columns: 5}
+
+	defaultKeyBindings(grid, &quit)
 
 	go func() {
 		for {
 			ev := s.PollEvent()
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
-				switch ev.Key() {
-				case tcell.KeyEscape:
-					quit()
-					return
-				case tcell.KeyCtrlL:
-					s.Sync()
-				}
-				switch ev.Rune() {
-				case 'q':
-					quit()
-					return
-				}
-				grid.EventKey(s, ev)
+				photon.KeyBindings.Run(newKeyEvent(ev))
 			case *tcell.EventResize:
 				s.Sync()
 				grid.ClearImages()
@@ -67,18 +126,302 @@ func main() {
 		}
 	}()
 
-	addTestDataToGrid(grid)
-
 	for {
 		s.Clear()
 		sixelBuf := grid.Draw(ctx, s)
 		s.Sync()
 		//io.Copy(os.Stdout, sixelBuf)
-		os.Stdout.Write(sixelBuf.Bytes())
+		if sixelBuf.Len() > 0 {
+			os.Stdout.Write(sixelBuf.Bytes())
+		}
 		select {
 		case <-ctx.Done():
 			return
 		case <-redrawCh:
 		}
 	}
+}
+
+func newKeyEvent(e *tcell.EventKey) keybindings.KeyEvent {
+	var mod keybindings.Modifiers
+	switch {
+	case e.Modifiers()&tcell.ModCtrl != 0:
+		mod = keybindings.ModCtrl
+	case e.Modifiers()&tcell.ModShift != 0:
+		mod = keybindings.ModShift
+	case e.Modifiers()&tcell.ModAlt != 0:
+		mod = keybindings.ModAlt
+	case e.Modifiers()&tcell.ModMeta != 0:
+		mod = keybindings.ModSuper
+	}
+
+	var r rune
+	if e.Key() == tcell.KeyRune {
+		r = unicode.ToLower(e.Rune())
+	} else {
+		s, ok := tcell.KeyNames[e.Key()]
+		if ok && strings.HasPrefix(s, "Ctrl-") {
+			s = s[5:]
+			r, _ = utf8.DecodeLastRuneInString(s)
+			r = unicode.ToLower(r)
+		}
+	}
+	log.Println(keybindings.KeyEvent{Key: r, Modifiers: mod})
+	return keybindings.KeyEvent{Key: r, Modifiers: mod}
+}
+
+func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
+	//NormalState
+	photon.KeyBindings.Add(states.Normal, "q", func() error {
+		if quit != nil {
+			q := *quit
+			quit = nil
+			q()
+		}
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, string(rune(tcell.KeyEnter)), func() error {
+		photon.SelectedCard.OpenArticle()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "⏎", func() error {
+		photon.SelectedCard.OpenArticle()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "<ctrl>p", func() error {
+		log.Println("runmedia", photon.SelectedCard)
+		photon.SelectedCard.RunMedia()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "<ctrl>⏎", func() error {
+		photon.SelectedCard.RunMedia()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "<alt>"+string(rune(tcell.KeyEnter)), func() error {
+		photon.SelectedCard.OpenBrowser()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "<alt>⏎", func() error {
+		photon.SelectedCard.OpenBrowser()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, string(rune(tcell.KeyEscape)), func() error {
+		/*TODO
+		if searchEditor == nil {
+			return nil
+		}
+		searchEditor = nil
+		photon.VisibleCards = photon.Cards
+		redraw()
+		*/
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "=", func() error {
+		grid.Columns++
+		redraw()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "-", func() error {
+		if grid.Columns > 1 {
+			grid.Columns--
+			redraw()
+		}
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "/", func() error {
+		/*TODO
+		if searchEditor != nil && !searchEditor.Focused() {
+			searchEditorFocus = true
+			redraw()
+			return nil
+		}
+		searchEditor = &widget.Editor{SingleLine: true, Submit: true}
+		searchEditor.SetText("/")
+		searchEditor.SetCaret(1, 1)
+		searchEditorFocus = true
+		redraw()
+		*/
+		return nil
+	})
+	//copy item link
+	photon.KeyBindings.Add(states.Normal, "yy", func() error {
+		if photon.SelectedCard == nil {
+			return nil
+		}
+		clipboard.Write(clipboard.FmtText, []byte(photon.SelectedCard.Item.Link))
+		return nil
+	})
+	//copy item image
+	photon.KeyBindings.Add(states.Normal, "yi", func() error {
+		if photon.SelectedCard == nil {
+			return nil
+		}
+		if photon.SelectedCard.ItemImage == nil {
+			return nil
+		}
+		var buf bytes.Buffer
+		if err := png.Encode(&buf, photon.SelectedCard.ItemImage); err != nil {
+			return fmt.Errorf("encoding image: %w", err)
+		}
+		clipboard.Write(clipboard.FmtImage, buf.Bytes())
+		return nil
+	})
+	//download media
+	photon.KeyBindings.Add(states.Normal, "dm", func() error {
+		photon.SelectedCard.DownloadMedia()
+		return nil
+	})
+	//download link
+	photon.KeyBindings.Add(states.Normal, "dl", func() error {
+		photon.SelectedCard.DownloadLink()
+		return nil
+	})
+	//download image
+	photon.KeyBindings.Add(states.Normal, "di", func() error {
+		photon.SelectedCard.DownloadImage()
+		return nil
+	})
+	//move selectedCard
+	photon.KeyBindings.Add(states.Normal, "h", func() error {
+		cb.SelectedCardMoveLeft()
+		redraw()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "l", func() error {
+		cb.SelectedCardMoveRight()
+		redraw()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "j", func() error {
+		cb.SelectedCardMoveDown()
+		redraw()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "k", func() error {
+		cb.SelectedCardMoveUp()
+		redraw()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "<ctrl>d", func() error {
+		/*TODO
+		list.Position.First += int(float32(list.Position.Count) / 2)
+		redraw()
+		*/
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "<ctrl>u", func() error {
+		/*TODO
+		list.Position.First -= int(float32(list.Position.Count) / 2)
+		if list.Position.First < 0 {
+			list.Position.First = 0
+		}
+		redraw()
+		*/
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "<ctrl>f", func() error {
+		/*TODO
+		list.Position.First += list.Position.Count
+		redraw()
+		*/
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "<ctrl>b", func() error {
+		/*TODO
+		list.Position.First -= list.Position.Count
+		if list.Position.First < 0 {
+			list.Position.First = 0
+		}
+		redraw()
+		*/
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "gg", func() error {
+		/*TODO
+		list.Position.First = 0
+		list.Position.Offset = 0
+		photon.SelectedCardPos.Y = 0
+		cb.Refresh()
+		redraw()
+		*/
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "<shift>g", func() error {
+		/*TODO
+		list.Position.First = len(photon.VisibleCards) - list.Position.Count
+		photon.SelectedCardPos.Y = len(photon.VisibleCards)/ncols - 1
+		cb.Refresh()
+		redraw()
+		*/
+		return nil
+	})
+
+	/*
+		//SearchState
+		photon.KeyBindings.Add(states.Search, "⏎", func() error {
+			searchEditorFocus = false
+			redraw()
+			return nil
+		})
+		photon.KeyBindings.Add(states.Search, string(rune(tcell.KeyEnter)), func() error {
+			searchEditorFocus = false
+			redraw()
+			return nil
+		})
+		photon.KeyBindings.Add(states.Search, string(rune(tcell.KeyEscape)), func() error {
+			searchEditor = nil
+			photon.VisibleCards = photon.Cards
+			redraw()
+			return nil
+		})
+
+		//ArticleState
+		photon.KeyBindings.Add(states.Article, string(rune(tcell.KeyEscape)), func() error {
+			openedArticle = nil
+			photon.OpenedArticle = nil
+			redraw()
+			return nil
+		})
+		photon.KeyBindings.Add(states.Article, "q", func() error {
+			openedArticle = nil
+			photon.OpenedArticle = nil
+			redraw()
+			return nil
+		})
+		photon.KeyBindings.Add(states.Article, "j", func() error {
+			if openedArticle == nil {
+				return nil
+			}
+			openedArticle.list.Position.Offset += 50
+			openedArticle.list.Position.OffsetLast -= 50
+			redraw()
+			return nil
+		})
+		photon.KeyBindings.Add(states.Article, "k", func() error {
+			if openedArticle == nil {
+				return nil
+			}
+			openedArticle.list.Position.Offset -= 50
+			openedArticle.list.Position.OffsetLast += 50
+			redraw()
+			return nil
+		})
+		photon.KeyBindings.Add(states.Article, "gg", func() error {
+			if openedArticle == nil {
+				return nil
+			}
+			openedArticle.list.Position.Offset = 0
+			redraw()
+			return nil
+		})
+		photon.KeyBindings.Add(states.Article, "<shift>g", func() error {
+			if openedArticle == nil {
+				return nil
+			}
+			openedArticle.list.Position.Offset -= openedArticle.list.Position.OffsetLast
+			openedArticle.list.Position.OffsetLast = 0
+			redraw()
+			return nil
+		})
+	*/
 }

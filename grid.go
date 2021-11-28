@@ -10,12 +10,7 @@ import (
 )
 
 type Grid struct {
-	Columns  int
-	Children []Child
-
-	selectedChildPos image.Point
-	selectedChild    Child
-
+	Columns          int
 	FirstChildIndex  int
 	FirstChildOffset int
 	LastChildIndex   int
@@ -38,18 +33,18 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) *bytes.Buffer {
 	w, h := s.Size()
 	margin := (w % g.Columns) / 2
 	childWidth := w / g.Columns
-	childHeight := childWidth / 2
-	if g.selectedChild == nil && g.Children != nil {
-		g.selectedChildPos = image.Point{
+	childHeight := int(float32(childWidth) / 2.2)
+	if photon.SelectedCard == nil && photon.VisibleCards != nil {
+		photon.SelectedCardPos = image.Point{
 			X: g.FirstChildIndex % g.Columns,
 			Y: g.FirstChildIndex / g.Columns,
 		}
-		g.selectedChild = g.Children[g.FirstChildIndex]
-		g.selectedChild.Select()
+		photon.SelectedCard = photon.VisibleCards[g.FirstChildIndex]
+		getCard(photon.SelectedCard).Select()
 	}
 	var buf bytes.Buffer
-	for i := g.FirstChildIndex; i < len(g.Children); i++ {
-		child := g.Children[i]
+	for i := g.FirstChildIndex; i < len(photon.VisibleCards); i++ {
+		child := photon.VisibleCards[i]
 		chctx := Context{
 			WinSize: ctx.WinSize,
 			X:       margin + (i%g.Columns)*childWidth,
@@ -62,121 +57,122 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) *bytes.Buffer {
 		}
 		g.LastChildIndex = i
 		g.LastChildOffset = chctx.Y + childHeight - h
-		child.Draw(chctx, s, &buf)
+		getCard(child).Draw(chctx, s, &buf)
 	}
 	return &buf
 }
 
 func (g *Grid) ClearImages() {
-	for _, ch := range g.Children {
-		ch.ClearImage()
+	for _, ch := range photon.VisibleCards {
+		getCard(ch).ClearImage()
 	}
 }
 
 func (g *Grid) SelectedChildMoveLeft() {
-	if g.selectedChild == nil {
+	if photon.SelectedCard == nil {
 		return
 	}
 	defer g.selectedChildRefresh()
-	if g.selectedChildPos.X == 0 {
-		if g.selectedChildPos.Y == 0 {
+	if photon.SelectedCardPos.X == 0 {
+		if photon.SelectedCardPos.Y == 0 {
 			return
 		}
-		g.selectedChildPos.Y--
-		if g.FirstChildIndex/g.Columns == g.selectedChildPos.Y {
+		photon.SelectedCardPos.Y--
+		if g.FirstChildIndex/g.Columns == photon.SelectedCardPos.Y {
 			g.FirstChildOffset = 0
 		}
-		if g.FirstChildIndex/g.Columns > g.selectedChildPos.Y {
-			g.FirstChildIndex = g.selectedChildPos.Y * g.Columns
+		if g.FirstChildIndex/g.Columns > photon.SelectedCardPos.Y {
+			g.FirstChildIndex = photon.SelectedCardPos.Y * g.Columns
 		}
-		g.selectedChildPos.X = g.Columns - 1
+		photon.SelectedCardPos.X = g.Columns - 1
 		return
 	}
-	g.selectedChildPos.X--
+	photon.SelectedCardPos.X--
 }
 
 func (g *Grid) SelectedChildMoveRight() {
-	if g.selectedChild == nil {
+	if photon.SelectedCard == nil {
 		return
 	}
 	defer g.selectedChildRefresh()
-	if g.selectedChildPos.Y == int(math.Ceil(float64(len(g.Children))/float64(g.Columns)))-1 {
-		if g.selectedChildPos.X == g.Columns-1 || len(g.Children) == (g.selectedChildPos.Y*g.Columns+g.selectedChildPos.X+1) {
+	if photon.SelectedCardPos.Y == int(math.Ceil(float64(len(photon.VisibleCards))/float64(g.Columns)))-1 {
+		if photon.SelectedCardPos.X == g.Columns-1 || len(photon.VisibleCards) == (photon.SelectedCardPos.Y*g.Columns+photon.SelectedCardPos.X+1) {
 			return
 		}
-		g.selectedChildPos.X++
+		photon.SelectedCardPos.X++
 		return
 	}
-	if g.selectedChildPos.X == g.Columns-1 {
-		g.selectedChildPos.Y++
-		g.selectedChildPos.X = 0
-		if g.LastChildIndex/g.Columns < g.selectedChildPos.Y {
+	if photon.SelectedCardPos.X == g.Columns-1 {
+		photon.SelectedCardPos.Y++
+		photon.SelectedCardPos.X = 0
+		if g.LastChildIndex/g.Columns < photon.SelectedCardPos.Y {
 			g.FirstChildIndex += g.Columns
 		}
-		if g.LastChildIndex/g.Columns == g.selectedChildPos.Y {
+		if g.LastChildIndex/g.Columns == photon.SelectedCardPos.Y {
 			g.FirstChildOffset -= g.LastChildOffset
 			g.LastChildOffset = 0
 		}
 		return
 	}
-	g.selectedChildPos.X++
+	photon.SelectedCardPos.X++
 }
 
 func (g *Grid) SelectedChildMoveDown() {
-	if g.selectedChild == nil {
+	if photon.SelectedCard == nil {
 		return
 	}
 	defer g.selectedChildRefresh()
-	maxRow := int(math.Ceil(float64(len(g.Children))/float64(g.Columns))) - 1
-	if g.selectedChildPos.Y == maxRow {
+	maxRow := int(math.Ceil(float64(len(photon.VisibleCards))/float64(g.Columns))) - 1
+	if photon.SelectedCardPos.Y == maxRow {
 		return
 	}
-	g.selectedChildPos.Y++
-	if g.selectedChildPos.Y == maxRow {
-		g.selectedChildPos.X = min(g.selectedChildPos.X, len(g.Children)%g.Columns-1)
+	photon.SelectedCardPos.Y++
+	if photon.SelectedCardPos.Y == maxRow {
+		photon.SelectedCardPos.X = min(photon.SelectedCardPos.X, len(photon.VisibleCards)%g.Columns-1)
 	}
-	if g.LastChildIndex/g.Columns == g.selectedChildPos.Y {
+	if g.LastChildIndex/g.Columns == photon.SelectedCardPos.Y {
 		g.FirstChildOffset -= g.LastChildOffset
 		g.LastChildOffset = 0
 	}
-	if g.LastChildIndex/g.Columns < g.selectedChildPos.Y {
+	if g.LastChildIndex/g.Columns < photon.SelectedCardPos.Y {
 		g.FirstChildIndex += g.Columns
 	}
 }
 
 func (g *Grid) SelectedChildMoveUp() {
-	if g.selectedChild == nil {
+	if photon.SelectedCard == nil {
 		return
 	}
 	defer g.selectedChildRefresh()
-	if g.selectedChildPos.Y == 0 {
+	if photon.SelectedCardPos.Y == 0 {
 		return
 	}
-	g.selectedChildPos.Y--
-	if g.FirstChildIndex/g.Columns == g.selectedChildPos.Y {
+	photon.SelectedCardPos.Y--
+	if g.FirstChildIndex/g.Columns == photon.SelectedCardPos.Y {
 		g.FirstChildOffset = 0
 	}
-	if g.FirstChildIndex/g.Columns > g.selectedChildPos.Y {
-		g.FirstChildIndex = g.selectedChildPos.Y * g.Columns
+	if g.FirstChildIndex/g.Columns > photon.SelectedCardPos.Y {
+		g.FirstChildIndex = photon.SelectedCardPos.Y * g.Columns
 	}
 }
 
 func (g *Grid) selectedChildRefresh() {
-	if g.selectedChildPos.Y < 0 {
-		g.selectedChildPos.Y = 0
+	if photon.SelectedCardPos.Y < 0 {
+		photon.SelectedCardPos.Y = 0
 	}
-	if g.selectedChildPos.X < 0 {
-		g.selectedChildPos.X = 0
+	if photon.SelectedCardPos.X < 0 {
+		photon.SelectedCardPos.X = 0
 	}
-	index := g.selectedChildPos.Y*g.Columns + g.selectedChildPos.X
-	if len(g.Children)-1 < index {
-		g.selectedChild.Unselect()
-		g.selectedChild = nil
+	index := photon.SelectedCardPos.Y*g.Columns + photon.SelectedCardPos.X
+	c := getCard(photon.SelectedCard)
+	if len(photon.VisibleCards)-1 < index {
+		c.Unselect()
+		photon.SelectedCard = nil
 		return
 	}
-	g.selectedChild.Unselect()
-	g.selectedChild = g.Children[index]
-	g.selectedChild.Select()
+	c.Unselect()
+	photon.SelectedCard = photon.VisibleCards[index]
+	getCard(photon.SelectedCard).Select()
 }
 
 func min(a, b int) int {
@@ -184,32 +180,4 @@ func min(a, b int) int {
 		return a
 	}
 	return b
-}
-
-func (g *Grid) EventKey(s tcell.Screen, ev *tcell.EventKey) {
-	switch ev.Rune() {
-	case '-':
-		if g.Columns == 1 {
-			return
-		}
-		g.Columns -= 1
-		g.ClearImages()
-		redraw()
-	case '=':
-		g.Columns += 1
-		g.ClearImages()
-		redraw()
-	case 'h':
-		g.SelectedChildMoveLeft()
-		redraw()
-	case 'l':
-		g.SelectedChildMoveRight()
-		redraw()
-	case 'j':
-		g.SelectedChildMoveDown()
-		redraw()
-	case 'k':
-		g.SelectedChildMoveUp()
-		redraw()
-	}
 }
