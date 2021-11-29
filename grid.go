@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"image"
-	"io"
 	"math"
 
 	"github.com/gdamore/tcell/v2"
@@ -15,21 +14,12 @@ type Grid struct {
 	FirstChildOffset int
 	LastChildIndex   int
 	LastChildOffset  int
+	RowsCount        int //count of visible rows on the screen
+
+	previousOffset int
 }
 
-type Selectable interface {
-	Selected() bool
-	Select()
-	Unselect()
-}
-
-type Child interface {
-	Selectable
-	Draw(ctx Context, s tcell.Screen, w io.Writer)
-	ClearImage()
-}
-
-func (g *Grid) Draw(ctx Context, s tcell.Screen) *bytes.Buffer {
+func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer, fullRedraw bool) {
 	w, h := s.Size()
 	margin := (w % g.Columns) / 2
 	childWidth := w / g.Columns
@@ -42,7 +32,7 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) *bytes.Buffer {
 		photon.SelectedCard = photon.VisibleCards[g.FirstChildIndex]
 		getCard(photon.SelectedCard).Select()
 	}
-	var buf bytes.Buffer
+	buf = bytes.NewBuffer(nil)
 	for i := g.FirstChildIndex; i < len(photon.VisibleCards); i++ {
 		child := photon.VisibleCards[i]
 		chctx := Context{
@@ -56,14 +46,26 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) *bytes.Buffer {
 			break
 		}
 		g.LastChildIndex = i
+		g.RowsCount = i / g.Columns
 		g.LastChildOffset = chctx.Y + childHeight - h
-		getCard(child).Draw(chctx, s, &buf)
+		getCard(child).Draw(chctx, s, buf)
 	}
-	return &buf
+	//download next screen of images
+	for i := g.LastChildIndex + 1; i < len(photon.VisibleCards) && i < g.LastChildIndex+(g.RowsCount*g.Columns)+1; i++ {
+		child := photon.VisibleCards[i]
+		chctx := Context{
+			WinSize: ctx.WinSize,
+			Width:   childWidth,
+			Height:  childHeight,
+		}
+		getCard(child).DownloadImage(chctx, s)
+	}
+	defer func() { g.previousOffset = g.FirstChildOffset }()
+	return buf, g.FirstChildOffset != g.previousOffset
 }
 
 func (g *Grid) ClearImages() {
-	for _, ch := range photon.VisibleCards {
+	for _, ch := range photon.Cards {
 		getCard(ch).ClearImage()
 	}
 }

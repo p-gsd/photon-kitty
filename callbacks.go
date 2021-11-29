@@ -10,7 +10,7 @@ type Callbacks struct {
 }
 
 func (cb Callbacks) Redraw() {
-	redraw()
+	redraw(false)
 }
 
 func (cb Callbacks) State() states.Enum {

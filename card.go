@@ -21,7 +21,7 @@ func getCard(card *libphoton.Card) *Card {
 	if !ok {
 		c = &Card{
 			Card:          card,
-			SelectedColor: tcell.ColorPurple,
+			SelectedColor: tcell.ColorGrey,
 		}
 		cards[card] = c
 	}
@@ -36,18 +36,15 @@ type Card struct {
 	scaledImage   image.Image
 }
 
-func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
-	if c.selected {
-		for x := 0; x < ctx.Width; x++ {
-			for y := 0; y < ctx.Height; y++ {
-				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(c.SelectedColor))
+func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style tcell.Style) {
+	var x, y int
+	for _, c := range text {
+		if x > maxWidth {
+			if y >= maxLines {
+				break
 			}
-		}
-	}
-	var x int
-	for _, c := range c.Item.Title {
-		if x > ctx.Width {
-			break
+			y++
+			x = 0
 		}
 		var comb []rune
 		w := runewidth.RuneWidth(c)
@@ -57,23 +54,36 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 			w = 1
 		}
 		s.SetContent(
-			x+ctx.X,
-			ctx.Height-1+ctx.Y,
+			x+X,
+			y+Y,
 			c,
 			comb,
-			tcell.StyleDefault,
+			style,
 		)
 		x += w
 	}
-	if c.ItemImage == nil && c.Item.Image != nil {
-		photon.ImgDownloader.Download(
-			c.Item.Image.URL,
-			func(img image.Image) {
-				c.ItemImage = img
-				c.makeSixel(ctx, s)
-				redraw()
-			},
-		)
+}
+
+func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
+	background := tcell.ColorBlack
+	if c.selected {
+		background = c.SelectedColor
+		for x := 0; x < ctx.Width; x++ {
+			for y := 0; y < ctx.Height; y++ {
+				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(c.SelectedColor))
+			}
+		}
+	}
+	drawLines(
+		s,
+		ctx.X+1,
+		ctx.Height-2+ctx.Y,
+		ctx.Width-3,
+		2,
+		c.Item.Title,
+		tcell.StyleDefault.Background(background),
+	)
+	if c.DownloadImage(ctx, s) {
 		return
 	}
 	c.makeSixel(ctx, s)
@@ -91,15 +101,31 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	w.Write(c.sixelData)
 }
 
+func (c *Card) DownloadImage(ctx Context, s tcell.Screen) bool {
+	if c.ItemImage != nil || c.Item.Image == nil {
+		return false
+	}
+	photon.ImgDownloader.Download(
+		c.Item.Image.URL,
+		func(img image.Image) {
+			c.ItemImage = img
+			c.makeSixel(ctx, s)
+			redraw(false)
+		},
+	)
+	return true
+}
+
 func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 	if c.sixelData == nil && c.ItemImage != nil {
 		targetWidth := ctx.Width * int(ctx.XPixel) / int(ctx.Cols)
-		targetHeight := ctx.Height * int(ctx.YPixel) / int(ctx.Rows)
+		targetHeight := (ctx.Height - 2) * int(ctx.YPixel) / int(ctx.Rows)
 		c.scaledImage, c.sixelData = imageProc(c.ItemImage, targetWidth, targetHeight)
 	}
 }
 
 func (c *Card) ClearImage() {
+	c.scaledImage = nil
 	c.sixelData = nil
 }
 
@@ -124,6 +150,8 @@ func (c *Card) Unselect() {
 	c.selected = false
 }
 
+//Image Processing, scaling and sixel encoding
+
 type imageProcReq struct {
 	src       image.Image
 	maxWidth  int
@@ -136,7 +164,7 @@ type imageProcResp struct {
 	sixelData   []byte
 }
 
-var imageProcChan = make(chan imageProcReq)
+var imageProcChan = make(chan imageProcReq, 50)
 
 func init() {
 	for i := 0; i < runtime.NumCPU(); i++ {
@@ -159,7 +187,6 @@ func imageProcWorker() {
 			}
 			newWidth = req.maxWidth
 		}
-
 		if newHeight > req.maxHeight {
 			newWidth = newWidth * req.maxHeight / newHeight
 			if newWidth < 1 {
@@ -167,9 +194,10 @@ func imageProcWorker() {
 			}
 			newHeight = req.maxHeight
 		}
+
 		rect := image.Rect(0, 0, int(newWidth), int(newHeight))
 		dst := image.NewRGBA(rect)
-		draw.ApproxBiLinear.Scale(dst, rect, req.src, req.src.Bounds(), draw.Over, nil)
+		draw.ApproxBiLinear.Scale(dst, rect, req.src, origBounds, draw.Over, nil)
 		var buf bytes.Buffer
 		sixel.NewEncoder(&buf).Encode(dst)
 		req.resp <- imageProcResp{scaledImage: dst, sixelData: buf.Bytes()}

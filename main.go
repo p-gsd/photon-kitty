@@ -35,11 +35,11 @@ var CLI struct {
 var (
 	photon   *libphoton.Photon
 	cb       Callbacks
-	redrawCh = make(chan struct{})
+	redrawCh = make(chan bool, 1024)
 )
 
-func redraw() {
-	redrawCh <- struct{}{}
+func redraw(full bool) {
+	redrawCh <- full
 }
 
 func main() {
@@ -88,7 +88,7 @@ func main() {
 
 	go func() {
 		photon.RefreshFeed()
-		redraw()
+		redraw(true)
 	}()
 
 	//tui
@@ -103,9 +103,6 @@ func main() {
 		os.Exit(1)
 	}
 	defer s.Fini()
-	tcell.StyleDefault = tcell.StyleDefault.
-		Background(tcell.ColorBlack).
-		Foreground(tcell.ColorWhite)
 
 	ctx, quit := WithCancel(Background())
 
@@ -118,26 +115,29 @@ func main() {
 			case *tcell.EventKey:
 				photon.KeyBindings.Run(newKeyEvent(ev))
 			case *tcell.EventResize:
-				s.Sync()
 				grid.ClearImages()
 				ctx, quit = WithCancel(Background())
-				redraw()
+				redraw(true)
 			}
 		}
 	}()
 
+	var fullRedraw bool
 	for {
 		s.Clear()
-		sixelBuf := grid.Draw(ctx, s)
-		s.Sync()
-		//io.Copy(os.Stdout, sixelBuf)
+		sixelBuf, fr := grid.Draw(ctx, s)
+		if fr || fullRedraw {
+			s.Sync()
+		} else {
+			s.Show()
+		}
 		if sixelBuf.Len() > 0 {
 			os.Stdout.Write(sixelBuf.Bytes())
 		}
 		select {
 		case <-ctx.Done():
 			return
-		case <-redrawCh:
+		case fullRedraw = <-redrawCh:
 		}
 	}
 }
@@ -157,6 +157,9 @@ func newKeyEvent(e *tcell.EventKey) keybindings.KeyEvent {
 
 	var r rune
 	if e.Key() == tcell.KeyRune {
+		if unicode.IsUpper(e.Rune()) {
+			mod = keybindings.ModShift
+		}
 		r = unicode.ToLower(e.Rune())
 	} else {
 		s, ok := tcell.KeyNames[e.Key()]
@@ -218,14 +221,17 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 	})
 	photon.KeyBindings.Add(states.Normal, "=", func() error {
 		grid.Columns++
-		redraw()
+		grid.ClearImages()
+		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "-", func() error {
-		if grid.Columns > 1 {
-			grid.Columns--
-			redraw()
+		if grid.Columns == 1 {
+			return nil
 		}
+		grid.Columns--
+		grid.ClearImages()
+		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "/", func() error {
@@ -284,22 +290,22 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 	//move selectedCard
 	photon.KeyBindings.Add(states.Normal, "h", func() error {
 		cb.SelectedCardMoveLeft()
-		redraw()
+		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "l", func() error {
 		cb.SelectedCardMoveRight()
-		redraw()
+		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "j", func() error {
 		cb.SelectedCardMoveDown()
-		redraw()
+		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "k", func() error {
 		cb.SelectedCardMoveUp()
-		redraw()
+		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<ctrl>d", func() error {
@@ -337,22 +343,17 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "gg", func() error {
-		/*TODO
-		list.Position.First = 0
-		list.Position.Offset = 0
+		grid.FirstChildIndex = 0
+		grid.FirstChildOffset = 0
 		photon.SelectedCardPos.Y = 0
-		cb.Refresh()
-		redraw()
-		*/
+		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<shift>g", func() error {
-		/*TODO
-		list.Position.First = len(photon.VisibleCards) - list.Position.Count
-		photon.SelectedCardPos.Y = len(photon.VisibleCards)/ncols - 1
-		cb.Refresh()
-		redraw()
-		*/
+		log.Println("<shift>g", grid.RowsCount)
+		grid.FirstChildIndex = len(photon.VisibleCards) - grid.RowsCount
+		photon.SelectedCardPos.Y = len(photon.VisibleCards)/grid.Columns - 1
+		redraw(true)
 		return nil
 	})
 
