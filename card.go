@@ -40,11 +40,11 @@ func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style 
 	var x, y int
 	for _, c := range text {
 		if x > maxWidth {
+			y++
+			x = 0
 			if y >= maxLines {
 				break
 			}
-			y++
-			x = 0
 		}
 		var comb []rune
 		w := runewidth.RuneWidth(c)
@@ -53,13 +53,7 @@ func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style 
 			c = ' '
 			w = 1
 		}
-		s.SetContent(
-			x+X,
-			y+Y,
-			c,
-			comb,
-			style,
-		)
+		s.SetContent(x+X, y+Y, c, comb, style)
 		x += w
 	}
 }
@@ -74,6 +68,8 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 			}
 		}
 	}
+	s.SetContent(ctx.X, ctx.Height-2+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
+	s.SetContent(ctx.X, ctx.Height-1+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
 	drawLines(
 		s,
 		ctx.X+1,
