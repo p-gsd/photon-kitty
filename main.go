@@ -10,6 +10,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -33,14 +34,9 @@ var CLI struct {
 }
 
 var (
-	photon   *libphoton.Photon
-	cb       Callbacks
-	redrawCh = make(chan bool, 1024)
+	photon *libphoton.Photon
+	cb     Callbacks
 )
-
-func redraw(full bool) {
-	redrawCh <- full
-}
 
 func main() {
 	f, _ := os.Create("/tmp/photon.log")
@@ -140,6 +136,25 @@ func main() {
 		case fullRedraw = <-redrawCh:
 		}
 	}
+}
+
+var redrawCh = make(chan bool, 1024)
+
+func redraw(full bool) {
+	redrawCh <- full
+}
+
+func redrawWorker() {
+	redrawReq := make(chan bool)
+	go func() {
+		var timestamp time.Time
+		for f := range redrawCh {
+			if time.Now().Sub(timestamp) < time.Second/60 {
+				continue
+			}
+			redrawReq <- f
+		}
+	}()
 }
 
 func newKeyEvent(e *tcell.EventKey) keybindings.KeyEvent {
