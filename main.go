@@ -82,11 +82,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	go func() {
-		photon.RefreshFeed()
-		redraw(true)
-	}()
-
 	//tui
 	tcell.SetEncodingFallback(tcell.EncodingFallbackASCII)
 	s, err := tcell.NewScreen()
@@ -101,6 +96,11 @@ func main() {
 	defer s.Fini()
 
 	ctx, quit := WithCancel(Background())
+
+	go func() {
+		photon.RefreshFeed()
+		redraw(true)
+	}()
 
 	defaultKeyBindings(grid, &quit)
 

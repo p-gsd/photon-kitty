@@ -67,8 +67,11 @@ type WinSize struct {
 	YPixel int16 /* vertical size, pixels */
 }
 
-func GetWinSize() (WinSize, error) {
-	var sz WinSize
-	err := ioctl(0, tiocgwinsz, uintptr(unsafe.Pointer(&sz)))
-	return sz, err
+func GetWinSize() (sz WinSize, err error) {
+	for fd := uintptr(0); fd < 3; fd++ {
+		if err = ioctl(fd, tiocgwinsz, uintptr(unsafe.Pointer(&sz))); err == nil {
+			return
+		}
+	}
+	return
 }
