@@ -78,7 +78,6 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	if c.DownloadImage(ctx, s) {
 		return
 	}
-	c.makeSixel(ctx, s)
 	if c.sixelData == nil {
 		return
 	}
@@ -95,6 +94,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 
 func (c *Card) DownloadImage(ctx Context, s tcell.Screen) bool {
 	if c.ItemImage != nil || c.Item.Image == nil {
+		c.makeSixel(ctx, s)
 		return false
 	}
 	photon.ImgDownloader.Download(
@@ -102,18 +102,27 @@ func (c *Card) DownloadImage(ctx Context, s tcell.Screen) bool {
 		func(img image.Image) {
 			c.ItemImage = img
 			c.makeSixel(ctx, s)
-			redraw(false)
 		},
 	)
 	return true
 }
 
 func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
-	if c.sixelData == nil && c.ItemImage != nil {
-		targetWidth := ctx.Width * int(ctx.XPixel) / int(ctx.Cols)
-		targetHeight := (ctx.Height - 2) * int(ctx.YPixel) / int(ctx.Rows)
-		c.scaledImageBounds, c.sixelData = imageProc(c.ItemImage, targetWidth, targetHeight)
+	if c.sixelData != nil || c.ItemImage == nil {
+		return
 	}
+	targetWidth := ctx.Width * int(ctx.XPixel) / int(ctx.Cols)
+	targetHeight := (ctx.Height - 2) * int(ctx.YPixel) / int(ctx.Rows)
+	imageProc(
+		c,
+		c.ItemImage,
+		targetWidth,
+		targetHeight,
+		func(b image.Rectangle, sd []byte) {
+			c.scaledImageBounds, c.sixelData = b, sd
+			redraw(false)
+		},
+	)
 }
 
 func (c *Card) ClearImage() {

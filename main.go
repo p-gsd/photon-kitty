@@ -112,6 +112,10 @@ func main() {
 				photon.KeyBindings.Run(newKeyEvent(ev))
 			case *tcell.EventResize:
 				grid.ClearImages()
+				imageProcMap.Range(func(k, v interface{}) bool {
+					imageProcMap.Delete(k)
+					return true
+				})
 				ctx, quit = WithCancel(Background())
 				redraw(true)
 			}
@@ -138,7 +142,7 @@ func main() {
 	}
 }
 
-var redrawCh = make(chan bool, 1024)
+var redrawCh = make(chan bool, 10240)
 
 func redraw(full bool) {
 	redrawCh <- full
@@ -149,7 +153,7 @@ func redrawWorker() {
 	go func() {
 		var timestamp time.Time
 		for f := range redrawCh {
-			if time.Now().Sub(timestamp) < time.Second/60 {
+			if time.Now().Sub(timestamp) < time.Second/30 {
 				continue
 			}
 			redrawReq <- f

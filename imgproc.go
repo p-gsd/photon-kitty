@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"image"
 	"runtime"
+	"sync"
 
 	"github.com/mattn/go-sixel"
 	"golang.org/x/image/draw"
@@ -12,18 +13,18 @@ import (
 //Image Processing, scaling and sixel encoding
 
 type imageProcReq struct {
+	card      *Card
 	src       image.Image
 	maxWidth  int
 	maxHeight int
-	resp      chan imageProcResp
+	callback  func(image.Rectangle, []byte)
 }
 
-type imageProcResp struct {
-	scaledImageBounds image.Rectangle
-	sixelData         []byte
-}
-
-var imageProcChan = make(chan imageProcReq, 50)
+var (
+	imageProcChan = make(chan imageProcReq, 1024)
+	//map that holds cards that are right now processed
+	imageProcMap sync.Map
+)
 
 func init() {
 	for i := 0; i < runtime.NumCPU(); i++ {
@@ -33,6 +34,10 @@ func init() {
 
 func imageProcWorker() {
 	for req := range imageProcChan {
+		//if there is a goroutine that already processes this card, then skip
+		if _, ok := imageProcMap.LoadOrStore(req.card, struct{}{}); ok {
+			continue
+		}
 		origBounds := req.src.Bounds()
 		origWidth := origBounds.Dx()
 		origHeight := origBounds.Dy()
@@ -59,21 +64,17 @@ func imageProcWorker() {
 		draw.ApproxBiLinear.Scale(dst, rect, req.src, origBounds, draw.Over, nil)
 		var buf bytes.Buffer
 		sixel.NewEncoder(&buf).Encode(dst)
-		req.resp <- imageProcResp{
-			scaledImageBounds: dst.Bounds(),
-			sixelData:         buf.Bytes(),
-		}
+		req.callback(dst.Bounds(), buf.Bytes())
+		//imageProcMap.Delete(req.card)
 	}
 }
 
-func imageProc(src image.Image, maxWidth, maxHeight int) (image.Rectangle, []byte) {
-	respChan := make(chan imageProcResp)
+func imageProc(card *Card, src image.Image, maxWidth, maxHeight int, callback func(image.Rectangle, []byte)) {
 	imageProcChan <- imageProcReq{
+		card:      card,
 		src:       src,
 		maxWidth:  maxWidth,
 		maxHeight: maxHeight,
-		resp:      respChan,
+		callback:  callback,
 	}
-	resp := <-respChan
-	return resp.scaledImageBounds, resp.sixelData
 }
