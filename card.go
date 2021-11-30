@@ -16,17 +16,20 @@ func getCard(card *libphoton.Card) *Card {
 	c, ok := cards[card]
 	if !ok {
 		c = &Card{
-			Card:          card,
-			SelectedColor: tcell.ColorGrey,
+			Card: card,
 		}
 		cards[card] = c
 	}
 	return c
 }
 
+const (
+	headerHeight  = 2
+	selectedColor = tcell.ColorGray
+)
+
 type Card struct {
 	*libphoton.Card
-	SelectedColor     tcell.Color
 	selected          bool
 	sixelData         []byte
 	scaledImageBounds image.Rectangle
@@ -35,6 +38,11 @@ type Card struct {
 func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style tcell.Style) {
 	var x, y int
 	for _, c := range text {
+		if c == '\n' {
+			y++
+			x = 0
+			continue
+		}
 		if x > maxWidth {
 			y++
 			x = 0
@@ -49,6 +57,7 @@ func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style 
 			c = ' '
 			w = 1
 		}
+
 		s.SetContent(x+X, y+Y, c, comb, style)
 		x += w
 	}
@@ -57,23 +66,42 @@ func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style 
 func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	background := tcell.ColorBlack
 	if c.selected {
-		background = c.SelectedColor
-		for x := 0; x < ctx.Width; x++ {
-			for y := 0; y < ctx.Height; y++ {
-				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(c.SelectedColor))
-			}
+		background = selectedColor
+	}
+	for x := 0; x < ctx.Width; x++ {
+		for y := 0; y < ctx.Height; y++ {
+			s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
 		}
 	}
-	s.SetContent(ctx.X, ctx.Height-2+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
-	s.SetContent(ctx.X, ctx.Height-1+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
+	if c.Item.Image == nil {
+		drawLines(
+			s,
+			ctx.X+1,
+			ctx.Y,
+			ctx.Width-3,
+			headerHeight,
+			c.Item.Title,
+			tcell.StyleDefault.Background(background).Bold(true),
+		)
+		drawLines(
+			s,
+			ctx.X+1,
+			ctx.Y+headerHeight,
+			ctx.Width-3,
+			ctx.Height-headerHeight,
+			c.Item.Description,
+			tcell.StyleDefault.Background(background),
+		)
+		return
+	}
 	drawLines(
 		s,
 		ctx.X+1,
-		ctx.Height-2+ctx.Y,
+		ctx.Height-headerHeight+ctx.Y,
 		ctx.Width-3,
-		2,
+		headerHeight,
 		c.Item.Title,
-		tcell.StyleDefault.Background(background),
+		tcell.StyleDefault.Background(background).Bold(true),
 	)
 	if c.DownloadImage(ctx, s) {
 		return
@@ -112,7 +140,7 @@ func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 		return
 	}
 	targetWidth := ctx.Width * int(ctx.XPixel) / int(ctx.Cols)
-	targetHeight := (ctx.Height - 2) * int(ctx.YPixel) / int(ctx.Rows)
+	targetHeight := (ctx.Height - headerHeight) * int(ctx.YPixel) / int(ctx.Rows)
 	imageProc(
 		c,
 		c.ItemImage,

@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	git.sr.ht/~ghost08/libphoton v0.0.0-20211128200007-eba352aba49d
+	github.com/afbjorklund/go-termbg v0.3.0
 	github.com/alecthomas/kong v0.2.18
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/mattn/go-runewidth v0.0.13
@@ -30,7 +31,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/soniakeys/quant v1.0.0 // indirect
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9 // indirect
-	golang.org/x/exp v0.0.0-20211123021643-48cbe7f80d7c // indirect
+	golang.org/x/exp v0.0.0-20211129234152-8a230f1f7d7a // indirect
 	golang.org/x/mobile v0.0.0-20211109191125-d61a72f26a1a // indirect
 	golang.org/x/net v0.0.0-20211123203042-d83791d6bcd9 // indirect
 	golang.org/x/sys v0.0.0-20211124211545-fe61309f8881 // indirect

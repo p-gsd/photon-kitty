@@ -185,7 +185,6 @@ func newKeyEvent(e *tcell.EventKey) keybindings.KeyEvent {
 			r = unicode.ToLower(r)
 		}
 	}
-	log.Println(keybindings.KeyEvent{Key: r, Modifiers: mod})
 	return keybindings.KeyEvent{Key: r, Modifiers: mod}
 }
 
@@ -208,7 +207,6 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<ctrl>p", func() error {
-		log.Println("runmedia", photon.SelectedCard)
 		photon.SelectedCard.RunMedia()
 		return nil
 	})
