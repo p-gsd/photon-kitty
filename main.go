@@ -112,10 +112,7 @@ func main() {
 				photon.KeyBindings.Run(newKeyEvent(ev))
 			case *tcell.EventResize:
 				grid.ClearImages()
-				imageProcMap.Range(func(k, v interface{}) bool {
-					imageProcMap.Delete(k)
-					return true
-				})
+				imageProcClear()
 				ctx, quit = WithCancel(Background())
 				redraw(true)
 			}
@@ -241,6 +238,7 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 	photon.KeyBindings.Add(states.Normal, "=", func() error {
 		grid.Columns++
 		grid.ClearImages()
+		imageProcClear()
 		redraw(true)
 		return nil
 	})
@@ -250,6 +248,7 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		}
 		grid.Columns--
 		grid.ClearImages()
+		imageProcClear()
 		redraw(true)
 		return nil
 	})

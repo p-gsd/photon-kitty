@@ -44,28 +44,33 @@ func imageProcWorker() {
 		newWidth, newHeight := origWidth, origHeight
 
 		// Preserve aspect ratio
-		if origWidth > req.maxWidth {
+		if origWidth > origHeight {
 			newHeight = origHeight * req.maxWidth / origWidth
-			if newHeight < 1 {
-				newHeight = 1
-			}
 			newWidth = req.maxWidth
-		}
-		if newHeight > req.maxHeight {
-			newWidth = newWidth * req.maxHeight / newHeight
-			if newWidth < 1 {
-				newWidth = 1
-			}
+		} else {
+			newWidth = origWidth * req.maxHeight / origHeight
 			newHeight = req.maxHeight
 		}
 
-		rect := image.Rect(0, 0, int(newWidth), int(newHeight))
-		dst := image.NewRGBA(rect)
-		draw.ApproxBiLinear.Scale(dst, rect, req.src, origBounds, draw.Over, nil)
+		offset := (req.maxWidth - newWidth) / 2
+		rect := image.Rect(
+			offset,
+			0,
+			newWidth+offset,
+			newHeight,
+		)
+		dst := image.NewRGBA(image.Rect(0, 0, req.maxWidth, req.maxHeight))
+		draw.ApproxBiLinear.Scale(
+			dst,
+			rect,
+			req.src,
+			origBounds,
+			draw.Over,
+			nil,
+		)
 		var buf bytes.Buffer
 		sixel.NewEncoder(&buf).Encode(dst)
 		req.callback(dst.Bounds(), buf.Bytes())
-		//imageProcMap.Delete(req.card)
 	}
 }
 
@@ -77,4 +82,11 @@ func imageProc(card *Card, src image.Image, maxWidth, maxHeight int, callback fu
 		maxHeight: maxHeight,
 		callback:  callback,
 	}
+}
+
+func imageProcClear() {
+	imageProcMap.Range(func(k, v interface{}) bool {
+		imageProcMap.Delete(k)
+		return true
+	})
 }
