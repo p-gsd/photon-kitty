@@ -15,11 +15,9 @@ type Grid struct {
 	LastChildIndex   int
 	LastChildOffset  int
 	RowsCount        int //count of visible rows on the screen
-
-	previousOffset int
 }
 
-func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer, fullRedraw bool) {
+func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf bytes.Buffer) {
 	w, h := s.Size()
 	margin := (w % g.Columns) / 2
 	childWidth := w / g.Columns
@@ -32,7 +30,6 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer, fullRedraw 
 		photon.SelectedCard = photon.VisibleCards[g.FirstChildIndex]
 		getCard(photon.SelectedCard).Select()
 	}
-	buf = bytes.NewBuffer(nil)
 	for i := g.FirstChildIndex; i < len(photon.VisibleCards); i++ {
 		child := photon.VisibleCards[i]
 		chctx := Context{
@@ -48,7 +45,7 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer, fullRedraw 
 		g.LastChildIndex = i
 		g.RowsCount = i / g.Columns
 		g.LastChildOffset = chctx.Y + childHeight - h
-		getCard(child).Draw(chctx, s, buf)
+		getCard(child).Draw(chctx, s, &buf)
 	}
 	//download next screen of images
 	for i := g.LastChildIndex + 1; i < len(photon.VisibleCards) && i < g.LastChildIndex+(g.RowsCount*g.Columns)+1; i++ {
@@ -60,8 +57,7 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer, fullRedraw 
 		}
 		getCard(child).DownloadImage(chctx, s)
 	}
-	defer func() { g.previousOffset = g.FirstChildOffset }()
-	return buf, g.FirstChildOffset != g.previousOffset
+	return buf
 }
 
 func (g *Grid) ClearImages() {

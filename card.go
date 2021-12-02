@@ -33,6 +33,8 @@ type Card struct {
 	selected          bool
 	sixelData         []byte
 	scaledImageBounds image.Rectangle
+	previousImagePos  image.Point
+	previousSelected  bool
 }
 
 func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style tcell.Style) {
@@ -68,12 +70,12 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	if c.selected {
 		background = selectedColor
 	}
-	for x := 0; x < ctx.Width; x++ {
-		for y := 0; y < ctx.Height; y++ {
-			s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
-		}
-	}
 	if c.Item.Image == nil {
+		for x := 0; x < ctx.Width; x++ {
+			for y := 0; y < ctx.Height; y++ {
+				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
+			}
+		}
 		drawLines(
 			s,
 			ctx.X+1,
@@ -94,7 +96,12 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		)
 		return
 	}
-	drawLines(
+	for x := 0; x < ctx.Width; x++ {
+		for y := 0; y < ctx.Height; y++ {
+			s.SetContent(x+ctx.X, y+ctx.Y, '\u2800', nil, tcell.StyleDefault.Background(background))
+		}
+	}
+	defer drawLines(
 		s,
 		ctx.X+1,
 		ctx.Height-headerHeight+ctx.Y,
@@ -104,19 +111,40 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		tcell.StyleDefault.Background(background).Bold(true),
 	)
 	if c.DownloadImage(ctx, s) {
+		c.previousImagePos = image.Point{-1, -1}
 		return
 	}
 	if c.sixelData == nil {
+		c.previousImagePos = image.Point{-1, -1}
 		return
 	}
 	imgHeight := c.scaledImageBounds.Dy()
 	if int(ctx.YPixel)/int(ctx.Rows)*(ctx.Y+1)+imgHeight > int(ctx.YPixel) {
+		c.previousImagePos = image.Point{-1, -1}
+		for x := 0; x < ctx.Width; x++ {
+			for y := 0; y < ctx.Height-headerHeight; y++ {
+				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
+			}
+		}
 		return
 	}
 	if ctx.Y+1 < 0 {
+		c.previousImagePos = image.Point{-1, -1}
+		for x := 0; x < ctx.Width; x++ {
+			for y := 0; y < ctx.Height-headerHeight; y++ {
+				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
+			}
+		}
 		return
 	}
-	fmt.Fprintf(w, "\033[%d;%dH", ctx.Y+1, ctx.X+1)
+	newImagePos := image.Point{ctx.X + 1, ctx.Y + 1}
+	if c.previousImagePos.Eq(newImagePos) && c.selected == c.previousSelected {
+		return
+	}
+	c.previousImagePos = newImagePos
+	c.previousSelected = c.selected
+	//set cursor to x, y
+	fmt.Fprintf(w, "\033[%d;%dH", newImagePos.Y, newImagePos.X)
 	w.Write(c.sixelData)
 }
 

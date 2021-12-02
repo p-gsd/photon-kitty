@@ -3,12 +3,9 @@ package main
 import (
 	"bytes"
 	"image"
-	"image/color"
 	"runtime"
 	"sync"
-	"time"
 
-	"github.com/afbjorklund/go-termbg/pkg/termbg"
 	"github.com/mattn/go-sixel"
 	"golang.org/x/image/draw"
 )
@@ -27,18 +24,9 @@ var (
 	imageProcChan = make(chan imageProcReq, 1024)
 	//map that holds cards that are right now processed
 	imageProcMap sync.Map
-	terminalBg   color.Color
 )
 
 func init() {
-	if rgb, err := termbg.NewRGB(100 * time.Millisecond); err == nil {
-		terminalBg = color.RGBA{
-			R: uint8(rgb.R >> 8),
-			G: uint8(rgb.G >> 8),
-			B: uint8(rgb.B >> 8),
-			A: 255,
-		}
-	}
 	for i := 0; i < runtime.NumCPU(); i++ {
 		go imageProcWorker()
 	}
@@ -64,8 +52,7 @@ func imageProcWorker() {
 		}
 		offset := (req.maxWidth - newWidth) / 2
 		rect := image.Rect(offset, 0, newWidth+offset, newHeight)
-		dst := image.NewRGBA(image.Rect(0, 0, req.maxWidth, req.maxHeight))
-		draw.Draw(dst, dst.Bounds(), &image.Uniform{terminalBg}, image.Point{}, draw.Src)
+		dst := image.NewRGBA(image.Rect(0, 0, req.maxWidth, newHeight))
 		draw.ApproxBiLinear.Scale(dst, rect, req.src, origBounds, draw.Over, nil)
 		var buf bytes.Buffer
 		sixel.NewEncoder(&buf).Encode(dst)
