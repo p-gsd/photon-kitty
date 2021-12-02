@@ -97,19 +97,34 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		return
 	}
 	for x := 0; x < ctx.Width; x++ {
-		for y := 0; y < ctx.Height; y++ {
+		for y := 0; y < ctx.Height-headerHeight; y++ {
 			s.SetContent(x+ctx.X, y+ctx.Y, '\u2800', nil, tcell.StyleDefault.Background(background))
 		}
 	}
-	defer drawLines(
-		s,
-		ctx.X+1,
-		ctx.Height-headerHeight+ctx.Y,
-		ctx.Width-3,
-		headerHeight,
-		c.Item.Title,
-		tcell.StyleDefault.Background(background).Bold(true),
-	)
+	var imageDrawn bool
+	defer func() {
+		if !imageDrawn {
+			for x := 0; x < ctx.Width; x++ {
+				for y := 0; y < ctx.Height-headerHeight; y++ {
+					s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
+				}
+			}
+		}
+		for x := 0; x < ctx.Width; x++ {
+			for y := ctx.Height - headerHeight; y < ctx.Height; y++ {
+				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
+			}
+		}
+		drawLines(
+			s,
+			ctx.X+1,
+			ctx.Height-headerHeight+ctx.Y,
+			ctx.Width-3,
+			headerHeight,
+			c.Item.Title,
+			tcell.StyleDefault.Background(background).Bold(true),
+		)
+	}()
 	if c.DownloadImage(ctx, s) {
 		c.previousImagePos = image.Point{-1, -1}
 		return
@@ -121,22 +136,13 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	imgHeight := c.scaledImageBounds.Dy()
 	if int(ctx.YPixel)/int(ctx.Rows)*(ctx.Y+1)+imgHeight > int(ctx.YPixel) {
 		c.previousImagePos = image.Point{-1, -1}
-		for x := 0; x < ctx.Width; x++ {
-			for y := 0; y < ctx.Height-headerHeight; y++ {
-				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
-			}
-		}
 		return
 	}
 	if ctx.Y+1 < 0 {
 		c.previousImagePos = image.Point{-1, -1}
-		for x := 0; x < ctx.Width; x++ {
-			for y := 0; y < ctx.Height-headerHeight; y++ {
-				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
-			}
-		}
 		return
 	}
+	imageDrawn = true
 	newImagePos := image.Point{ctx.X + 1, ctx.Y + 1}
 	if c.previousImagePos.Eq(newImagePos) && c.selected == c.previousSelected {
 		return
