@@ -38,7 +38,6 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf bytes.Buffer) {
 			Y:       g.FirstChildOffset + ((i-g.FirstChildIndex)/g.Columns)*childHeight,
 			Width:   childWidth,
 			Height:  childHeight,
-			RuneBuf: ctx.RuneBuf,
 		}
 		if chctx.Y >= h {
 			break

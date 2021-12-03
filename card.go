@@ -49,9 +49,9 @@ func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style 
 		if x > maxWidth {
 			y++
 			x = 0
-			if y >= maxLines {
-				break
-			}
+		}
+		if y >= maxLines {
+			break
 		}
 		var comb []rune
 		w := runewidth.RuneWidth(c)
@@ -75,7 +75,6 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		for x := ctx.X; x < ctx.Width+ctx.X; x++ {
 			for y := ctx.Y; y < ctx.Height+ctx.Y; y++ {
 				s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
-				ctx.SetRune(x, y, ' ')
 			}
 		}
 		drawLines(
@@ -92,7 +91,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 			ctx.X+1,
 			ctx.Y+headerHeight,
 			ctx.Width-3,
-			ctx.Height-headerHeight,
+			ctx.Height-headerHeight-5,
 			c.Item.Description,
 			tcell.StyleDefault.Background(background),
 		)
@@ -103,7 +102,6 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	for x := ctx.X; x < ctx.Width+ctx.X; x++ {
 		for y := ctx.Height - headerHeight + ctx.Y; y < ctx.Height+ctx.Y; y++ {
 			s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
-			ctx.SetRune(x, y, ' ')
 		}
 	}
 	drawLines(
@@ -117,24 +115,28 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	)
 
 	if c.DownloadImage(ctx, s) {
-		c.previousImagePos = image.Point{-1, -1}
+		c.previousImagePos = image.Point{-2, -2}
 		c.swapImageRegion(ctx, s)
 		return
 	}
 	if c.sixelData == nil {
-		c.previousImagePos = image.Point{-1, -1}
+		c.previousImagePos = image.Point{-2, -2}
 		c.swapImageRegion(ctx, s)
 		return
 	}
 	imgHeight := c.scaledImageBounds.Dy()
 	if int(ctx.YPixel)/int(ctx.Rows)*(ctx.Y+1)+imgHeight > int(ctx.YPixel) {
-		c.previousImagePos = image.Point{-1, -1}
-		c.swapImageRegion(ctx, s)
+		if !c.previousImagePos.Eq(image.Point{-2, -2}) {
+			c.previousImagePos = image.Point{-2, -2}
+			c.swapImageRegion(ctx, s)
+		}
 		return
 	}
 	if ctx.Y+1 < 0 {
-		c.previousImagePos = image.Point{-1, -1}
-		c.swapImageRegion(ctx, s)
+		if !c.previousImagePos.Eq(image.Point{-2, -2}) {
+			c.previousImagePos = image.Point{-2, -2}
+			c.swapImageRegion(ctx, s)
+		}
 		return
 	}
 	imageWidthInCells := c.scaledImageBounds.Dx() / int(ctx.XPixel/ctx.Cols)
@@ -152,19 +154,6 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	w.Write(c.sixelData)
 }
 
-func (c *Card) fillImageRegion(ctx Context, s tcell.Screen, r rune) {
-	background := tcell.ColorBlack
-	if c.selected {
-		background = selectedColor
-	}
-	for x := ctx.X; x < ctx.Width+ctx.X; x++ {
-		for y := ctx.Y; y < ctx.Height-headerHeight+ctx.Y; y++ {
-			s.SetContent(x, y, r, nil, tcell.StyleDefault.Background(background))
-			ctx.SetRune(x, y, r)
-		}
-	}
-}
-
 func (c *Card) swapImageRegion(ctx Context, s tcell.Screen) {
 	background := tcell.ColorBlack
 	if c.selected {
@@ -173,11 +162,11 @@ func (c *Card) swapImageRegion(ctx Context, s tcell.Screen) {
 	for x := ctx.X; x < ctx.Width+ctx.X; x++ {
 		for y := ctx.Y; y < ctx.Height-headerHeight+ctx.Y; y++ {
 			r := '\u2800'
-			if ctx.GetRune(x, y) == r {
+			c, _, _, _ := s.GetContent(x, y)
+			if c == r {
 				r = '\u2007'
 			}
 			s.SetContent(x, y, r, nil, tcell.StyleDefault.Background(background))
-			ctx.SetRune(x, y, r)
 		}
 	}
 }

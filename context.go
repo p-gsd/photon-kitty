@@ -12,15 +12,10 @@ func Background() Context {
 	if err != nil {
 		panic(err)
 	}
-	rb := make([][]rune, ws.Cols)
-	for i := 0; i < int(ws.Cols); i++ {
-		rb[i] = make([]rune, ws.Rows)
-	}
 	return Context{
 		WinSize: ws,
 		Width:   int(ws.Cols),
 		Height:  int(ws.Rows),
-		RuneBuf: rb,
 	}
 }
 
@@ -36,25 +31,7 @@ type Context struct {
 	WinSize
 	X, Y          int
 	Width, Height int
-	RuneBuf       [][]rune
 	cancelChan    chan struct{}
-}
-
-func (ctx Context) SetRune(x, y int, r rune) {
-	if x > 0 && y > 0 {
-		if x < len(ctx.RuneBuf) && y < len(ctx.RuneBuf[x]) {
-			ctx.RuneBuf[x][y] = r
-		}
-	}
-}
-
-func (ctx Context) GetRune(x, y int) rune {
-	if x > 0 && y > 0 {
-		if x < len(ctx.RuneBuf) && y < len(ctx.RuneBuf[x]) {
-			return ctx.RuneBuf[x][y]
-		}
-	}
-	return ' '
 }
 
 func (ctx Context) Deadline() (deadline time.Time, ok bool) {
