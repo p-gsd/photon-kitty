@@ -29,10 +29,10 @@ func commandInput(s tcell.Screen, ev *tcell.EventKey) bool {
 	if cb.State() != states.Search || !commandFocus {
 		return false
 	}
-	if ev.Key() != tcell.KeyRune {
+	if ev.Key() != tcell.KeyRune && ev.Key() != tcell.KeyBackspace && ev.Key() != tcell.KeyBackspace2 {
 		return false
 	}
-	if ev.Key() == tcell.KeyBackspace {
+	if ev.Key() == tcell.KeyBackspace || ev.Key() == tcell.KeyBackspace2 {
 		command = command[:len(command)-1]
 	} else {
 		command += string(ev.Rune())

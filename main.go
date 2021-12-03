@@ -35,11 +35,10 @@ var CLI struct {
 }
 
 var (
-	photon        *libphoton.Photon
-	cb            Callbacks
-	command       string
-	commandCursor int
-	commandFocus  bool
+	photon       *libphoton.Photon
+	cb           Callbacks
+	command      string
+	commandFocus bool
 )
 
 func main() {
@@ -155,7 +154,7 @@ func main() {
 	}
 }
 
-var redrawCh = make(chan bool, 10240)
+var redrawCh = make(chan bool, 1024)
 
 func redraw(full bool) {
 	redrawCh <- full
@@ -273,7 +272,6 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 			return nil
 		}
 		command = "/"
-		commandCursor = 1
 		commandFocus = true
 		redraw(false)
 		return nil
@@ -437,15 +435,12 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		redraw(false)
 		return nil
 	})
-	/*
-		photon.KeyBindings.Add(states.Article, "<shift>g", func() error {
-			if openedArticle == nil {
-				return nil
-			}
-			openedArticle.list.Position.Offset -= openedArticle.list.Position.OffsetLast
-			openedArticle.list.Position.OffsetLast = 0
-			redraw()
+	photon.KeyBindings.Add(states.Article, "<shift>g", func() error {
+		if openedArticle == nil {
 			return nil
-		})
-	*/
+		}
+		openedArticle.offset = openedArticle.lastLineDrawn - len(openedArticle.buffer)
+		redraw(false)
+		return nil
+	})
 }
