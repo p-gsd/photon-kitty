@@ -33,8 +33,9 @@ type Card struct {
 	selected          bool
 	sixelData         []byte
 	scaledImageBounds image.Rectangle
-	previousImagePos  image.Point
-	previousSelected  bool
+	//isOnScreen        func(*libphoton.Card)
+	previousImagePos image.Point
+	previousSelected bool
 }
 
 func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style tcell.Style) {
@@ -71,9 +72,10 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		background = selectedColor
 	}
 	if c.Item.Image == nil {
-		for x := 0; x < ctx.Width; x++ {
-			for y := 0; y < ctx.Height; y++ {
-				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
+		for x := ctx.X; x < ctx.Width+ctx.X; x++ {
+			for y := ctx.Y; y < ctx.Height+ctx.Y; y++ {
+				s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
+				ctx.SetRune(x, y, ' ')
 			}
 		}
 		drawLines(
@@ -96,62 +98,86 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		)
 		return
 	}
-	for x := 0; x < ctx.Width; x++ {
-		for y := 0; y < ctx.Height-headerHeight; y++ {
-			s.SetContent(x+ctx.X, y+ctx.Y, '\u2800', nil, tcell.StyleDefault.Background(background))
+
+	//header
+	for x := ctx.X; x < ctx.Width+ctx.X; x++ {
+		for y := ctx.Height - headerHeight + ctx.Y; y < ctx.Height+ctx.Y; y++ {
+			s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
+			ctx.SetRune(x, y, ' ')
 		}
 	}
-	var imageDrawn bool
-	defer func() {
-		if !imageDrawn {
-			for x := 0; x < ctx.Width; x++ {
-				for y := 0; y < ctx.Height-headerHeight; y++ {
-					s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
-				}
-			}
-		}
-		for x := 0; x < ctx.Width; x++ {
-			for y := ctx.Height - headerHeight; y < ctx.Height; y++ {
-				s.SetContent(x+ctx.X, y+ctx.Y, ' ', nil, tcell.StyleDefault.Background(background))
-			}
-		}
-		drawLines(
-			s,
-			ctx.X+1,
-			ctx.Height-headerHeight+ctx.Y,
-			ctx.Width-3,
-			headerHeight,
-			c.Item.Title,
-			tcell.StyleDefault.Background(background).Bold(true),
-		)
-	}()
+	drawLines(
+		s,
+		ctx.X+1,
+		ctx.Height-headerHeight+ctx.Y,
+		ctx.Width-3,
+		headerHeight,
+		c.Item.Title,
+		tcell.StyleDefault.Background(background).Bold(true),
+	)
+
 	if c.DownloadImage(ctx, s) {
 		c.previousImagePos = image.Point{-1, -1}
+		c.swapImageRegion(ctx, s)
 		return
 	}
 	if c.sixelData == nil {
 		c.previousImagePos = image.Point{-1, -1}
+		c.swapImageRegion(ctx, s)
 		return
 	}
 	imgHeight := c.scaledImageBounds.Dy()
 	if int(ctx.YPixel)/int(ctx.Rows)*(ctx.Y+1)+imgHeight > int(ctx.YPixel) {
 		c.previousImagePos = image.Point{-1, -1}
+		c.swapImageRegion(ctx, s)
 		return
 	}
 	if ctx.Y+1 < 0 {
 		c.previousImagePos = image.Point{-1, -1}
+		c.swapImageRegion(ctx, s)
 		return
 	}
-	imageDrawn = true
 	newImagePos := image.Point{ctx.X + 1, ctx.Y + 1}
 	if c.previousImagePos.Eq(newImagePos) && c.selected == c.previousSelected {
 		return
 	}
+	if !c.previousImagePos.Eq(image.Point{-1, -1}) {
+		c.swapImageRegion(ctx, s)
+	}
 	c.previousImagePos = newImagePos
 	c.previousSelected = c.selected
-	//set cursor to x, y
-	fmt.Fprintf(w, "\033[%d;%dH", newImagePos.Y, newImagePos.X)
+	fmt.Fprintf(w, "\033[%d;%dH", newImagePos.Y, newImagePos.X) //set cursor to x, y
 	w.Write(c.sixelData)
+}
+
+func (c *Card) fillImageRegion(ctx Context, s tcell.Screen, r rune) {
+	background := tcell.ColorBlack
+	if c.selected {
+		background = selectedColor
+	}
+	for x := ctx.X; x < ctx.Width+ctx.X; x++ {
+		for y := ctx.Y; y < ctx.Height-headerHeight+ctx.Y; y++ {
+			s.SetContent(x, y, r, nil, tcell.StyleDefault.Background(background))
+			ctx.SetRune(x, y, r)
+		}
+	}
+}
+
+func (c *Card) swapImageRegion(ctx Context, s tcell.Screen) {
+	background := tcell.ColorBlack
+	if c.selected {
+		background = selectedColor
+	}
+	for x := ctx.X; x < ctx.Width+ctx.X; x++ {
+		for y := ctx.Y; y < ctx.Height-headerHeight+ctx.Y; y++ {
+			r := '\u2800'
+			if ctx.GetRune(x, y) == r {
+				r = '\u2007'
+			}
+			s.SetContent(x, y, r, nil, tcell.StyleDefault.Background(background))
+			ctx.SetRune(x, y, r)
+		}
+	}
 }
 
 func (c *Card) DownloadImage(ctx Context, s tcell.Screen) bool {
@@ -182,7 +208,9 @@ func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 		targetHeight,
 		func(b image.Rectangle, sd []byte) {
 			c.scaledImageBounds, c.sixelData = b, sd
+			//if c.isOnScreen(c.Card) {
 			redraw(false)
+			//}
 		},
 	)
 }

@@ -121,7 +121,7 @@ func main() {
 
 	var fullRedraw bool
 	for {
-		s.Clear()
+		//s.Clear()
 		sixelBuf := grid.Draw(ctx, s)
 		if fullRedraw {
 			s.Sync()

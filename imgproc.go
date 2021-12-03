@@ -43,12 +43,16 @@ func imageProcWorker() {
 		origHeight := origBounds.Dy()
 		newWidth, newHeight := origWidth, origHeight
 		// Preserve aspect ratio
-		if origWidth > origHeight {
+		if origWidth >= origHeight {
 			newHeight = origHeight * req.maxWidth / origWidth
 			newWidth = req.maxWidth
 		} else {
 			newWidth = origWidth * req.maxHeight / origHeight
 			newHeight = req.maxHeight
+		}
+		if newHeight > req.maxHeight {
+			newHeight = req.maxHeight
+			newWidth = origWidth * req.maxHeight / origHeight
 		}
 		offset := (req.maxWidth - newWidth) / 2
 		rect := image.Rect(offset, 0, newWidth+offset, newHeight)
