@@ -137,7 +137,9 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		c.swapImageRegion(ctx, s)
 		return
 	}
-	newImagePos := image.Point{ctx.X + 1, ctx.Y + 1}
+	imageWidthInCells := c.scaledImageBounds.Dx() / int(ctx.XPixel/ctx.Cols)
+	offset := (ctx.Width - imageWidthInCells) / 2
+	newImagePos := image.Point{ctx.X + 1 + offset, ctx.Y + 1}
 	if c.previousImagePos.Eq(newImagePos) && c.selected == c.previousSelected {
 		return
 	}

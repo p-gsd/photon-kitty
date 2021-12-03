@@ -48,6 +48,13 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf bytes.Buffer) {
 		g.LastChildOffset = chctx.Y + childHeight - h
 		getCard(child).Draw(chctx, s, &buf)
 	}
+	//set all not visible cards previous position outside
+	for i := 0; i < len(photon.VisibleCards); i++ {
+		if i >= g.FirstChildIndex && i <= g.LastChildIndex {
+			continue
+		}
+		getCard(photon.VisibleCards[i]).previousImagePos = image.Point{-2, -2}
+	}
 	//download next screen of images
 	for i := g.LastChildIndex + 1; i < len(photon.VisibleCards) && i < g.LastChildIndex+(g.RowsCount*g.Columns)+1; i++ {
 		child := photon.VisibleCards[i]

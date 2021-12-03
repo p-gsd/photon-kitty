@@ -54,12 +54,20 @@ func imageProcWorker() {
 			newHeight = req.maxHeight
 			newWidth = origWidth * req.maxHeight / origHeight
 		}
-		offset := (req.maxWidth - newWidth) / 2
-		rect := image.Rect(offset, 0, newWidth+offset, newHeight)
-		dst := image.NewRGBA(image.Rect(0, 0, req.maxWidth, newHeight))
+		rect := image.Rect(0, 0, newWidth, newHeight)
+		dst := image.NewRGBA(rect)
+		if !imageProcStillThere(req.card) {
+			continue
+		}
 		draw.ApproxBiLinear.Scale(dst, rect, req.src, origBounds, draw.Over, nil)
+		if !imageProcStillThere(req.card) {
+			continue
+		}
 		var buf bytes.Buffer
 		sixel.NewEncoder(&buf).Encode(dst)
+		if !imageProcStillThere(req.card) {
+			continue
+		}
 		req.callback(dst.Bounds(), buf.Bytes())
 	}
 }
@@ -74,9 +82,17 @@ func imageProc(card *Card, src image.Image, maxWidth, maxHeight int, callback fu
 	}
 }
 
+//clears the image map, serves for EventResize
 func imageProcClear() {
 	imageProcMap.Range(func(k, v interface{}) bool {
 		imageProcMap.Delete(k)
 		return true
 	})
+}
+
+//checks if image is still in map, server as checking if
+//the map wasn't cleared and all images must be rescaled
+func imageProcStillThere(c *Card) bool {
+	_, ok := imageProcMap.Load(c)
+	return ok
 }
