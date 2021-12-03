@@ -13,7 +13,7 @@ import (
 //Image Processing, scaling and sixel encoding
 
 type imageProcReq struct {
-	card      *Card
+	ident     interface{}
 	src       image.Image
 	maxWidth  int
 	maxHeight int
@@ -35,7 +35,7 @@ func init() {
 func imageProcWorker() {
 	for req := range imageProcChan {
 		//if there is a goroutine that already processes this card, then skip
-		if _, ok := imageProcMap.LoadOrStore(req.card, struct{}{}); ok {
+		if _, ok := imageProcMap.LoadOrStore(req.ident, struct{}{}); ok {
 			continue
 		}
 		origBounds := req.src.Bounds()
@@ -56,25 +56,31 @@ func imageProcWorker() {
 		}
 		rect := image.Rect(0, 0, newWidth, newHeight)
 		dst := image.NewRGBA(rect)
-		if !imageProcStillThere(req.card) {
+		if !imageProcStillThere(req.ident) {
 			continue
 		}
 		draw.ApproxBiLinear.Scale(dst, rect, req.src, origBounds, draw.Over, nil)
-		if !imageProcStillThere(req.card) {
+		if !imageProcStillThere(req.ident) {
 			continue
 		}
 		var buf bytes.Buffer
 		sixel.NewEncoder(&buf).Encode(dst)
-		if !imageProcStillThere(req.card) {
+		if !imageProcStillThere(req.ident) {
 			continue
 		}
 		req.callback(dst.Bounds(), buf.Bytes())
 	}
 }
 
-func imageProc(card *Card, src image.Image, maxWidth, maxHeight int, callback func(image.Rectangle, []byte)) {
+func imageProc(
+	ident interface{},
+	src image.Image,
+	maxWidth,
+	maxHeight int,
+	callback func(image.Rectangle, []byte),
+) {
 	imageProcChan <- imageProcReq{
-		card:      card,
+		ident:     ident,
 		src:       src,
 		maxWidth:  maxWidth,
 		maxHeight: maxHeight,
@@ -92,7 +98,7 @@ func imageProcClear() {
 
 //checks if image is still in map, server as checking if
 //the map wasn't cleared and all images must be rescaled
-func imageProcStillThere(c *Card) bool {
-	_, ok := imageProcMap.Load(c)
+func imageProcStillThere(ident interface{}) bool {
+	_, ok := imageProcMap.Load(ident)
 	return ok
 }

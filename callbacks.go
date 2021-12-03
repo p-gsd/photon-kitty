@@ -14,21 +14,20 @@ func (cb Callbacks) Redraw() {
 }
 
 func (cb Callbacks) State() states.Enum {
-	return states.Normal
-	/*TODO
 	switch {
 	case openedArticle != nil:
 		return states.Article
-	case searchEditor != nil && searchEditorFocus:
-		return states.Search
+		/*
+			case searchEditor != nil && searchEditorFocus:
+				return states.Search
+		*/
 	default:
 		return states.Normal
 	}
-	*/
 }
 
 func (cb Callbacks) ArticleChanged(article *libphoton.Article) {
-	//TODO ParseArticleContent(article, "")
+	openedArticle = &Article{Article: article}
 }
 
 func (cb Callbacks) SelectedCardMoveLeft() {

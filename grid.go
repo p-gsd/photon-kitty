@@ -17,7 +17,8 @@ type Grid struct {
 	RowsCount        int //count of visible rows on the screen
 }
 
-func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf bytes.Buffer) {
+func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
+	buf = bytes.NewBuffer(nil)
 	w, h := s.Size()
 	margin := (w % g.Columns) / 2
 	childWidth := w / g.Columns
@@ -45,7 +46,7 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf bytes.Buffer) {
 		g.LastChildIndex = i
 		g.RowsCount = i / g.Columns
 		g.LastChildOffset = chctx.Y + childHeight - h
-		getCard(child).Draw(chctx, s, &buf)
+		getCard(child).Draw(chctx, s, buf)
 	}
 	//set all not visible cards previous position outside
 	for i := 0; i < len(photon.VisibleCards); i++ {

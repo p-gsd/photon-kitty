@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"image"
 	"image/png"
 	"log"
 	"os"
@@ -109,7 +110,8 @@ func main() {
 			ev := s.PollEvent()
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
-				photon.KeyBindings.Run(newKeyEvent(ev))
+				ke := newKeyEvent(ev)
+				photon.KeyBindings.Run(ke)
 			case *tcell.EventResize:
 				grid.ClearImages()
 				imageProcClear()
@@ -120,15 +122,20 @@ func main() {
 	}()
 
 	var fullRedraw bool
+	var sixelBuf *bytes.Buffer
 	for {
-		//s.Clear()
-		sixelBuf := grid.Draw(ctx, s)
+		switch cb.State() {
+		case states.Normal:
+			sixelBuf = grid.Draw(ctx, s)
+		case states.Article:
+			sixelBuf = openedArticle.Draw(ctx, s)
+		}
 		if fullRedraw {
 			s.Sync()
 		} else {
 			s.Show()
 		}
-		if sixelBuf.Len() > 0 {
+		if sixelBuf != nil && sixelBuf.Len() > 0 {
 			os.Stdout.Write(sixelBuf.Bytes())
 		}
 		select {
@@ -172,20 +179,30 @@ func newKeyEvent(e *tcell.EventKey) keybindings.KeyEvent {
 	}
 
 	var r rune
-	if e.Key() == tcell.KeyRune {
+	switch {
+	case e.Key() == tcell.KeyBackspace:
+		return keybindings.KeyEvent{Key: '\u0008'}
+	case e.Key() == tcell.KeyTab:
+		return keybindings.KeyEvent{Key: '\t'}
+	case e.Key() == tcell.KeyEsc:
+		return keybindings.KeyEvent{Key: '\u00b1'}
+	case e.Key() == tcell.KeyEnter:
+		return keybindings.KeyEvent{Key: '\n'}
+	case e.Key() == tcell.KeyRune:
 		if unicode.IsUpper(e.Rune()) {
 			mod = keybindings.ModShift
 		}
 		r = unicode.ToLower(e.Rune())
-	} else {
+		return keybindings.KeyEvent{Key: r, Modifiers: mod}
+	default:
 		s, ok := tcell.KeyNames[e.Key()]
 		if ok && strings.HasPrefix(s, "Ctrl-") {
 			s = s[5:]
 			r, _ = utf8.DecodeLastRuneInString(s)
 			r = unicode.ToLower(r)
 		}
+		return keybindings.KeyEvent{Key: r, Modifiers: mod}
 	}
-	return keybindings.KeyEvent{Key: r, Modifiers: mod}
 }
 
 func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
@@ -198,31 +215,22 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		}
 		return nil
 	})
-	photon.KeyBindings.Add(states.Normal, string(rune(tcell.KeyEnter)), func() error {
+	photon.KeyBindings.Add(states.Normal, "<enter>", func() error {
 		photon.SelectedCard.OpenArticle()
+		for i := 0; i < len(photon.VisibleCards); i++ {
+			getCard(photon.VisibleCards[i]).previousImagePos = image.Point{-2, -2}
+		}
 		return nil
 	})
-	photon.KeyBindings.Add(states.Normal, "⏎", func() error {
-		photon.SelectedCard.OpenArticle()
-		return nil
-	})
-	photon.KeyBindings.Add(states.Normal, "<ctrl>p", func() error {
+	photon.KeyBindings.Add(states.Normal, "p", func() error {
 		photon.SelectedCard.RunMedia()
 		return nil
 	})
-	photon.KeyBindings.Add(states.Normal, "<ctrl>⏎", func() error {
-		photon.SelectedCard.RunMedia()
-		return nil
-	})
-	photon.KeyBindings.Add(states.Normal, "<alt>"+string(rune(tcell.KeyEnter)), func() error {
+	photon.KeyBindings.Add(states.Normal, "o", func() error {
 		photon.SelectedCard.OpenBrowser()
 		return nil
 	})
-	photon.KeyBindings.Add(states.Normal, "<alt>⏎", func() error {
-		photon.SelectedCard.OpenBrowser()
-		return nil
-	})
-	photon.KeyBindings.Add(states.Normal, string(rune(tcell.KeyEscape)), func() error {
+	photon.KeyBindings.Add(states.Normal, "<esc>", func() error {
 		/*TODO
 		if searchEditor == nil {
 			return nil
@@ -388,49 +396,49 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		photon.KeyBindings.Add(states.Search, string(rune(tcell.KeyEscape)), func() error {
 			searchEditor = nil
 			photon.VisibleCards = photon.Cards
-			redraw()
+			redraw()false
 			return nil
 		})
+	*/
 
-		//ArticleState
-		photon.KeyBindings.Add(states.Article, string(rune(tcell.KeyEscape)), func() error {
-			openedArticle = nil
-			photon.OpenedArticle = nil
-			redraw()
+	//ArticleState
+	photon.KeyBindings.Add(states.Article, "<esc>", func() error {
+		openedArticle = nil
+		photon.OpenedArticle = nil
+		redraw(true)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Article, "q", func() error {
+		openedArticle = nil
+		photon.OpenedArticle = nil
+		redraw(true)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Article, "j", func() error {
+		if openedArticle == nil {
 			return nil
-		})
-		photon.KeyBindings.Add(states.Article, "q", func() error {
-			openedArticle = nil
-			photon.OpenedArticle = nil
-			redraw()
+		}
+		openedArticle.scroll(-1)
+		redraw(false)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Article, "k", func() error {
+		if openedArticle == nil {
 			return nil
-		})
-		photon.KeyBindings.Add(states.Article, "j", func() error {
-			if openedArticle == nil {
-				return nil
-			}
-			openedArticle.list.Position.Offset += 50
-			openedArticle.list.Position.OffsetLast -= 50
-			redraw()
+		}
+		openedArticle.scroll(1)
+		redraw(false)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Article, "gg", func() error {
+		if openedArticle == nil {
 			return nil
-		})
-		photon.KeyBindings.Add(states.Article, "k", func() error {
-			if openedArticle == nil {
-				return nil
-			}
-			openedArticle.list.Position.Offset -= 50
-			openedArticle.list.Position.OffsetLast += 50
-			redraw()
-			return nil
-		})
-		photon.KeyBindings.Add(states.Article, "gg", func() error {
-			if openedArticle == nil {
-				return nil
-			}
-			openedArticle.list.Position.Offset = 0
-			redraw()
-			return nil
-		})
+		}
+		openedArticle.offset = 0
+		redraw(false)
+		return nil
+	})
+	/*
 		photon.KeyBindings.Add(states.Article, "<shift>g", func() error {
 			if openedArticle == nil {
 				return nil
