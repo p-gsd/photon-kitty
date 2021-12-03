@@ -50,6 +50,14 @@ func (ctx Context) Value(key interface{}) interface{} {
 	return nil
 }
 
+func (ctx Context) YCellPixels() int {
+	return int(ctx.YPixel) / int(ctx.Rows)
+}
+
+func (ctx Context) XCellPixels() int {
+	return int(ctx.XPixel) / int(ctx.Cols)
+}
+
 const tiocgwinsz = 0x5413
 
 func ioctl(fd, op, arg uintptr) error {

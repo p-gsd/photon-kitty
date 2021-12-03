@@ -17,10 +17,8 @@ func (cb Callbacks) State() states.Enum {
 	switch {
 	case openedArticle != nil:
 		return states.Article
-		/*
-			case searchEditor != nil && searchEditorFocus:
-				return states.Search
-		*/
+	case command != "" && commandFocus:
+		return states.Search
 	default:
 		return states.Normal
 	}

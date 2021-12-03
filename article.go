@@ -125,10 +125,12 @@ func (a *Article) parseArticle(ctx Context) {
 			}
 			i++
 		}
-		rt = append(rt, textobject{
-			text:  string(txt),
-			style: to.style,
-		})
+		if len(txt) != 0 {
+			rt = append(rt, textobject{
+				text:  string(txt),
+				style: to.style,
+			})
+		}
 		txt = nil
 	}
 	a.buffer = rt

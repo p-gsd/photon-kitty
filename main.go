@@ -35,8 +35,11 @@ var CLI struct {
 }
 
 var (
-	photon *libphoton.Photon
-	cb     Callbacks
+	photon        *libphoton.Photon
+	cb            Callbacks
+	command       string
+	commandCursor int
+	commandFocus  bool
 )
 
 func main() {
@@ -110,9 +113,13 @@ func main() {
 			ev := s.PollEvent()
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
+				if commandInput(s, ev) {
+					continue
+				}
 				ke := newKeyEvent(ev)
 				photon.KeyBindings.Run(ke)
 			case *tcell.EventResize:
+				s.Clear()
 				grid.ClearImages()
 				imageProcClear()
 				ctx, quit = WithCancel(Background())
@@ -121,12 +128,14 @@ func main() {
 		}
 	}()
 
+	ctx.Width -= 1
 	var fullRedraw bool
 	var sixelBuf *bytes.Buffer
 	for {
 		switch cb.State() {
-		case states.Normal:
+		case states.Normal, states.Search:
 			sixelBuf = grid.Draw(ctx, s)
+			drawCommand(ctx, s)
 		case states.Article:
 			sixelBuf = openedArticle.Draw(ctx, s)
 		}
@@ -231,14 +240,13 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<esc>", func() error {
-		/*TODO
-		if searchEditor == nil {
+		if command == "" {
 			return nil
 		}
-		searchEditor = nil
+		command = ""
+		commandFocus = false
 		photon.VisibleCards = photon.Cards
-		redraw()
-		*/
+		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "=", func() error {
@@ -259,18 +267,15 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "/", func() error {
-		/*TODO
-		if searchEditor != nil && !searchEditor.Focused() {
-			searchEditorFocus = true
-			redraw()
+		if command != "" && !commandFocus {
+			commandFocus = true
+			redraw(false)
 			return nil
 		}
-		searchEditor = &widget.Editor{SingleLine: true, Submit: true}
-		searchEditor.SetText("/")
-		searchEditor.SetCaret(1, 1)
-		searchEditorFocus = true
-		redraw()
-		*/
+		command = "/"
+		commandCursor = 1
+		commandFocus = true
+		redraw(false)
 		return nil
 	})
 	//copy item link
@@ -381,25 +386,19 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 
-	/*
-		//SearchState
-		photon.KeyBindings.Add(states.Search, "⏎", func() error {
-			searchEditorFocus = false
-			redraw()
-			return nil
-		})
-		photon.KeyBindings.Add(states.Search, string(rune(tcell.KeyEnter)), func() error {
-			searchEditorFocus = false
-			redraw()
-			return nil
-		})
-		photon.KeyBindings.Add(states.Search, string(rune(tcell.KeyEscape)), func() error {
-			searchEditor = nil
-			photon.VisibleCards = photon.Cards
-			redraw()false
-			return nil
-		})
-	*/
+	//SearchState
+	photon.KeyBindings.Add(states.Search, "<enter>", func() error {
+		commandFocus = false
+		redraw(false)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Search, "<esc>", func() error {
+		command = ""
+		commandFocus = false
+		photon.VisibleCards = photon.Cards
+		redraw(false)
+		return nil
+	})
 
 	//ArticleState
 	photon.KeyBindings.Add(states.Article, "<esc>", func() error {

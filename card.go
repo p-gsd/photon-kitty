@@ -107,7 +107,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		return
 	}
 	imgHeight := c.scaledImageBounds.Dy()
-	if int(ctx.YPixel)/int(ctx.Rows)*(ctx.Y+1)+imgHeight > int(ctx.YPixel) {
+	if ctx.YCellPixels()*(ctx.Y+1)+imgHeight > int(ctx.YPixel) {
 		if !c.previousImagePos.Eq(image.Point{-2, -2}) {
 			c.previousImagePos = image.Point{-2, -2}
 			c.swapImageRegion(ctx, s)
@@ -121,7 +121,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		}
 		return
 	}
-	imageWidthInCells := c.scaledImageBounds.Dx() / int(ctx.XPixel/ctx.Cols)
+	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels()
 	offset := (ctx.Width - imageWidthInCells) / 2
 	newImagePos := image.Point{ctx.X + 1 + offset, ctx.Y + 1}
 	if c.previousImagePos.Eq(newImagePos) && c.selected == c.previousSelected {
@@ -172,8 +172,8 @@ func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 	if c.sixelData != nil || c.ItemImage == nil {
 		return
 	}
-	targetWidth := ctx.Width * int(ctx.XPixel) / int(ctx.Cols)
-	targetHeight := (ctx.Height - headerHeight) * int(ctx.YPixel) / int(ctx.Rows)
+	targetWidth := ctx.Width * ctx.XCellPixels()
+	targetHeight := (ctx.Height - headerHeight) * ctx.YCellPixels()
 	imageProc(
 		c,
 		c.ItemImage,

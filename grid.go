@@ -19,9 +19,8 @@ type Grid struct {
 
 func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 	buf = bytes.NewBuffer(nil)
-	w, h := s.Size()
-	margin := (w % g.Columns) / 2
-	childWidth := w / g.Columns
+	margin := (int(ctx.Width) % g.Columns) / 2
+	childWidth := int(ctx.Width) / g.Columns
 	childHeight := int(float32(childWidth) / 2.2)
 	if photon.SelectedCard == nil && photon.VisibleCards != nil {
 		photon.SelectedCardPos = image.Point{
@@ -40,12 +39,12 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 			Width:   childWidth,
 			Height:  childHeight,
 		}
-		if chctx.Y >= h {
+		if chctx.Y >= int(ctx.Height) {
 			break
 		}
 		g.LastChildIndex = i
 		g.RowsCount = i / g.Columns
-		g.LastChildOffset = chctx.Y + childHeight - h
+		g.LastChildOffset = chctx.Y + childHeight - int(ctx.Height)
 		getCard(child).Draw(chctx, s, buf)
 	}
 	//set all not visible cards previous position outside
