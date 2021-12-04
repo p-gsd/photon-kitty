@@ -377,7 +377,6 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<shift>g", func() error {
-		log.Println("<shift>g", grid.RowsCount)
 		grid.FirstChildIndex = len(photon.VisibleCards) - grid.RowsCount
 		photon.SelectedCardPos.Y = len(photon.VisibleCards)/grid.Columns - 1
 		redraw(true)

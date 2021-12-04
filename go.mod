@@ -9,7 +9,7 @@ require (
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/levigross/exp-html v0.0.0-20120902181939-8df60c69a8f5
 	github.com/mattn/go-runewidth v0.0.13
-	github.com/mattn/go-sixel v0.0.1
+	github.com/mattn/go-sixel v0.0.2-0.20210304070930-abc463a8f9c4
 	github.com/sbani/go-humanizer v0.3.2
 	golang.design/x/clipboard v0.5.3
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
