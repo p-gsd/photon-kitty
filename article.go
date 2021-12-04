@@ -34,7 +34,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 	contentY := 5
 
 	//header
-	drawLines(
+	drawLinesWordwrap(
 		s,
 		x,
 		1,
@@ -71,12 +71,11 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		var offset int
 		var texts []string
 		for _, to := range line {
-			drawLines(
+			drawLine(
 				s,
 				x+offset,
 				contentY,
 				int(ctx.Cols),
-				1,
 				to.Text,
 				to.Style,
 			)

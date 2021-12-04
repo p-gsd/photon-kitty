@@ -9,12 +9,11 @@ func drawCommand(ctx Context, s tcell.Screen) {
 	for i := 0; i < int(ctx.Cols); i++ {
 		s.SetContent(i, int(ctx.Rows)-1, ' ', nil, tcell.StyleDefault)
 	}
-	drawLines(
+	drawLine(
 		s,
 		0,
 		int(ctx.Rows-1),
 		int(ctx.Cols),
-		1,
 		command,
 		tcell.StyleDefault,
 	)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"strings"
 	"time"
 
 	"git.sr.ht/~ghost08/libphoton"
@@ -40,32 +41,88 @@ type Card struct {
 	previousSelected bool
 }
 
-func drawLines(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style tcell.Style) {
-	var x, y int
+func drawLine(s tcell.Screen, X, Y, maxWidth int, text string, style tcell.Style) (width int) {
+	var x int
 	for _, c := range text {
 		if c == '\n' {
-			y++
-			x = 0
-			continue
+			return
 		}
 		if x > maxWidth {
-			y++
-			x = 0
-		}
-		if y >= maxLines {
-			break
+			return
 		}
 		var comb []rune
 		w := runewidth.RuneWidth(c)
+		width += w
 		if w == 0 {
 			comb = []rune{c}
 			c = ' '
 			w = 1
 		}
 
-		s.SetContent(x+X, y+Y, c, comb, style)
+		s.SetContent(x+X, Y, c, comb, style)
 		x += w
 	}
+	return
+}
+
+func drawLinesWordwrap(s tcell.Screen, X, Y, maxWidth, maxLines int, text string, style tcell.Style) {
+	var x, y int
+	var word strings.Builder
+	var wordLength int
+	for _, c := range text {
+		if c != ' ' && c != '\n' {
+			word.WriteRune(c)
+			wordLength += runewidth.RuneWidth(c)
+			continue
+		}
+		for wordLength > maxWidth && y < maxLines {
+			w := drawLine(s, x+X, y+Y, maxWidth-x, word.String(), style)
+			wordRest := word.String()[w:]
+			word.Reset()
+			word.WriteString(wordRest)
+			wordLength -= w
+			y++
+			x = 0
+		}
+		if y >= maxLines {
+			break
+		}
+		if c == '\n' || x+wordLength == maxWidth {
+			drawString(s, x+X, y+Y, word.String(), style)
+			word.Reset()
+			wordLength = 0
+			y++
+			x = 0
+			continue
+		}
+		if x+wordLength > maxWidth {
+			y++
+			x = 0
+		}
+		if y >= maxLines {
+			break
+		}
+		x += drawString(s, x+X, y+Y, word.String()+" ", style)
+		word.Reset()
+		wordLength = 0
+	}
+}
+
+func drawString(s tcell.Screen, x, y int, text string, style tcell.Style) (width int) {
+	for _, c := range text {
+		var comb []rune
+		w := runewidth.RuneWidth(c)
+		width += w
+		if w == 0 {
+			comb = []rune{c}
+			c = ' '
+			w = 1
+		}
+
+		s.SetContent(x, y, c, comb, style)
+		x += w
+	}
+	return
 }
 
 func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
@@ -79,10 +136,10 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 				s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
 			}
 		}
-		drawLines(s, ctx.X+1, ctx.Y, ctx.Width-3, 2, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
-		drawLines(s, ctx.X+1, ctx.Y+2, ctx.Width-3, 1, c.Feed.Title, tcell.StyleDefault.Background(background).Italic(true))
-		drawLines(s, ctx.X+1, ctx.Y+3, ctx.Width-3, 1, htime.Difference(time.Now(), *c.Item.PublishedParsed), tcell.StyleDefault.Background(background).Italic(true))
-		drawLines(s, ctx.X+1, ctx.Y+headerHeight+1, ctx.Width-3, ctx.Height-headerHeight-2, c.Item.Description, tcell.StyleDefault.Background(background))
+		drawLinesWordwrap(s, ctx.X+1, ctx.Y, ctx.Width-3, 2, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
+		drawLine(s, ctx.X+1, ctx.Y+2, ctx.Width-3, c.Feed.Title, tcell.StyleDefault.Background(background).Italic(true))
+		drawLine(s, ctx.X+1, ctx.Y+3, ctx.Width-3, htime.Difference(time.Now(), *c.Item.PublishedParsed), tcell.StyleDefault.Background(background).Italic(true))
+		drawLinesWordwrap(s, ctx.X+1, ctx.Y+headerHeight+1, ctx.Width-3, ctx.Height-headerHeight-2, c.Item.Description, tcell.StyleDefault.Background(background))
 		return
 	}
 
@@ -92,9 +149,9 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 			s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
 		}
 	}
-	drawLines(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y, ctx.Width-3, 2, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
-	drawLines(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+2, ctx.Width-3, 1, c.Feed.Title, tcell.StyleDefault.Background(background).Italic(true))
-	drawLines(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+3, ctx.Width-3, 1, htime.Difference(time.Now(), *c.Item.PublishedParsed), tcell.StyleDefault.Background(background).Italic(true))
+	drawLinesWordwrap(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y, ctx.Width-3, 2, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
+	drawLine(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+2, ctx.Width-3, c.Feed.Title, tcell.StyleDefault.Background(background).Italic(true))
+	drawLine(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+3, ctx.Width-3, htime.Difference(time.Now(), *c.Item.PublishedParsed), tcell.StyleDefault.Background(background).Italic(true))
 
 	if c.DownloadImage(ctx, s) {
 		c.previousImagePos = image.Point{-2, -2}
