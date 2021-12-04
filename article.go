@@ -18,8 +18,8 @@ var openedArticle *Article
 
 type Article struct {
 	*libphoton.Article
-	offset            int
-	lastLineDrawn     int
+	firstLine         int
+	lastLine          int
 	contentLines      []richtext
 	topImageSixel     []byte
 	scaledImageBounds image.Rectangle
@@ -67,7 +67,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 	}
 
 	//content
-	for i := -a.offset; i < len(a.contentLines); i++ {
+	for i := a.firstLine; i < len(a.contentLines); i++ {
 		line := a.contentLines[i]
 		var offset int
 		for _, to := range line {
@@ -82,7 +82,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 			)
 			offset += len(to.Text)
 		}
-		a.lastLineDrawn = i
+		a.lastLine = i
 		contentY++
 		if contentY > int(ctx.Rows) {
 			break
@@ -92,15 +92,16 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 }
 
 func (a *Article) scroll(d int) {
-	if a.lastLineDrawn == len(a.contentLines)-1 && d < 0 {
+	log.Println(a.firstLine, a.lastLine, d)
+	if a.lastLine == len(a.contentLines)-1 && d > 0 {
 		return
 	}
-	a.offset += d
-	if a.offset > 0 {
-		a.offset = 0
+	a.firstLine += d
+	if a.firstLine < 0 {
+		a.firstLine = 0
 	}
-	if a.offset >= len(a.contentLines) {
-		a.offset = len(a.contentLines) - 1
+	if a.firstLine >= len(a.contentLines) {
+		a.firstLine = len(a.contentLines) - 1
 	}
 }
 
@@ -309,7 +310,6 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 					Style: tcell.StyleDefault,
 					Text:  strings.TrimSpace(node.Data),
 				})
-				log.Println(strings.TrimSpace(node.Data))
 				continue
 			}
 		}

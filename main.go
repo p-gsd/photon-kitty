@@ -417,7 +417,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.scroll(-1)
+		openedArticle.scroll(1)
 		redraw(false)
 		return nil
 	})
@@ -425,7 +425,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.scroll(1)
+		openedArticle.scroll(-1)
 		redraw(false)
 		return nil
 	})
@@ -433,7 +433,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.offset = 0
+		openedArticle.firstLine = 0
 		redraw(false)
 		return nil
 	})
@@ -441,8 +441,24 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.offset = openedArticle.lastLineDrawn - len(openedArticle.contentLines)
+		openedArticle.firstLine = openedArticle.lastLine - len(openedArticle.contentLines)
 		redraw(false)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Article, "<ctrl>d", func() error {
+		if openedArticle == nil {
+			return nil
+		}
+		openedArticle.scroll((openedArticle.lastLine - openedArticle.firstLine) / 2)
+		redraw(true)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Article, "<ctrl>u", func() error {
+		if openedArticle == nil {
+			return nil
+		}
+		openedArticle.scroll(-(openedArticle.lastLine - openedArticle.firstLine) / 2)
+		redraw(true)
 		return nil
 	})
 }
