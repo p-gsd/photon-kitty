@@ -71,15 +71,13 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		var offset int
 		var texts []string
 		for _, to := range line {
-			drawLine(
+			offset += drawString(
 				s,
 				x+offset,
 				contentY,
-				int(ctx.Cols),
 				to.Text,
 				to.Style,
 			)
-			offset += len(to.Text)
 			texts = append(texts, to.Text)
 		}
 		a.lastLine = i
@@ -121,19 +119,17 @@ func (a *Article) parseArticle(ctx Context) {
 	var txt, word strings.Builder
 	for _, to := range buf {
 		for _, c := range to.Text {
-			if c != '\n' && c != ' ' {
+			if c != '\n' && c != ' ' && wordLength < articleWidth {
 				word.WriteRune(c)
 				wordLength += runewidth.RuneWidth(c)
 				continue
 			}
-			if c == '\n' || lineLength+wordLength == articleWidth {
-				txt.WriteString(word.String())
-				txt.WriteRune(' ')
-				log.Println(word.String(), "$1$", txt.String())
-				line = append(line, textobject{
-					Text:  txt.String(),
-					Style: to.Style,
-				})
+			if lineLength+wordLength == articleWidth {
+				log.Println(lineLength, word.String(), "$1$", txt.String())
+				if wordLength > 0 {
+					txt.WriteString(word.String())
+				}
+				line = append(line, textobject{Text: txt.String(), Style: to.Style})
 				lines = append(lines, line)
 				line = nil
 				lineLength = 0
@@ -142,26 +138,29 @@ func (a *Article) parseArticle(ctx Context) {
 				wordLength = 0
 				continue
 			}
-			if lineLength+wordLength > articleWidth {
-				line = append(line, textobject{
-					Text:  txt.String(),
-					Style: to.Style,
-				})
+			if c == '\n' || lineLength+wordLength > articleWidth {
+				log.Println(lineLength, word.String(), "$2$", txt.String())
+				line = append(line, textobject{Text: txt.String(), Style: to.Style})
 				lines = append(lines, line)
 				line = nil
 				txt.Reset()
-				txt.WriteString(word.String())
-				txt.WriteRune(' ')
-				log.Println(word.String(), "$2$", txt.String())
-				word.Reset()
-				lineLength = wordLength + 1
-				wordLength = 0
+				if wordLength > 0 {
+					txt.WriteString(word.String())
+					if wordLength < articleWidth {
+						txt.WriteRune(' ')
+					}
+					lineLength = wordLength + 1
+					word.Reset()
+					wordLength = 0
+					continue
+				}
+				lineLength = 0
 				continue
 			}
 			if wordLength > 0 {
+				log.Println(lineLength, word.String(), "$3$", txt.String())
 				txt.WriteString(word.String())
 				txt.WriteRune(' ')
-				log.Println(word.String(), "$3$", txt.String())
 				lineLength += wordLength + 1
 				word.Reset()
 				wordLength = 0
@@ -171,10 +170,7 @@ func (a *Article) parseArticle(ctx Context) {
 			continue
 		}
 		if lineLength+wordLength > articleWidth {
-			line = append(line, textobject{
-				Text:  txt.String(),
-				Style: to.Style,
-			})
+			line = append(line, textobject{Text: txt.String(), Style: to.Style})
 			lines = append(lines, line)
 			line = richtext{textobject{
 				Text:  word.String() + " ",
@@ -187,10 +183,7 @@ func (a *Article) parseArticle(ctx Context) {
 		} else {
 			txt.WriteString(word.String())
 			txt.WriteRune(' ')
-			line = append(line, textobject{
-				Text:  txt.String(),
-				Style: to.Style,
-			})
+			line = append(line, textobject{Text: txt.String(), Style: to.Style})
 			txt.Reset()
 			word.Reset()
 			lineLength += wordLength + 1
