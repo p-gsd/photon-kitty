@@ -461,4 +461,20 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		redraw(true)
 		return nil
 	})
+	photon.KeyBindings.Add(states.Article, "<ctrl>f", func() error {
+		if openedArticle == nil {
+			return nil
+		}
+		openedArticle.scroll(openedArticle.lastLine - openedArticle.firstLine)
+		redraw(true)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Article, "<ctrl>b", func() error {
+		if openedArticle == nil {
+			return nil
+		}
+		openedArticle.scroll(-(openedArticle.lastLine - openedArticle.firstLine))
+		redraw(true)
+		return nil
+	})
 }

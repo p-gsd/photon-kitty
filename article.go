@@ -102,6 +102,10 @@ func (a *Article) scroll(d int) {
 	if a.firstLine >= len(a.contentLines) {
 		a.firstLine = len(a.contentLines) - 1
 	}
+	if a.lastLine+d >= len(a.contentLines) {
+		a.firstLine -= a.lastLine + d - len(a.contentLines)
+		a.lastLine = len(a.contentLines)
+	}
 }
 
 func (a *Article) parseArticle(ctx Context) {
