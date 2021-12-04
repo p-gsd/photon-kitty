@@ -105,7 +105,7 @@ func main() {
 		redraw(true)
 	}()
 
-	defaultKeyBindings(grid, &quit)
+	defaultKeyBindings(s, grid, &quit)
 
 	go func() {
 		for {
@@ -213,7 +213,7 @@ func newKeyEvent(e *tcell.EventKey) keybindings.KeyEvent {
 	}
 }
 
-func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
+func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	//NormalState
 	photon.KeyBindings.Add(states.Normal, "q", func() error {
 		if quit != nil {
@@ -402,12 +402,14 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 	photon.KeyBindings.Add(states.Article, "<esc>", func() error {
 		openedArticle = nil
 		photon.OpenedArticle = nil
+		s.Clear()
 		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Article, "q", func() error {
 		openedArticle = nil
 		photon.OpenedArticle = nil
+		s.Clear()
 		redraw(true)
 		return nil
 	})
@@ -439,7 +441,7 @@ func defaultKeyBindings(grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.offset = openedArticle.lastLineDrawn - len(openedArticle.buffer)
+		openedArticle.offset = openedArticle.lastLineDrawn - len(openedArticle.contentLines)
 		redraw(false)
 		return nil
 	})

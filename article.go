@@ -10,6 +10,7 @@ import (
 
 	"git.sr.ht/~ghost08/libphoton"
 	"github.com/gdamore/tcell/v2"
+	"github.com/mattn/go-runewidth"
 	"golang.org/x/net/html"
 )
 
@@ -19,14 +20,14 @@ type Article struct {
 	*libphoton.Article
 	offset            int
 	lastLineDrawn     int
-	buffer            []textobject
+	contentLines      []richtext
 	topImageSixel     []byte
 	scaledImageBounds image.Rectangle
 }
 
 func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 	s.Clear()
-	if a.buffer == nil {
+	if a.contentLines == nil {
 		a.parseArticle(ctx)
 	}
 	articleWidth := min(72, ctx.Width)
@@ -66,17 +67,21 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 	}
 
 	//content
-	for i := -a.offset; i < len(a.buffer); i++ {
-		to := a.buffer[i]
-		drawLines(
-			s,
-			x,
-			contentY,
-			articleWidth,
-			ctx.Height,
-			to.text,
-			to.style,
-		)
+	for i := -a.offset; i < len(a.contentLines); i++ {
+		line := a.contentLines[i]
+		var offset int
+		for _, to := range line {
+			drawLines(
+				s,
+				x+offset,
+				contentY,
+				int(ctx.Cols),
+				1,
+				to.Text,
+				to.Style,
+			)
+			offset += len(to.Text)
+		}
 		a.lastLineDrawn = i
 		contentY++
 		if contentY > int(ctx.Rows) {
@@ -87,15 +92,15 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 }
 
 func (a *Article) scroll(d int) {
-	if a.lastLineDrawn == len(a.buffer)-1 && d < 0 {
+	if a.lastLineDrawn == len(a.contentLines)-1 && d < 0 {
 		return
 	}
 	a.offset += d
 	if a.offset > 0 {
 		a.offset = 0
 	}
-	if a.offset >= len(a.buffer) {
-		a.offset = len(a.buffer) - 1
+	if a.offset >= len(a.contentLines) {
+		a.offset = len(a.contentLines) - 1
 	}
 }
 
@@ -105,42 +110,91 @@ func (a *Article) parseArticle(ctx Context) {
 		log.Println(err)
 		return
 	}
-	var rt richtext
 	articleWidth := min(72, ctx.Width)
-	var i int
-	var txt []rune
+	var lines []richtext
+	var line richtext
+	var lineLength, wordLength int
+	var txt, word strings.Builder
 	for _, to := range buf {
-		for _, c := range to.text {
-			if c != '\n' {
-				txt = append(txt, c)
-			}
-			if i == articleWidth || c == '\n' {
-				rt = append(rt, textobject{
-					text:  string(txt),
-					style: to.style,
-				})
-				i = 0
-				txt = nil
+		for _, c := range to.Text {
+			if c != '\n' && c != ' ' {
+				word.WriteRune(c)
+				wordLength += runewidth.RuneWidth(c)
 				continue
 			}
-			i++
+			if c == '\n' || lineLength+wordLength == articleWidth {
+				txt.WriteString(word.String())
+				txt.WriteRune(' ')
+				line = append(line, textobject{
+					Text:  txt.String(),
+					Style: to.Style,
+				})
+				txt.Reset()
+				word.Reset()
+				wordLength = 0
+				lines = append(lines, line)
+				line = nil
+				lineLength = 0
+				continue
+			}
+			if lineLength+wordLength > articleWidth {
+				line = append(line, textobject{
+					Text:  txt.String(),
+					Style: to.Style,
+				})
+				lines = append(lines, line)
+				line = richtext{textobject{
+					Text:  word.String() + " ",
+					Style: to.Style,
+				}}
+				txt.Reset()
+				word.Reset()
+				lineLength = wordLength + 1
+				wordLength = 0
+				continue
+			}
+			if wordLength > 0 {
+				txt.WriteString(word.String())
+				txt.WriteRune(' ')
+				lineLength += wordLength + 1
+				word.Reset()
+				wordLength = 0
+			}
 		}
-		if len(txt) != 0 {
-			rt = append(rt, textobject{
-				text:  string(txt),
-				style: to.style,
+		if wordLength == 0 {
+			continue
+		}
+		if lineLength+wordLength > articleWidth {
+			line = append(line, textobject{
+				Text:  txt.String(),
+				Style: to.Style,
 			})
+			lines = append(lines, line)
+			line = richtext{textobject{
+				Text:  word.String() + " ",
+				Style: to.Style,
+			}}
+			txt.Reset()
+			word.Reset()
+			lineLength = wordLength + 1
+			wordLength = 0
+		} else {
+			txt.WriteString(word.String())
+			txt.WriteRune(' ')
+			lineLength += wordLength + 1
+			word.Reset()
+			wordLength = 0
 		}
-		txt = nil
 	}
-	a.buffer = rt
+	a.contentLines = lines
 }
 
 type richtext []textobject
 
 type textobject struct {
-	text  string
-	style tcell.Style
+	Text  string
+	Style tcell.Style
+	link  string
 }
 
 func parseArticleContent(node *html.Node) (rt richtext, err error) {
@@ -158,7 +212,7 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 				return nil, fmt.Errorf("parsing node <%s>: %w", node.Data, err)
 			}
 			rt = append(rt, subrt...)
-			rt = append(rt, textobject{text: "\n\n", style: tcell.StyleDefault})
+			rt = append(rt, textobject{Text: "\n\n", Style: tcell.StyleDefault})
 		case "span":
 			color := tcell.ColorWhite
 			for _, attr := range node.Attr {
@@ -173,7 +227,7 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 			subrt = maprt(
 				subrt,
 				func(to textobject) textobject {
-					to.style = tcell.StyleDefault.Foreground(color)
+					to.Style = tcell.StyleDefault.Foreground(color)
 					return to
 				},
 			)
@@ -193,8 +247,8 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 			subrt = maprt(
 				subrt,
 				func(to textobject) textobject {
-					to.style = to.style.Foreground(tcell.ColorOrangeRed).Bold(true)
-					to.text = href
+					to.Style = to.Style.Foreground(tcell.ColorOrangeRed).Bold(true)
+					to.link = href
 					return to
 				},
 			)
@@ -207,7 +261,7 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 			subrt = maprt(
 				subrt,
 				func(to textobject) textobject {
-					to.style = to.style.Italic(true)
+					to.Style = to.Style.Italic(true)
 					return to
 				},
 			)
@@ -220,7 +274,7 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 			subrt = maprt(
 				subrt,
 				func(to textobject) textobject {
-					to.style = to.style.Bold(true)
+					to.Style = to.Style.Bold(true)
 					return to
 				},
 			)
@@ -233,14 +287,14 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 			subrt = maprt(
 				subrt,
 				func(to textobject) textobject {
-					to.style = to.style.Bold(true)
+					to.Style = to.Style.Bold(true)
 					return to
 				},
 			)
 			rt = append(rt, subrt...)
 			rt = append(rt, textobject{
-				style: tcell.StyleDefault.Bold(true),
-				text:  "\n\n",
+				Style: tcell.StyleDefault.Bold(true),
+				Text:  "\n\n",
 			})
 		case "div":
 			divrt, err := parseArticleContent(node)
@@ -252,8 +306,8 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 		default:
 			if node != nil && node.Type == html.TextNode {
 				rt = append(rt, textobject{
-					style: tcell.StyleDefault,
-					text:  strings.TrimSpace(node.Data),
+					Style: tcell.StyleDefault,
+					Text:  strings.TrimSpace(node.Data),
 				})
 				log.Println(strings.TrimSpace(node.Data))
 				continue
@@ -263,9 +317,9 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 	//add spaces between TextObjects
 	if len(rt) > 1 {
 		prev := rt[len(rt)-2]
-		contentRunes := []rune(prev.text)
+		contentRunes := []rune(prev.Text)
 		if len(contentRunes) > 0 && !unicode.IsSpace(contentRunes[len(contentRunes)-1]) {
-			prev.text += " "
+			prev.Text += " "
 		}
 	}
 	return rt, nil
