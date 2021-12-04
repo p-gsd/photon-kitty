@@ -79,10 +79,10 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 				s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
 			}
 		}
-		drawLines(s, ctx.X+1, ctx.Y, ctx.Width-3, headerHeight, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
+		drawLines(s, ctx.X+1, ctx.Y, ctx.Width-3, 2, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
 		drawLines(s, ctx.X+1, ctx.Y+2, ctx.Width-3, 1, c.Feed.Title, tcell.StyleDefault.Background(background).Italic(true))
 		drawLines(s, ctx.X+1, ctx.Y+3, ctx.Width-3, 1, htime.Difference(time.Now(), *c.Item.PublishedParsed), tcell.StyleDefault.Background(background).Italic(true))
-		drawLines(s, ctx.X+1, ctx.Y+headerHeight+1, ctx.Width-3, ctx.Height-headerHeight-1, c.Item.Description, tcell.StyleDefault.Background(background))
+		drawLines(s, ctx.X+1, ctx.Y+headerHeight+1, ctx.Width-3, ctx.Height-headerHeight-2, c.Item.Description, tcell.StyleDefault.Background(background))
 		return
 	}
 
@@ -92,7 +92,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 			s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
 		}
 	}
-	drawLines(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y, ctx.Width-3, headerHeight, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
+	drawLines(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y, ctx.Width-3, 2, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
 	drawLines(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+2, ctx.Width-3, 1, c.Feed.Title, tcell.StyleDefault.Background(background).Italic(true))
 	drawLines(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+3, ctx.Width-3, 1, htime.Difference(time.Now(), *c.Item.PublishedParsed), tcell.StyleDefault.Background(background).Italic(true))
 

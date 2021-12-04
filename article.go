@@ -6,7 +6,6 @@ import (
 	"image"
 	"log"
 	"strings"
-	"unicode"
 
 	"git.sr.ht/~ghost08/libphoton"
 	"github.com/gdamore/tcell/v2"
@@ -70,6 +69,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 	for i := a.firstLine; i < len(a.contentLines); i++ {
 		line := a.contentLines[i]
 		var offset int
+		var texts []string
 		for _, to := range line {
 			drawLines(
 				s,
@@ -81,9 +81,11 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 				to.Style,
 			)
 			offset += len(to.Text)
+			texts = append(texts, to.Text)
 		}
 		a.lastLine = i
 		contentY++
+		log.Println("DRAW:", texts)
 		if contentY > int(ctx.Rows) {
 			break
 		}
@@ -111,6 +113,8 @@ func (a *Article) parseArticle(ctx Context) {
 		log.Println(err)
 		return
 	}
+
+	//word wrap with textobjects
 	articleWidth := min(72, ctx.Width)
 	var lines []richtext
 	var line richtext
@@ -126,16 +130,17 @@ func (a *Article) parseArticle(ctx Context) {
 			if c == '\n' || lineLength+wordLength == articleWidth {
 				txt.WriteString(word.String())
 				txt.WriteRune(' ')
+				log.Println(word.String(), "$1$", txt.String())
 				line = append(line, textobject{
 					Text:  txt.String(),
 					Style: to.Style,
 				})
-				txt.Reset()
-				word.Reset()
-				wordLength = 0
 				lines = append(lines, line)
 				line = nil
 				lineLength = 0
+				txt.Reset()
+				word.Reset()
+				wordLength = 0
 				continue
 			}
 			if lineLength+wordLength > articleWidth {
@@ -144,11 +149,11 @@ func (a *Article) parseArticle(ctx Context) {
 					Style: to.Style,
 				})
 				lines = append(lines, line)
-				line = richtext{textobject{
-					Text:  word.String() + " ",
-					Style: to.Style,
-				}}
+				line = nil
 				txt.Reset()
+				txt.WriteString(word.String())
+				txt.WriteRune(' ')
+				log.Println(word.String(), "$2$", txt.String())
 				word.Reset()
 				lineLength = wordLength + 1
 				wordLength = 0
@@ -157,6 +162,7 @@ func (a *Article) parseArticle(ctx Context) {
 			if wordLength > 0 {
 				txt.WriteString(word.String())
 				txt.WriteRune(' ')
+				log.Println(word.String(), "$3$", txt.String())
 				lineLength += wordLength + 1
 				word.Reset()
 				wordLength = 0
@@ -182,8 +188,13 @@ func (a *Article) parseArticle(ctx Context) {
 		} else {
 			txt.WriteString(word.String())
 			txt.WriteRune(' ')
-			lineLength += wordLength + 1
+			line = append(line, textobject{
+				Text:  txt.String(),
+				Style: to.Style,
+			})
+			txt.Reset()
 			word.Reset()
+			lineLength += wordLength + 1
 			wordLength = 0
 		}
 	}
@@ -312,14 +323,6 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 				})
 				continue
 			}
-		}
-	}
-	//add spaces between TextObjects
-	if len(rt) > 1 {
-		prev := rt[len(rt)-2]
-		contentRunes := []rune(prev.Text)
-		if len(contentRunes) > 0 && !unicode.IsSpace(contentRunes[len(contentRunes)-1]) {
-			prev.Text += " "
 		}
 	}
 	return rt, nil
