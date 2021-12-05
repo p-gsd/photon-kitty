@@ -88,6 +88,10 @@ func drawLinesWordwrap(s tcell.Screen, X, Y, maxWidth, maxLines int, text string
 		if y >= maxLines {
 			break
 		}
+		if x+wordLength > maxWidth {
+			y++
+			x = 0
+		}
 		if c == '\n' || x+wordLength == maxWidth {
 			drawString(s, x+X, y+Y, word.String(), style)
 			word.Reset()
@@ -96,10 +100,6 @@ func drawLinesWordwrap(s tcell.Screen, X, Y, maxWidth, maxLines int, text string
 			x = 0
 			continue
 		}
-		if x+wordLength > maxWidth {
-			y++
-			x = 0
-		}
 		if y >= maxLines {
 			break
 		}
@@ -107,6 +107,17 @@ func drawLinesWordwrap(s tcell.Screen, X, Y, maxWidth, maxLines int, text string
 		word.Reset()
 		wordLength = 0
 	}
+	if wordLength == 0 {
+		return
+	}
+	if x+wordLength > maxWidth {
+		y++
+		x = 0
+	}
+	if y >= maxLines {
+		return
+	}
+	drawString(s, x+X, y+Y, word.String(), style)
 }
 
 func drawString(s tcell.Screen, x, y int, text string, style tcell.Style) (width int) {
