@@ -112,7 +112,7 @@ func (a *Article) parseArticle(ctx Context) {
 		log.Println(err)
 		return
 	}
-	if len(a.contentLines) == 0 {
+	if len(buf) == 0 {
 		buf = richtext{
 			{
 				Text:  a.TextContent,
