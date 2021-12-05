@@ -20,7 +20,7 @@ type Article struct {
 	firstLine         int
 	lastLine          int
 	contentLines      []richtext
-	topImageSixel     []byte
+	topImageSixel     *Sixel
 	scaledImageBounds image.Rectangle
 }
 
@@ -52,15 +52,15 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 				a.TopImage,
 				articleWidth*int(ctx.XPixel/ctx.Cols),
 				articleWidth*int(ctx.XPixel/ctx.Cols),
-				func(b image.Rectangle, sd []byte) {
-					a.scaledImageBounds, a.topImageSixel = b, sd
+				func(b image.Rectangle, s *Sixel) {
+					a.scaledImageBounds, a.topImageSixel = b, s
 					redraw(true)
 				},
 			)
 		} else {
 			buf = bytes.NewBuffer(nil)
 			fmt.Fprintf(buf, "\033[%d;%dH", contentY, x+1) //set cursor to x, y
-			buf.Write(a.topImageSixel)
+			a.topImageSixel.Write(buf)
 			contentY += a.scaledImageBounds.Dy()/int(ctx.YPixel/ctx.Rows) + 1
 		}
 	}

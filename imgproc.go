@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"image"
 	"runtime"
 	"sync"
 
-	"github.com/mattn/go-sixel"
 	"golang.org/x/image/draw"
 )
 
@@ -17,7 +15,7 @@ type imageProcReq struct {
 	src       image.Image
 	maxWidth  int
 	maxHeight int
-	callback  func(image.Rectangle, []byte)
+	callback  func(image.Rectangle, *Sixel)
 }
 
 var (
@@ -63,12 +61,11 @@ func imageProcWorker() {
 		if !imageProcStillThere(req.ident) {
 			continue
 		}
-		var buf bytes.Buffer
-		sixel.NewEncoder(&buf).Encode(dst)
+		sixel := EncodeSixel(dst)
 		if !imageProcStillThere(req.ident) {
 			continue
 		}
-		req.callback(dst.Bounds(), buf.Bytes())
+		req.callback(dst.Bounds(), sixel)
 	}
 }
 
@@ -77,7 +74,7 @@ func imageProc(
 	src image.Image,
 	maxWidth,
 	maxHeight int,
-	callback func(image.Rectangle, []byte),
+	callback func(image.Rectangle, *Sixel),
 ) {
 	imageProcChan <- imageProcReq{
 		ident:     ident,

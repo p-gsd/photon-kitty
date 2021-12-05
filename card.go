@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"image"
 	"io"
+	"log"
 	"strings"
 	"time"
 
@@ -34,7 +35,7 @@ const (
 type Card struct {
 	*libphoton.Card
 	selected          bool
-	sixelData         []byte
+	sixelData         *Sixel
 	scaledImageBounds image.Rectangle
 	//isOnScreen        func(*libphoton.Card)
 	previousImagePos image.Point
@@ -163,21 +164,6 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		c.swapImageRegion(ctx, s)
 		return
 	}
-	imgHeight := c.scaledImageBounds.Dy()
-	if ctx.YCellPixels()*(ctx.Y+1)+imgHeight > int(ctx.YPixel) {
-		if !c.previousImagePos.Eq(image.Point{-2, -2}) {
-			c.previousImagePos = image.Point{-2, -2}
-			c.swapImageRegion(ctx, s)
-		}
-		return
-	}
-	if ctx.Y+1 < 0 {
-		if !c.previousImagePos.Eq(image.Point{-2, -2}) {
-			c.previousImagePos = image.Point{-2, -2}
-			c.swapImageRegion(ctx, s)
-		}
-		return
-	}
 	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels()
 	offset := (ctx.Width - imageWidthInCells) / 2
 	newImagePos := image.Point{ctx.X + 1 + offset, ctx.Y + 1}
@@ -189,8 +175,22 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	}
 	c.previousImagePos = newImagePos
 	c.previousSelected = c.selected
-	fmt.Fprintf(w, "\033[%d;%dH", newImagePos.Y, newImagePos.X) //set cursor to x, y
-	w.Write(c.sixelData)
+	switch {
+	case newImagePos.Y < 0:
+		//if the image upper left corner is outside of the screen leave some upper sixel rows
+		fmt.Fprintf(w, "\033[0;%dH", newImagePos.X) //set cursor to x, 0
+		leaveRows := int((ctx.YCellPixels()*(-newImagePos.Y))/6) + 4
+		c.sixelData.WriteLeaveUpper(w, leaveRows)
+	case ctx.YCellPixels()*newImagePos.Y+c.scaledImageBounds.Dy() > int(ctx.YPixel):
+		//if the image lover pars is outside of the screen leave some lower sixel rows
+		fmt.Fprintf(w, "\033[%d;%dH", newImagePos.Y, newImagePos.X) //set cursor to x, y
+		log.Println(ctx.YCellPixels(), newImagePos.Y, c.scaledImageBounds.Dy(), ctx.YPixel)
+		leaveRows := 2 + ((ctx.YCellPixels()*newImagePos.Y+c.scaledImageBounds.Dy())-int(ctx.YPixel))/6
+		c.sixelData.WriteLeaveLower(w, leaveRows)
+	default:
+		fmt.Fprintf(w, "\033[%d;%dH", newImagePos.Y, newImagePos.X) //set cursor to x, y
+		c.sixelData.Write(w)
+	}
 }
 
 func (c *Card) swapImageRegion(ctx Context, s tcell.Screen) {
@@ -236,8 +236,8 @@ func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 		c.ItemImage,
 		targetWidth,
 		targetHeight,
-		func(b image.Rectangle, sd []byte) {
-			c.scaledImageBounds, c.sixelData = b, sd
+		func(b image.Rectangle, s *Sixel) {
+			c.scaledImageBounds, c.sixelData = b, s
 			//if c.isOnScreen(c.Card) {
 			redraw(false)
 			//}
