@@ -82,7 +82,6 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		}
 		a.lastLine = i
 		contentY++
-		log.Println("DRAW:", texts)
 		if contentY > int(ctx.Rows) {
 			break
 		}
@@ -91,7 +90,6 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 }
 
 func (a *Article) scroll(d int) {
-	log.Println(a.firstLine, a.lastLine, d)
 	if a.lastLine == len(a.contentLines)-1 && d > 0 {
 		return
 	}
@@ -114,6 +112,14 @@ func (a *Article) parseArticle(ctx Context) {
 		log.Println(err)
 		return
 	}
+	if len(a.contentLines) == 0 {
+		buf = richtext{
+			{
+				Text:  a.TextContent,
+				Style: tcell.StyleDefault,
+			},
+		}
+	}
 
 	//word wrap with textobjects
 	articleWidth := min(72, ctx.Width)
@@ -129,7 +135,6 @@ func (a *Article) parseArticle(ctx Context) {
 				continue
 			}
 			if lineLength+wordLength == articleWidth {
-				log.Println(lineLength, word.String(), "$1$", txt.String())
 				if wordLength > 0 {
 					txt.WriteString(word.String())
 				}
@@ -143,7 +148,6 @@ func (a *Article) parseArticle(ctx Context) {
 				continue
 			}
 			if c == '\n' || lineLength+wordLength > articleWidth {
-				log.Println(lineLength, word.String(), "$2$", txt.String())
 				line = append(line, textobject{Text: txt.String(), Style: to.Style})
 				lines = append(lines, line)
 				line = nil
@@ -162,7 +166,6 @@ func (a *Article) parseArticle(ctx Context) {
 				continue
 			}
 			if wordLength > 0 {
-				log.Println(lineLength, word.String(), "$3$", txt.String())
 				txt.WriteString(word.String())
 				txt.WriteRune(' ')
 				lineLength += wordLength + 1
