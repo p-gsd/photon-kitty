@@ -118,16 +118,22 @@ func main() {
 				ke := newKeyEvent(ev)
 				photon.KeyBindings.Run(ke)
 			case *tcell.EventResize:
-				s.Clear()
-				grid.ClearImages()
-				imageProcClear()
+				switch cb.State() {
+				case states.Normal:
+					s.Clear()
+					grid.ClearImages()
+					imageProcClear()
+				case states.Article:
+					openedArticle.contentLines = nil
+					openedArticle.topImageSixel = nil
+				}
 				ctx, quit = WithCancel(Background())
 				redraw(true)
 			}
 		}
 	}()
 
-	ctx.Width -= 1
+	ctx.Height -= 1
 	var fullRedraw bool
 	var sixelBuf *bytes.Buffer
 	for {

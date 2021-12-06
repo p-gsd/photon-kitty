@@ -47,6 +47,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 	//top image
 	if a.TopImage != nil {
 		if a.topImageSixel == nil {
+			imageProcMap.Delete(a)
 			imageProc(
 				a,
 				a.TopImage,

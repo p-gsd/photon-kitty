@@ -138,6 +138,12 @@ func drawString(s tcell.Screen, x, y int, text string, style tcell.Style) (width
 }
 
 func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
+	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels()
+	offset := (ctx.Width - imageWidthInCells) / 2
+	newImagePos := image.Point{ctx.X + 1 + offset, ctx.Y + 1}
+	if c.previousImagePos.Eq(newImagePos) && c.selected == c.previousSelected {
+		return
+	}
 	background := tcell.ColorBlack
 	if c.selected {
 		background = selectedColor
@@ -173,12 +179,6 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	if c.sixelData == nil {
 		c.previousImagePos = image.Point{-2, -2}
 		c.swapImageRegion(ctx, s)
-		return
-	}
-	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels()
-	offset := (ctx.Width - imageWidthInCells) / 2
-	newImagePos := image.Point{ctx.X + 1 + offset, ctx.Y + 1}
-	if c.previousImagePos.Eq(newImagePos) && c.selected == c.previousSelected {
 		return
 	}
 	if !c.previousImagePos.Eq(image.Point{-1, -1}) {
