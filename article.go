@@ -51,8 +51,8 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 			imageProc(
 				a,
 				a.TopImage,
-				articleWidth*int(ctx.XPixel/ctx.Cols),
-				articleWidth*int(ctx.XPixel/ctx.Cols),
+				articleWidth*ctx.XCellPixels(),
+				articleWidth*ctx.XCellPixels(),
 				func(b image.Rectangle, s *Sixel) {
 					a.scaledImageBounds, a.topImageSixel = b, s
 					redraw(true)
@@ -62,7 +62,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 			buf = bytes.NewBuffer(nil)
 			fmt.Fprintf(buf, "\033[%d;%dH", contentY, x+1) //set cursor to x, y
 			a.topImageSixel.Write(buf)
-			contentY += a.scaledImageBounds.Dy()/int(ctx.YPixel/ctx.Rows) + 1
+			contentY += a.scaledImageBounds.Dy()/ctx.YCellPixels() + 1
 		}
 	}
 

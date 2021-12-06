@@ -47,6 +47,18 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		g.LastChildOffset = chctx.Y + childHeight - int(ctx.Height)
 		getCard(child).Draw(chctx, s, buf)
 	}
+	//clear last line
+	if g.LastChildIndex == len(photon.VisibleCards)-1 {
+		for i := g.LastChildIndex + 1; i < (g.RowsCount+1)*g.Columns; i++ {
+			X := margin + (i%g.Columns)*childWidth
+			Y := g.FirstChildOffset + ((i-g.FirstChildIndex)/g.Columns)*childHeight
+			fillArea(
+				s,
+				image.Rect(X, Y, X+childWidth, Y+childHeight),
+				' ',
+			)
+		}
+	}
 	//set all not visible cards previous position outside
 	for i := 0; i < len(photon.VisibleCards); i++ {
 		if i >= g.FirstChildIndex && i <= g.LastChildIndex {
@@ -185,4 +197,12 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func fillArea(s tcell.Screen, rect image.Rectangle, r rune) {
+	for x := rect.Min.X; x <= rect.Max.X; x++ {
+		for y := rect.Min.Y; y <= rect.Max.Y; y++ {
+			s.SetContent(x, y, r, nil, tcell.StyleDefault)
+		}
+	}
 }

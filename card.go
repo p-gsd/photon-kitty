@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-	"log"
 	"strings"
 	"time"
 
@@ -195,8 +194,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	case ctx.YCellPixels()*newImagePos.Y+c.scaledImageBounds.Dy() > int(ctx.YPixel):
 		//if the image lover pars is outside of the screen leave some lower sixel rows
 		fmt.Fprintf(w, "\033[%d;%dH", newImagePos.Y, newImagePos.X) //set cursor to x, y
-		log.Println(ctx.YCellPixels(), newImagePos.Y, c.scaledImageBounds.Dy(), ctx.YPixel)
-		leaveRows := 2 + ((ctx.YCellPixels()*newImagePos.Y+c.scaledImageBounds.Dy())-int(ctx.YPixel))/6
+		leaveRows := ((ctx.YCellPixels()*newImagePos.Y+c.scaledImageBounds.Dy())-int(ctx.YPixel))/6 + 2
 		c.sixelData.WriteLeaveLower(w, leaveRows)
 	default:
 		fmt.Fprintf(w, "\033[%d;%dH", newImagePos.Y, newImagePos.X) //set cursor to x, y
