@@ -31,7 +31,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 	}
 	articleWidth := min(72, ctx.Width)
 	x := (ctx.Width - articleWidth) / 2
-	contentY := 5
+	contentY := 7
 
 	//header
 	drawLinesWordwrap(
@@ -43,14 +43,12 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		a.Title,
 		tcell.StyleDefault.Foreground(tcell.ColorWhiteSmoke).Bold(true),
 	)
-
-	//author
 	drawLine(
 		s,
 		x,
-		3,
+		4,
 		articleWidth,
-		a.Article.Byline,
+		a.SiteName,
 		tcell.StyleDefault,
 	)
 
@@ -70,7 +68,8 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 			)
 		} else {
 			buf = bytes.NewBuffer(nil)
-			fmt.Fprintf(buf, "\033[%d;%dH", contentY, x+1) //set cursor to x, y
+			offset := (ctx.XCellPixels()*articleWidth - a.scaledImageBounds.Dx()) / ctx.XCellPixels() / 2
+			fmt.Fprintf(buf, "\033[%d;%dH", contentY, x+1+offset) //set cursor to x, y
 			a.topImageSixel.Write(buf)
 			contentY += a.scaledImageBounds.Dy()/ctx.YCellPixels() + 1
 		}

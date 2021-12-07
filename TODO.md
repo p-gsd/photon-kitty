@@ -11,8 +11,6 @@
 
 ### article
 
--   article - show author and date
--   center article image
 -   scroll article with the image
 -   status bar - show percentage in article scroll, like in vim (Top-percent-Bot or All)
 -   keybinding to toggle the card description or the article parsed content
