@@ -442,7 +442,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.firstLine = 0
+		openedArticle.scrollOffset = 0
 		redraw(false)
 		return nil
 	})
@@ -450,7 +450,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.firstLine = openedArticle.lastLine - len(openedArticle.contentLines)
+		openedArticle.scrollOffset = openedArticle.lastLine - len(openedArticle.contentLines)
 		redraw(false)
 		return nil
 	})
@@ -458,7 +458,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.scroll((openedArticle.lastLine - openedArticle.firstLine) / 2)
+		openedArticle.scroll((openedArticle.lastLine - openedArticle.scrollOffset) / 2)
 		redraw(true)
 		return nil
 	})
@@ -466,7 +466,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.scroll(-(openedArticle.lastLine - openedArticle.firstLine) / 2)
+		openedArticle.scroll(-(openedArticle.lastLine - openedArticle.scrollOffset) / 2)
 		redraw(true)
 		return nil
 	})
@@ -474,7 +474,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.scroll(openedArticle.lastLine - openedArticle.firstLine)
+		openedArticle.scroll(openedArticle.lastLine - openedArticle.scrollOffset)
 		redraw(true)
 		return nil
 	})
@@ -482,7 +482,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.scroll(-(openedArticle.lastLine - openedArticle.firstLine))
+		openedArticle.scroll(-(openedArticle.lastLine - openedArticle.scrollOffset))
 		redraw(true)
 		return nil
 	})

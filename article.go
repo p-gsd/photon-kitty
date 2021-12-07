@@ -17,11 +17,13 @@ var openedArticle *Article
 
 type Article struct {
 	*libphoton.Article
-	firstLine         int
-	lastLine          int
-	contentLines      []richtext
+	scrollOffset int
+	lastLine     int
+	contentLines []richtext
+
 	topImageSixel     *Sixel
 	scaledImageBounds image.Rectangle
+	underImageRune    rune
 }
 
 func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
@@ -30,6 +32,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		a.parseArticle(ctx)
 	}
 	articleWidth := min(72, ctx.Width)
+	articleWidthPixels := articleWidth * ctx.XCellPixels()
 	x := (ctx.Width - articleWidth) / 2
 	contentY := 7
 
@@ -59,32 +62,50 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 			imageProc(
 				a,
 				a.TopImage,
-				articleWidth*ctx.XCellPixels(),
-				articleWidth*ctx.XCellPixels(),
+				articleWidthPixels,
+				articleWidthPixels,
 				func(b image.Rectangle, s *Sixel) {
 					a.scaledImageBounds, a.topImageSixel = b, s
 					redraw(true)
 				},
 			)
 		} else {
-			buf = bytes.NewBuffer(nil)
-			offset := (ctx.XCellPixels()*articleWidth - a.scaledImageBounds.Dx()) / ctx.XCellPixels() / 2
-			fmt.Fprintf(buf, "\033[%d;%dH", contentY, x+1+offset) //set cursor to x, y
-			a.topImageSixel.Write(buf)
-			contentY += a.scaledImageBounds.Dy()/ctx.YCellPixels() + 1
+			if a.scrollOffset*ctx.YCellPixels() < a.scaledImageBounds.Dy() {
+				buf = bytes.NewBuffer(nil)
+				imageCenterOffset := (articleWidthPixels - a.scaledImageBounds.Dx()) / ctx.XCellPixels() / 2
+				fmt.Fprintf(buf, "\033[%d;%dH", contentY, x+1+imageCenterOffset) //set cursor to x, y
+				leaveRows := a.scrollOffset * ctx.YCellPixels() / 6
+				a.topImageSixel.WriteLeaveUpper(buf, leaveRows)
+				if a.underImageRune == '\u2800' {
+					a.underImageRune = '\u2007'
+				} else {
+					a.underImageRune = '\u2800'
+				}
+				fillArea(
+					s,
+					image.Rect(
+						x,
+						contentY-1,
+						x+articleWidth,
+						contentY+a.scaledImageBounds.Dy()/ctx.YCellPixels()-a.scrollOffset,
+					),
+					a.underImageRune,
+				)
+			}
 		}
 	}
 
 	//content
-	for i := a.firstLine; i < len(a.contentLines); i++ {
+	imageYCells := a.scaledImageBounds.Dy() / ctx.YCellPixels()
+	for i := max(0, a.scrollOffset-imageYCells); i < len(a.contentLines); i++ {
 		line := a.contentLines[i]
-		var offset int
+		var lineOffset int
 		var texts []string
 		for _, to := range line {
-			offset += drawString(
+			lineOffset += drawString(
 				s,
-				x+offset,
-				contentY,
+				x+lineOffset,
+				contentY+max(0, imageYCells-a.scrollOffset),
 				to.Text,
 				to.Style,
 			)
@@ -100,19 +121,14 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 }
 
 func (a *Article) scroll(d int) {
-	if a.lastLine == len(a.contentLines)-1 && d > 0 {
+	if a.lastLine+d >= len(a.contentLines) {
+		a.scrollOffset += a.lastLine + d - len(a.contentLines)
+		a.lastLine = len(a.contentLines)
 		return
 	}
-	a.firstLine += d
-	if a.firstLine < 0 {
-		a.firstLine = 0
-	}
-	if a.firstLine >= len(a.contentLines) {
-		a.firstLine = len(a.contentLines) - 1
-	}
-	if a.lastLine+d >= len(a.contentLines) {
-		a.firstLine -= a.lastLine + d - len(a.contentLines)
-		a.lastLine = len(a.contentLines)
+	a.scrollOffset += d
+	if a.scrollOffset < 0 {
+		a.scrollOffset = 0
 	}
 }
 

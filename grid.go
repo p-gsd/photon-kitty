@@ -205,6 +205,13 @@ func min(a, b int) int {
 	return b
 }
 
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
 func fillArea(s tcell.Screen, rect image.Rectangle, r rune) {
 	for x := rect.Min.X; x <= rect.Max.X; x++ {
 		for y := rect.Min.Y; y <= rect.Max.Y; y++ {
