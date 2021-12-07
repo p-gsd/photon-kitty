@@ -85,6 +85,12 @@ func (g *Grid) ClearImages() {
 	}
 }
 
+func (g *Grid) ClearCardsPosition() {
+	for i := 0; i < len(photon.VisibleCards); i++ {
+		getCard(photon.VisibleCards[i]).previousImagePos = image.Point{-2, -2}
+	}
+}
+
 func (g *Grid) SelectedChildMoveLeft() {
 	if photon.SelectedCard == nil {
 		return

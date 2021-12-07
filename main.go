@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"image"
 	"image/png"
 	"log"
 	"os"
@@ -45,6 +44,7 @@ func main() {
 	f, _ := os.Create("/tmp/photon.log")
 	log.SetOutput(f)
 	defer f.Close()
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	//args
 	kong.Parse(&CLI,
 		kong.Name("photon"),
@@ -118,16 +118,20 @@ func main() {
 				ke := newKeyEvent(ev)
 				photon.KeyBindings.Run(ke)
 			case *tcell.EventResize:
+				newCtx := Background()
 				switch cb.State() {
 				case states.Normal:
-					s.Clear()
-					grid.ClearImages()
-					imageProcClear()
+					if newCtx.Cols != ctx.Cols {
+						grid.ClearImages()
+						imageProcClear()
+					} else {
+						grid.ClearCardsPosition()
+					}
 				case states.Article:
 					openedArticle.contentLines = nil
 					openedArticle.topImageSixel = nil
 				}
-				ctx, quit = WithCancel(Background())
+				ctx, quit = WithCancel(newCtx)
 				redraw(true)
 			}
 		}
@@ -231,9 +235,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	})
 	photon.KeyBindings.Add(states.Normal, "<enter>", func() error {
 		photon.SelectedCard.OpenArticle()
-		for i := 0; i < len(photon.VisibleCards); i++ {
-			getCard(photon.VisibleCards[i]).previousImagePos = image.Point{-2, -2}
-		}
+		grid.ClearCardsPosition()
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "p", func() error {
@@ -250,8 +252,9 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		}
 		command = ""
 		commandFocus = false
-		photon.VisibleCards = photon.Cards
-		redraw(false)
+		photon.SearchQuery("")
+		grid.ClearCardsPosition()
+		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "=", func() error {
@@ -398,8 +401,9 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	photon.KeyBindings.Add(states.Search, "<esc>", func() error {
 		command = ""
 		commandFocus = false
-		photon.VisibleCards = photon.Cards
-		redraw(false)
+		photon.SearchQuery("")
+		grid.ClearCardsPosition()
+		redraw(true)
 		return nil
 	})
 
