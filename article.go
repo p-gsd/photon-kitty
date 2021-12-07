@@ -44,6 +44,16 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		tcell.StyleDefault.Foreground(tcell.ColorWhiteSmoke).Bold(true),
 	)
 
+	//author
+	drawLine(
+		s,
+		x,
+		3,
+		articleWidth,
+		a.Article.Byline,
+		tcell.StyleDefault,
+	)
+
 	//top image
 	if a.TopImage != nil {
 		if a.topImageSixel == nil {
