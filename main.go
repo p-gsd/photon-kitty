@@ -254,6 +254,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		commandFocus = false
 		photon.SearchQuery("")
 		grid.ClearCardsPosition()
+		grid.FirstChildIndex = 0
 		redraw(true)
 		return nil
 	})
@@ -403,6 +404,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		commandFocus = false
 		photon.SearchQuery("")
 		grid.ClearCardsPosition()
+		grid.FirstChildIndex = 0
 		redraw(true)
 		return nil
 	})

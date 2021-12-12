@@ -1,18 +1,31 @@
 ## bugs
 
+-   `gg` on the top hides the images
+-   filter that makes the cards to less that previous visible cards doesn't clear the cards in grid
+
 ### card
 
 -   add a tiny feed icon
 -   check if there is place for the author name
 
-### grid
-
--   ctrl + d/u/f/b
-
 ### article
 
 -   status bar - show percentage in article scroll, like in vim (Top-percent-Bot or All)
 -   keybinding to toggle the card description or the article parsed content
+
+### grid
+
+-   ctrl + d/u/f/b
+-   status bar - also show scroll percentage
+
+```
+if scrollHeight != viewportHeight
+	pct = Math.round scrollTop / (scrollHeight - viewportHeight) * 100
+
+	if isNaN(pct) then pct = 100
+	if pct > 100  then pct = 100
+	if pct < 0    then pct = 0
+```
 
 ### status bar
 
