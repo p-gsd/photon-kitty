@@ -133,6 +133,7 @@ func main() {
 					openedArticle.topImageSixel = nil
 				}
 				ctx, quit = WithCancel(newCtx)
+				ctx.Height -= 1
 				redraw(true)
 			}
 		}
@@ -141,14 +142,16 @@ func main() {
 	ctx.Height -= 1
 	var fullRedraw bool
 	var sixelBuf *bytes.Buffer
+	var statusBarText string
 	for {
 		switch cb.State() {
 		case states.Normal, states.Search:
-			sixelBuf = grid.Draw(ctx, s)
+			sixelBuf, statusBarText = grid.Draw(ctx, s)
 			drawCommand(ctx, s)
 		case states.Article:
-			sixelBuf = openedArticle.Draw(ctx, s)
+			sixelBuf, statusBarText = openedArticle.Draw(ctx, s)
 		}
+		drawStatusBar(s, statusBarText)
 		if fullRedraw {
 			s.Sync()
 		} else {
@@ -163,6 +166,13 @@ func main() {
 		case fullRedraw = <-redrawCh:
 		}
 	}
+}
+
+func drawStatusBar(s tcell.Screen, t string) {
+	w, h := s.Size()
+	X := w - len(t)
+	Y := h - 1
+	drawString(s, X, Y, t, tcell.StyleDefault)
 }
 
 var redrawCh = make(chan bool, 1024)

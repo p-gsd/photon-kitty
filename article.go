@@ -26,7 +26,7 @@ type Article struct {
 	underImageRune    rune
 }
 
-func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
+func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, statusBarText string) {
 	s.Clear()
 	if a.contentLines == nil {
 		a.parseArticle(ctx)
@@ -71,11 +71,11 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 			)
 		} else {
 			if a.scrollOffset*ctx.YCellPixels() < a.scaledImageBounds.Dy() {
-				buf = bytes.NewBuffer(nil)
+				sixelBuf = bytes.NewBuffer(nil)
 				imageCenterOffset := (articleWidthPixels - a.scaledImageBounds.Dx()) / ctx.XCellPixels() / 2
-				fmt.Fprintf(buf, "\033[%d;%dH", contentY, x+1+imageCenterOffset) //set cursor to x, y
+				fmt.Fprintf(sixelBuf, "\033[%d;%dH", contentY, x+1+imageCenterOffset) //set cursor to x, y
 				leaveRows := a.scrollOffset * ctx.YCellPixels() / 6
-				a.topImageSixel.WriteLeaveUpper(buf, leaveRows)
+				a.topImageSixel.WriteLeaveUpper(sixelBuf, leaveRows)
 				if a.underImageRune == '\u2800' {
 					a.underImageRune = '\u2007'
 				} else {
@@ -113,16 +113,33 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		}
 		a.lastLine = i
 		contentY++
-		if contentY > int(ctx.Rows) {
+		if contentY+max(0, imageYCells-a.scrollOffset) >= int(ctx.Height) {
 			break
 		}
+	}
+
+	//status bar text - scroll percentage
+	above := a.scrollOffset
+	below := len(a.contentLines) - a.lastLine - 1
+	log.Println(above, below, a.lastLine, len(a.contentLines))
+	switch {
+	case below <= 0 && above == 0:
+		statusBarText = "All"
+	case below <= 0 && above > 0:
+		statusBarText = "Bot"
+	case below > 0 && above <= 0:
+		statusBarText = "Top"
+	case above > 1000000:
+		statusBarText = fmt.Sprintf("%d%%", above/((above+below)/100))
+	default:
+		statusBarText = fmt.Sprintf("%d%%", above*100/(above+below))
 	}
 	return
 }
 
 func (a *Article) scroll(d int) {
 	if a.lastLine+d >= len(a.contentLines) {
-		a.scrollOffset += a.lastLine + d - len(a.contentLines)
+		a.scrollOffset = len(a.contentLines) - (a.lastLine - a.scrollOffset) - 1
 		a.lastLine = len(a.contentLines)
 		return
 	}

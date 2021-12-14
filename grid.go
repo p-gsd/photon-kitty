@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"image"
 	"math"
 
@@ -17,8 +18,8 @@ type Grid struct {
 	RowsCount        int //count of visible rows on the screen
 }
 
-func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
-	buf = bytes.NewBuffer(nil)
+func (g *Grid) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, statusBarText string) {
+	sixelBuf = bytes.NewBuffer(nil)
 	margin := (int(ctx.Width) % g.Columns) / 2
 	childWidth := int(ctx.Width) / g.Columns
 	childHeight := int(float32(childWidth) / 2.2)
@@ -45,18 +46,14 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		g.LastChildIndex = i
 		g.RowsCount = i / g.Columns
 		g.LastChildOffset = chctx.Y + childHeight - int(ctx.Height)
-		getCard(child).Draw(chctx, s, buf)
+		getCard(child).Draw(chctx, s, sixelBuf)
 	}
 	//clear last line
 	if g.LastChildIndex == len(photon.VisibleCards)-1 {
 		for i := g.LastChildIndex + 1; i < (g.RowsCount+1)*g.Columns; i++ {
 			X := margin + (i%g.Columns)*childWidth
 			Y := g.FirstChildOffset + ((i-g.FirstChildIndex)/g.Columns)*childHeight
-			fillArea(
-				s,
-				image.Rect(X, Y, X+childWidth, Y+childHeight),
-				' ',
-			)
+			fillArea(s, image.Rect(X, Y, X+childWidth, Y+childHeight), ' ')
 		}
 	}
 	//set all not visible cards previous position outside
@@ -76,7 +73,23 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (buf *bytes.Buffer) {
 		}
 		getCard(child).DownloadImage(chctx, s)
 	}
-	return buf
+	//status bar text - scroll percentage
+	above := (g.FirstChildIndex/g.Columns)*childHeight - g.FirstChildOffset
+	allRows := int(math.Ceil(float64(len(photon.VisibleCards)) / float64(g.Columns)))
+	below := (allRows-(g.LastChildIndex/g.Columns)-1)*childHeight + g.LastChildOffset
+	switch {
+	case below <= 0 && above == 0:
+		statusBarText = "All"
+	case below <= 0 && above > 0:
+		statusBarText = "Bot"
+	case below > 0 && above <= 0:
+		statusBarText = "Top"
+	case above > 1000000:
+		statusBarText = fmt.Sprintf("%d%%", above/((above+below)/100))
+	default:
+		statusBarText = fmt.Sprintf("%d%%", above*100/(above+below))
+	}
+	return
 }
 
 func (g *Grid) ClearImages() {
