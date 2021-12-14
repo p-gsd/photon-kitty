@@ -113,6 +113,7 @@ func main() {
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
 				if commandInput(s, ev) {
+					grid.ClearCardsPosition()
 					continue
 				}
 				ke := newKeyEvent(ev)
@@ -380,6 +381,9 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "gg", func() error {
+		if grid.FirstChildIndex == 0 && grid.FirstChildOffset == 0 {
+			return nil
+		}
 		grid.FirstChildIndex = 0
 		grid.FirstChildOffset = 0
 		photon.SelectedCardPos.Y = 0

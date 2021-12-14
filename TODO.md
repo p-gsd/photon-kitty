@@ -1,8 +1,5 @@
 ## bugs
 
--   `gg` on the top hides the images
--   filter that makes the cards to less that previous visible cards doesn't clear the cards in grid
-
 ### card
 
 -   add a tiny feed icon
