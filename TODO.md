@@ -1,5 +1,7 @@
 ## bugs
 
+-   select correct card when scrolling with G, gg, ctrl + d/u/f/b
+
 ### card
 
 -   add a tiny feed icon
@@ -8,10 +10,6 @@
 ### article
 
 -   keybinding to toggle the card description or the article parsed content
-
-### grid
-
--   ctrl + d/u/f/b
 
 ### status bar
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"image"
 	"image/png"
 	"log"
 	"os"
@@ -99,6 +100,7 @@ func main() {
 	defer s.Fini()
 
 	ctx, quit := WithCancel(Background())
+	grid.Resize(ctx)
 
 	go func() {
 		photon.RefreshFeed()
@@ -123,6 +125,7 @@ func main() {
 				switch cb.State() {
 				case states.Normal:
 					if newCtx.Cols != ctx.Cols {
+						grid.Resize(newCtx)
 						grid.ClearImages()
 						imageProcClear()
 					} else {
@@ -266,6 +269,10 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		photon.SearchQuery("")
 		grid.ClearCardsPosition()
 		grid.FirstChildIndex = 0
+		grid.FirstChildOffset = 0
+		if len(photon.VisibleCards) > 0 {
+			photon.SelectedCard = photon.VisibleCards[0]
+		}
 		redraw(true)
 		return nil
 	})
@@ -357,37 +364,27 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<ctrl>d", func() error {
-		/*TODO
-		list.Position.First += int(float32(list.Position.Count) / 2)
-		redraw()
-		*/
+		_, h := s.Size()
+		grid.Scroll((h - 1) / 2)
+		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<ctrl>u", func() error {
-		/*TODO
-		list.Position.First -= int(float32(list.Position.Count) / 2)
-		if list.Position.First < 0 {
-			list.Position.First = 0
-		}
-		redraw()
-		*/
+		_, h := s.Size()
+		grid.Scroll(-(h - 1) / 2)
+		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<ctrl>f", func() error {
-		/*TODO
-		list.Position.First += list.Position.Count
-		redraw()
-		*/
+		_, h := s.Size()
+		grid.Scroll(h - 1)
+		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<ctrl>b", func() error {
-		/*TODO
-		list.Position.First -= list.Position.Count
-		if list.Position.First < 0 {
-			list.Position.First = 0
-		}
-		redraw()
-		*/
+		_, h := s.Size()
+		grid.Scroll(1 - h)
+		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "gg", func() error {
@@ -397,12 +394,20 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		grid.FirstChildIndex = 0
 		grid.FirstChildOffset = 0
 		photon.SelectedCardPos.Y = 0
+		selectedCardIndex := photon.SelectedCardPos.Y*grid.Columns + photon.SelectedCardPos.X
+		if selectedCardIndex < len(photon.VisibleCards) {
+			photon.SelectedCard = photon.VisibleCards[selectedCardIndex]
+		}
 		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<shift>g", func() error {
 		grid.FirstChildIndex = len(photon.VisibleCards) - grid.RowsCount
 		photon.SelectedCardPos.Y = len(photon.VisibleCards)/grid.Columns - 1
+		selectedCardIndex := photon.SelectedCardPos.Y*grid.Columns + photon.SelectedCardPos.X
+		if selectedCardIndex < len(photon.VisibleCards) {
+			photon.SelectedCard = photon.VisibleCards[selectedCardIndex]
+		}
 		redraw(true)
 		return nil
 	})
@@ -419,6 +424,11 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		photon.SearchQuery("")
 		grid.ClearCardsPosition()
 		grid.FirstChildIndex = 0
+		grid.FirstChildOffset = 0
+		if len(photon.VisibleCards) > 0 {
+			photon.SelectedCard = photon.VisibleCards[0]
+			photon.SelectedCardPos = image.Point{}
+		}
 		redraw(true)
 		return nil
 	})

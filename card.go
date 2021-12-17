@@ -33,7 +33,6 @@ const (
 
 type Card struct {
 	*libphoton.Card
-	selected          bool
 	sixelData         *Sixel
 	scaledImageBounds image.Rectangle
 	//isOnScreen        func(*libphoton.Card)
@@ -140,11 +139,12 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels()
 	offset := (ctx.Width - imageWidthInCells) / 2
 	newImagePos := image.Point{ctx.X + 1 + offset, ctx.Y + 1}
-	if c.previousImagePos.Eq(newImagePos) && c.selected == c.previousSelected {
+	selected := c.Card == photon.SelectedCard
+	if c.previousImagePos.Eq(newImagePos) && selected == c.previousSelected {
 		return
 	}
 	background := tcell.ColorBlack
-	if c.selected {
+	if selected {
 		background = selectedColor
 	}
 	if c.Item.Image == nil {
@@ -184,7 +184,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		c.swapImageRegion(ctx, s)
 	}
 	c.previousImagePos = newImagePos
-	c.previousSelected = c.selected
+	c.previousSelected = selected
 	switch {
 	case newImagePos.Y < 0:
 		//if the image upper left corner is outside of the screen leave some upper sixel rows
@@ -203,8 +203,9 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 }
 
 func (c *Card) swapImageRegion(ctx Context, s tcell.Screen) {
+	selected := c.Card == photon.SelectedCard
 	background := tcell.ColorBlack
-	if c.selected {
+	if selected {
 		background = selectedColor
 	}
 	for x := ctx.X; x < ctx.Width+ctx.X; x++ {
@@ -256,18 +257,4 @@ func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 
 func (c *Card) ClearImage() {
 	c.sixelData = nil
-}
-
-func (c *Card) Select() {
-	if c == nil {
-		return
-	}
-	c.selected = true
-}
-
-func (c *Card) Unselect() {
-	if c == nil {
-		return
-	}
-	c.selected = false
 }
