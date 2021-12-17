@@ -2,14 +2,15 @@
 
 -   select correct card when scrolling with G, gg, ctrl + d/u/f/b
 
-### card
+## main
 
--   add a tiny feed icon
--   check if there is place for the author name
+-   move libphoton internally
+-   remove the movecard functions from callbacks and don't use them from lua
 
 ### article
 
 -   keybinding to toggle the card description or the article parsed content
+-   if article doesn't have a image and card has, than use that
 
 ### status bar
 
@@ -31,6 +32,4 @@
 
 ### ideas:
 
--   maybe to move libphoton internally
--   remove the movecard functions from callbacks and don't use them from lua
--   what if we don't use the build in article view, but just use a external tool, like less, bat, w3c and make the article view as a separate cli tool
+-   rewrite mercury to go and use that as article extractor
