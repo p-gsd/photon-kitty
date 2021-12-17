@@ -27,19 +27,3 @@ func (cb Callbacks) State() states.Enum {
 func (cb Callbacks) ArticleChanged(article *lib.Article) {
 	openedArticle = &Article{Article: article}
 }
-
-func (cb Callbacks) SelectedCardMoveLeft() {
-	cb.grid.SelectedChildMoveLeft()
-}
-
-func (cb Callbacks) SelectedCardMoveRight() {
-	cb.grid.SelectedChildMoveRight()
-}
-
-func (cb Callbacks) SelectedCardMoveDown() {
-	cb.grid.SelectedChildMoveDown()
-}
-
-func (cb Callbacks) SelectedCardMoveUp() {
-	cb.grid.SelectedChildMoveUp()
-}

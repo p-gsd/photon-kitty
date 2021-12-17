@@ -1,6 +1,7 @@
 ## bugs
 
 -   select correct card when scrolling with G, gg, ctrl + d/u/f/b
+-   grid image isn't covered by nonprintable characters + when scrolling it is a bit lower and sometimes covers the article content's first line
 
 ### article
 

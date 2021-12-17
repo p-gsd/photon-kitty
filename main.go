@@ -350,22 +350,22 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	})
 	//move selectedCard
 	photon.KeyBindings.Add(states.Normal, "h", func() error {
-		cb.SelectedCardMoveLeft()
+		grid.SelectedChildMoveLeft()
 		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "l", func() error {
-		cb.SelectedCardMoveRight()
+		grid.SelectedChildMoveRight()
 		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "j", func() error {
-		cb.SelectedCardMoveDown()
+		grid.SelectedChildMoveDown()
 		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "k", func() error {
-		cb.SelectedCardMoveUp()
+		grid.SelectedChildMoveUp()
 		redraw(false)
 		return nil
 	})
