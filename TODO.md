@@ -2,11 +2,6 @@
 
 -   select correct card when scrolling with G, gg, ctrl + d/u/f/b
 
-## main
-
--   move libphoton internally
--   remove the movecard functions from callbacks and don't use them from lua
-
 ### article
 
 -   keybinding to toggle the card description or the article parsed content

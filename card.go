@@ -7,15 +7,15 @@ import (
 	"strings"
 	"time"
 
-	"git.sr.ht/~ghost08/libphoton"
+	"git.sr.ht/~ghost08/photont/lib"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 	htime "github.com/sbani/go-humanizer/time"
 )
 
-var cards = make(map[*libphoton.Card]*Card)
+var cards = make(map[*lib.Card]*Card)
 
-func getCard(card *libphoton.Card) *Card {
+func getCard(card *lib.Card) *Card {
 	c, ok := cards[card]
 	if !ok {
 		c = &Card{
@@ -32,10 +32,10 @@ const (
 )
 
 type Card struct {
-	*libphoton.Card
+	*lib.Card
 	sixelData         *Sixel
 	scaledImageBounds image.Rectangle
-	//isOnScreen        func(*libphoton.Card)
+	//isOnScreen        func(*lib.Card)
 	previousImagePos image.Point
 	previousSelected bool
 }

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"git.sr.ht/~ghost08/libphoton"
-	"git.sr.ht/~ghost08/libphoton/states"
+	"git.sr.ht/~ghost08/photont/lib"
+	"git.sr.ht/~ghost08/photont/lib/states"
 )
 
 type Callbacks struct {
@@ -24,7 +24,7 @@ func (cb Callbacks) State() states.Enum {
 	}
 }
 
-func (cb Callbacks) ArticleChanged(article *libphoton.Article) {
+func (cb Callbacks) ArticleChanged(article *lib.Article) {
 	openedArticle = &Article{Article: article}
 }
 

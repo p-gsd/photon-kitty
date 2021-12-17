@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"git.sr.ht/~ghost08/libphoton"
+	"git.sr.ht/~ghost08/photont/lib"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 	"golang.org/x/net/html"
@@ -16,7 +16,7 @@ import (
 var openedArticle *Article
 
 type Article struct {
-	*libphoton.Article
+	*lib.Article
 	scrollOffset int
 	lastLine     int
 	contentLines []richtext

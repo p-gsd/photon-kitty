@@ -15,9 +15,9 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"git.sr.ht/~ghost08/libphoton"
-	"git.sr.ht/~ghost08/libphoton/keybindings"
-	"git.sr.ht/~ghost08/libphoton/states"
+	"git.sr.ht/~ghost08/photont/lib"
+	"git.sr.ht/~ghost08/photont/lib/keybindings"
+	"git.sr.ht/~ghost08/photont/lib/states"
 
 	"github.com/alecthomas/kong"
 	"github.com/gdamore/tcell/v2"
@@ -35,7 +35,7 @@ var CLI struct {
 }
 
 var (
-	photon       *libphoton.Photon
+	photon       *lib.Photon
 	cb           Callbacks
 	command      string
 	commandFocus bool
@@ -72,15 +72,15 @@ func main() {
 	grid := &Grid{Columns: 5}
 	cb = Callbacks{grid: grid}
 	var err error
-	photon, err = libphoton.New(
+	photon, err = lib.New(
 		cb,
 		CLI.Paths,
-		libphoton.WithHTTPClient(CLI.HTTPSettings.Client()),
-		libphoton.WithMediaExtractor(CLI.Extractor),
-		libphoton.WithMediaVideoCmd(CLI.VideoCmd),
-		libphoton.WithMediaImageCmd(CLI.ImageCmd),
-		libphoton.WithMediaTorrentCmd(CLI.TorrentCmd),
-		libphoton.WithDownloadPath(CLI.DownloadPath),
+		lib.WithHTTPClient(CLI.HTTPSettings.Client()),
+		lib.WithMediaExtractor(CLI.Extractor),
+		lib.WithMediaVideoCmd(CLI.VideoCmd),
+		lib.WithMediaImageCmd(CLI.ImageCmd),
+		lib.WithMediaTorrentCmd(CLI.TorrentCmd),
+		lib.WithDownloadPath(CLI.DownloadPath),
 	)
 	if err != nil {
 		log.Fatal(err)
