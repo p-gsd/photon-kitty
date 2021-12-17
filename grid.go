@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"image"
-	"log"
 	"math"
 
 	"github.com/gdamore/tcell/v2"
@@ -92,8 +91,8 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, status
 	return
 }
 
-func (g *Grid) Resize(ctx Context) {
-	g.childWidth = int(ctx.Width) / g.Columns
+func (g *Grid) Resize(w, h int) {
+	g.childWidth = w / g.Columns
 	g.childHeight = int(float32(g.childWidth) / 2.2)
 }
 
@@ -117,7 +116,6 @@ func (g *Grid) Scroll(d int) {
 	cardDiff := (d / g.childHeight) * g.Columns
 	cellDiff := d % g.childHeight
 	allRows := math.Ceil(float64(len(photon.VisibleCards)) / float64(g.Columns))
-	log.Println(math.Ceil(float64(g.LastChildIndex+cardDiff)/float64(g.Columns)), allRows)
 	if math.Ceil(float64(g.LastChildIndex+cardDiff)/float64(g.Columns)) >= allRows {
 		g.FirstChildIndex = len(photon.VisibleCards) - (g.LastChildIndex - g.FirstChildIndex) - 1
 		g.LastChildIndex = len(photon.VisibleCards) - 1

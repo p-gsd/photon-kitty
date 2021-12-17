@@ -100,7 +100,7 @@ func main() {
 	defer s.Fini()
 
 	ctx, quit := WithCancel(Background())
-	grid.Resize(ctx)
+	grid.Resize(int(ctx.Width), int(ctx.Height))
 
 	go func() {
 		photon.RefreshFeed()
@@ -115,6 +115,8 @@ func main() {
 			switch ev := ev.(type) {
 			case *tcell.EventKey:
 				if commandInput(s, ev) {
+					grid.FirstChildIndex = 0
+					grid.FirstChildOffset = 0
 					grid.ClearCardsPosition()
 					continue
 				}
@@ -122,10 +124,10 @@ func main() {
 				photon.KeyBindings.Run(ke)
 			case *tcell.EventResize:
 				newCtx := Background()
+				grid.Resize(int(newCtx.Width), int(newCtx.Height))
 				switch cb.State() {
 				case states.Normal:
 					if newCtx.Cols != ctx.Cols {
-						grid.Resize(newCtx)
 						grid.ClearImages()
 						imageProcClear()
 					} else {
@@ -279,6 +281,8 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	photon.KeyBindings.Add(states.Normal, "=", func() error {
 		grid.Columns++
 		grid.ClearImages()
+		w, h := s.Size()
+		grid.Resize(w, h)
 		imageProcClear()
 		redraw(true)
 		return nil
@@ -289,6 +293,8 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		}
 		grid.Columns--
 		grid.ClearImages()
+		w, h := s.Size()
+		grid.Resize(w, h)
 		imageProcClear()
 		redraw(true)
 		return nil

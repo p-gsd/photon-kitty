@@ -1,6 +1,8 @@
 package main
 
 import (
+	"image"
+
 	"git.sr.ht/~ghost08/libphoton/states"
 	"github.com/gdamore/tcell/v2"
 )
@@ -40,6 +42,7 @@ func commandInput(s tcell.Screen, ev *tcell.EventKey) bool {
 	photon.SelectedCard = nil
 	if len(photon.VisibleCards) > 0 {
 		photon.SelectedCard = photon.VisibleCards[0]
+		photon.SelectedCardPos = image.Point{}
 	}
 	s.Clear()
 	redraw(true)
