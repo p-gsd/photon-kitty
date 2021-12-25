@@ -25,13 +25,14 @@ import (
 )
 
 var CLI struct {
-	Extractor    string       `optional:"" default:"youtube-dl --get-url %" help:"command for media link extraction (item link is substituted for %)" env:"PHOTON_EXTRACTOR"`
-	VideoCmd     string       `optional:"" default:"mpv $" help:"set default command for opening the item media link in a video player (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_VIDEOCMD"`
-	ImageCmd     string       `optional:"" default:"imv -" help:"set default command for opening the item media link in a image viewer (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_IMAGECMD"`
-	TorrentCmd   string       `optional:"" default:"mpv %" help:"set default command for opening the item media link in a torrent downloader (media link is substituted for %, if link is a torrent file, photon will download it, and substitute the torrent file path for %)" env:"PHOTON_TORRENTCMD"`
-	HTTPSettings HTTPSettings `embed:""`
-	Paths        []string     `arg:"" optional:"" help:"RSS/Atom urls, config path, or - for stdin"`
-	DownloadPath string       `optional:"" default:"$HOME/Downloads" help:"the default download path"`
+	Extractor     string       `optional:"" default:"youtube-dl --get-url %" help:"command for media link extraction (item link is substituted for %)" env:"PHOTON_EXTRACTOR"`
+	VideoCmd      string       `optional:"" default:"mpv $" help:"set default command for opening the item media link in a video player (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_VIDEOCMD"`
+	ImageCmd      string       `optional:"" default:"imv -" help:"set default command for opening the item media link in a image viewer (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_IMAGECMD"`
+	TorrentCmd    string       `optional:"" default:"mpv %" help:"set default command for opening the item media link in a torrent downloader (media link is substituted for %, if link is a torrent file, photon will download it, and substitute the torrent file path for %)" env:"PHOTON_TORRENTCMD"`
+	HTTPSettings  HTTPSettings `embed:""`
+	Paths         []string     `arg:"" optional:"" help:"RSS/Atom urls, config path, or - for stdin"`
+	DownloadPath  string       `optional:"" default:"$HOME/Downloads" help:"the default download path"`
+	TerminalTitle string       `short:"t" optional:"" help:"set the terminal title"`
 }
 
 var (
@@ -42,10 +43,6 @@ var (
 )
 
 func main() {
-	f, _ := os.Create("/tmp/photon.log")
-	log.SetOutput(f)
-	defer f.Close()
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	//args
 	kong.Parse(&CLI,
 		kong.Name("photon"),
@@ -55,6 +52,13 @@ func main() {
 			Compact: true,
 			Summary: true,
 		}))
+
+	log.SetOutput(os.Stderr)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	if CLI.TerminalTitle != "" {
+		setTerminalTitle(CLI.TerminalTitle)
+	}
 
 	if len(CLI.Paths) == 0 {
 		usr, err := user.Current()
@@ -518,4 +522,8 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		redraw(true)
 		return nil
 	})
+}
+
+func setTerminalTitle(title string) {
+	fmt.Fprintf(os.Stdout, "\033]2;%s\007", title)
 }
