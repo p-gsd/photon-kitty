@@ -1,10 +1,6 @@
-## bugs
-
--   article image isn't covered by nonprintable characters + when scrolling it is a bit lower and sometimes covers the article content's first line
-
 ### article
 
--   keybinding to toggle the card description or the article parsed content
+-   keybinding to circle the card description, card content or the article parsed content
 -   if article doesn't have a image and card has, than use that
 
 ### status bar
@@ -28,3 +24,4 @@
 ### ideas:
 
 -   rewrite mercury to go and use that as article extractor
+-   rename photon to photon-gio and photont to photon

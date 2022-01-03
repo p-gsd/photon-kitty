@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"image"
 	"log"
+	"math"
 	"strings"
 
 	"git.sr.ht/~ghost08/photont/lib"
@@ -74,7 +75,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 				sixelBuf = bytes.NewBuffer(nil)
 				imageCenterOffset := (articleWidthPixels - a.scaledImageBounds.Dx()) / ctx.XCellPixels() / 2
 				fmt.Fprintf(sixelBuf, "\033[%d;%dH", contentY, x+1+imageCenterOffset) //set cursor to x, y
-				leaveRows := a.scrollOffset * ctx.YCellPixels() / 6
+				leaveRows := int(math.Ceil(float64(a.scrollOffset*ctx.YCellPixels())/6.0)) + 1
 				a.topImageSixel.WriteLeaveUpper(sixelBuf, leaveRows)
 				if a.underImageRune == '\u2800' {
 					a.underImageRune = '\u2007'
