@@ -1,4 +1,4 @@
-module git.sr.ht/~ghost08/photont
+module git.sr.ht/~ghost08/photon
 
 go 1.17
 
