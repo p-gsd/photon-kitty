@@ -6,9 +6,11 @@ photon is a RSS/Atom reader with the focus on speed, usability and a bit of unix
 
 ![photon screenshot](screenshot.png)
 
-With the current state of rss readers, which are archaic, or use electron for rendering, photon wants to bring a "fresh look" withing a lightweight package.
+With the current state of rss readers, which are archaic, or use electron for rendering, photon wants to bring a "fresh look" within terminal, with pictures!
 
 ## Installation
+
+You need a sixel supporting terminal emulator (I use [foot](https://codeberg.org/dnkl/foot))
 
 ### linux
 
@@ -17,16 +19,6 @@ With the current state of rss readers, which are archaic, or use electron for re
 AUR: [photon-rss-git](https://aur.archlinux.org/packages/photon-rss-git/)
 
     $ yay -S photon-rss-git
-
-### windows
-
-The easiest would be to install needed things trough [chocolatey](https://chocolatey.org/):
-
-    choco install golang git yt-dlp mpv
-
-and then install photon:
-
-    go install git.sr.ht/~ghost08/photon@latest
 
 ## Issues
 
@@ -111,7 +103,7 @@ Always one card is highlighted, we call it 'selectedCard'. To navigate to other 
 
 All downloads are saved automatically to the default downloads folder `$HOME/Downloads`. This can be changed with the `--download-dir` argument.
 
-Any keybinding can be prepended with a numeric value, like in vim. So you can type `10j` and the selectedCard will move 10 rows down.
+Any keybinding can be prepended with a numeric value, like in vim. So you can type `10j` and the `selectedCard` will move 10 rows down.
 
 ### view
 
@@ -121,7 +113,7 @@ By pressing `ENTER`, photon will show the article view, where it scraps the card
 
 `ALT+ENTER` will open the card's link in the default web browser (or default application).
 
-When the article is openned:
+When the article is opened:
 
 `j` will scroll the article down.
 `k` will scroll the article up.
