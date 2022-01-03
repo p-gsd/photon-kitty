@@ -10,8 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"git.sr.ht/~ghost08/photont/lib/events"
-	"git.sr.ht/~ghost08/photont/lib/media"
+	"git.sr.ht/~ghost08/photon/lib/events"
+	"git.sr.ht/~ghost08/photon/lib/media"
 	"github.com/cixtor/readability"
 	"github.com/kennygrant/sanitize"
 	"github.com/mmcdole/gofeed"

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"git.sr.ht/~ghost08/photont/lib"
+	"git.sr.ht/~ghost08/photon/lib"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
 	htime "github.com/sbani/go-humanizer/time"

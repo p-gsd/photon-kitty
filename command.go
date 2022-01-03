@@ -3,7 +3,7 @@ package main
 import (
 	"image"
 
-	"git.sr.ht/~ghost08/photont/lib/states"
+	"git.sr.ht/~ghost08/photon/lib/states"
 	"github.com/gdamore/tcell/v2"
 )
 

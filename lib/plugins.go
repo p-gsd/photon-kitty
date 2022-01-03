@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"strings"
 
-	"git.sr.ht/~ghost08/photont/lib/events"
-	"git.sr.ht/~ghost08/photont/lib/inputs"
-	"git.sr.ht/~ghost08/photont/lib/keybindings"
-	"git.sr.ht/~ghost08/photont/lib/media"
-	"git.sr.ht/~ghost08/photont/lib/states"
+	"git.sr.ht/~ghost08/photon/lib/events"
+	"git.sr.ht/~ghost08/photon/lib/inputs"
+	"git.sr.ht/~ghost08/photon/lib/keybindings"
+	"git.sr.ht/~ghost08/photon/lib/media"
+	"git.sr.ht/~ghost08/photon/lib/states"
 	lua "github.com/yuin/gopher-lua"
 )
 

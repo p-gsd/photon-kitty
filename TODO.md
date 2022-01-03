@@ -24,4 +24,3 @@
 ### ideas:
 
 -   rewrite mercury to go and use that as article extractor
--   rename photon to photon-gio and photont to photon

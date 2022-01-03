@@ -7,7 +7,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"git.sr.ht/~ghost08/photont/lib/states"
+	"git.sr.ht/~ghost08/photon/lib/states"
 )
 
 type Callback func() error

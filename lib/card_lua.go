@@ -1,7 +1,7 @@
 package lib
 
 import (
-	"git.sr.ht/~ghost08/photont/lib/media"
+	"git.sr.ht/~ghost08/photon/lib/media"
 	lua "github.com/yuin/gopher-lua"
 )
 

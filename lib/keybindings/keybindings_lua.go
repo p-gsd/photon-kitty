@@ -1,7 +1,7 @@
 package keybindings
 
 import (
-	"git.sr.ht/~ghost08/photont/lib/states"
+	"git.sr.ht/~ghost08/photon/lib/states"
 	lua "github.com/yuin/gopher-lua"
 )
 
