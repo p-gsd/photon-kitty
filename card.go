@@ -143,32 +143,32 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 	if c.previousImagePos.Eq(newImagePos) && selected == c.previousSelected {
 		return
 	}
-	background := tcell.ColorBlack
+	style := tcell.StyleDefault
 	if selected {
-		background = selectedColor
+		style = tcell.StyleDefault.Background(selectedColor)
 	}
 	if c.Item.Image == nil {
 		for x := ctx.X; x < ctx.Width+ctx.X; x++ {
 			for y := ctx.Y; y < ctx.Height+ctx.Y; y++ {
-				s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
+				s.SetContent(x, y, ' ', nil, style)
 			}
 		}
-		drawLinesWordwrap(s, ctx.X+1, ctx.Y, ctx.Width-3, 2, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
-		drawLine(s, ctx.X+1, ctx.Y+2, ctx.Width-3, c.Feed.Title, tcell.StyleDefault.Background(background).Italic(true))
-		drawLine(s, ctx.X+1, ctx.Y+3, ctx.Width-3, htime.Difference(time.Now(), *c.Item.PublishedParsed), tcell.StyleDefault.Background(background).Italic(true))
-		drawLinesWordwrap(s, ctx.X+1, ctx.Y+headerHeight+1, ctx.Width-3, ctx.Height-headerHeight-2, c.Item.Description, tcell.StyleDefault.Background(background))
+		drawLinesWordwrap(s, ctx.X+1, ctx.Y, ctx.Width-3, 2, c.Item.Title, style.Bold(true))
+		drawLine(s, ctx.X+1, ctx.Y+2, ctx.Width-3, c.Feed.Title, style.Italic(true))
+		drawLine(s, ctx.X+1, ctx.Y+3, ctx.Width-3, htime.Difference(time.Now(), *c.Item.PublishedParsed), style.Italic(true))
+		drawLinesWordwrap(s, ctx.X+1, ctx.Y+headerHeight+1, ctx.Width-3, ctx.Height-headerHeight-2, c.Item.Description, style)
 		return
 	}
 
 	//header
 	for x := ctx.X; x < ctx.Width+ctx.X; x++ {
 		for y := ctx.Height - headerHeight + ctx.Y; y < ctx.Height+ctx.Y; y++ {
-			s.SetContent(x, y, ' ', nil, tcell.StyleDefault.Background(background))
+			s.SetContent(x, y, ' ', nil, style)
 		}
 	}
-	drawLinesWordwrap(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y, ctx.Width-3, 2, c.Item.Title, tcell.StyleDefault.Background(background).Bold(true))
-	drawLine(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+2, ctx.Width-3, c.Feed.Title, tcell.StyleDefault.Background(background).Italic(true))
-	drawLine(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+3, ctx.Width-3, htime.Difference(time.Now(), *c.Item.PublishedParsed), tcell.StyleDefault.Background(background).Italic(true))
+	drawLinesWordwrap(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y, ctx.Width-3, 2, c.Item.Title, style.Bold(true))
+	drawLine(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+2, ctx.Width-3, c.Feed.Title, style.Italic(true))
+	drawLine(s, ctx.X+1, ctx.Height-headerHeight+ctx.Y+3, ctx.Width-3, htime.Difference(time.Now(), *c.Item.PublishedParsed), style.Italic(true))
 
 	if c.DownloadImage(ctx, s) {
 		c.previousImagePos = image.Point{-2, -2}
@@ -204,9 +204,9 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 
 func (c *Card) swapImageRegion(ctx Context, s tcell.Screen) {
 	selected := c.Card == photon.SelectedCard
-	background := tcell.ColorBlack
+	style := tcell.StyleDefault
 	if selected {
-		background = selectedColor
+		style = tcell.StyleDefault.Background(selectedColor)
 	}
 	for x := ctx.X; x < ctx.Width+ctx.X; x++ {
 		for y := ctx.Y; y < ctx.Height-headerHeight+ctx.Y; y++ {
@@ -215,7 +215,7 @@ func (c *Card) swapImageRegion(ctx Context, s tcell.Screen) {
 			if c == r {
 				r = '\u2007'
 			}
-			s.SetContent(x, y, r, nil, tcell.StyleDefault.Background(background))
+			s.SetContent(x, y, r, nil, style)
 		}
 	}
 }

@@ -121,7 +121,6 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 	//status bar text - scroll percentage
 	above := a.scrollOffset
 	below := len(a.contentLines) - a.lastLine - 1
-	log.Println(above, below, a.lastLine, len(a.contentLines))
 	switch {
 	case below <= 0 && above == 0:
 		statusBarText = "All"

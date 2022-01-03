@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"log"
 	"math"
 
 	"github.com/gdamore/tcell/v2"
@@ -109,10 +110,9 @@ func (g *Grid) ClearCardsPosition() {
 }
 
 func (g *Grid) Scroll(d int) {
-	defer func() {
-		index := photon.SelectedCardPos.Y*g.Columns + photon.SelectedCardPos.X
-		photon.SelectedCard = photon.VisibleCards[index]
-	}()
+	log.Println(d)
+	defer log.Println(photon.SelectedCardPos, g.FirstChildIndex, g.FirstChildOffset)
+	defer g.selectedChildRefresh()
 	cardDiff := (d / g.childHeight) * g.Columns
 	cellDiff := d % g.childHeight
 	allRows := math.Ceil(float64(len(photon.VisibleCards)) / float64(g.Columns))
@@ -123,11 +123,36 @@ func (g *Grid) Scroll(d int) {
 	}
 	g.FirstChildIndex += cardDiff
 	g.FirstChildOffset += -cellDiff
+	g.LastChildIndex += cardDiff
+	g.LastChildOffset += -cellDiff
+	for -g.FirstChildOffset > g.childHeight {
+		g.FirstChildIndex += g.Columns
+		g.LastChildIndex += g.Columns
+		g.FirstChildOffset += g.childHeight
+		g.LastChildOffset += g.childHeight
+	}
+	for g.FirstChildOffset > 0 {
+		g.FirstChildIndex -= g.Columns
+		g.LastChildIndex -= g.Columns
+		g.FirstChildOffset -= g.childHeight
+		g.LastChildOffset -= g.childHeight
+	}
 	if g.FirstChildIndex < 0 {
 		g.FirstChildIndex = 0
 		g.FirstChildOffset = 0
 	}
-	photon.SelectedCardPos.Y += max(0, int(math.Round(float64(d)/float64(g.childHeight))))
+	if g.FirstChildIndex/g.Columns > photon.SelectedCardPos.Y {
+		photon.SelectedCardPos.Y = g.FirstChildIndex / g.Columns
+		if g.FirstChildOffset < 0 {
+			photon.SelectedCardPos.Y++
+		}
+	}
+	if g.LastChildIndex/g.Columns < photon.SelectedCardPos.Y {
+		photon.SelectedCardPos.Y = g.LastChildIndex / g.Columns
+		if g.LastChildOffset > 0 {
+			photon.SelectedCardPos.Y--
+		}
+	}
 }
 
 func (g *Grid) SelectedChildMoveLeft() {
@@ -233,6 +258,14 @@ func (g *Grid) selectedChildRefresh() {
 	photon.SelectedCard = photon.VisibleCards[index]
 }
 
+func fillArea(s tcell.Screen, rect image.Rectangle, r rune) {
+	for x := rect.Min.X; x <= rect.Max.X; x++ {
+		for y := rect.Min.Y; y <= rect.Max.Y; y++ {
+			s.SetContent(x, y, r, nil, tcell.StyleDefault)
+		}
+	}
+}
+
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -247,10 +280,9 @@ func max(a, b int) int {
 	return b
 }
 
-func fillArea(s tcell.Screen, rect image.Rectangle, r rune) {
-	for x := rect.Min.X; x <= rect.Max.X; x++ {
-		for y := rect.Min.Y; y <= rect.Max.Y; y++ {
-			s.SetContent(x, y, r, nil, tcell.StyleDefault)
-		}
+func abs(x int) int {
+	if x < 0 {
+		return -x
 	}
+	return x
 }

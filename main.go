@@ -53,8 +53,10 @@ func main() {
 			Summary: true,
 		}))
 
-	log.SetOutput(os.Stderr)
+	f, _ := os.Create("/tmp/photon.log")
+	log.SetOutput(f)
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
+	defer f.Close()
 
 	if CLI.TerminalTitle != "" {
 		setTerminalTitle(CLI.TerminalTitle)
@@ -382,7 +384,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	photon.KeyBindings.Add(states.Normal, "<ctrl>u", func() error {
 		_, h := s.Size()
 		grid.Scroll(-(h - 1) / 2)
-		redraw(false)
+		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<ctrl>f", func() error {
