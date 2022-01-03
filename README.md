@@ -133,7 +133,9 @@ Searching is done with pressing `/` and then typing the query. photon will filte
 
 ### media extraction
 
-photon is designed strongly for media viewing/playing. `CTRL+click` or `CTRL+ENTER` will try to extract the direct media link of the card. By following the unix philosophy, [Do One Thing and Do It Well](https://en.wikipedia.org/wiki/Unix_philosophy#Do_One_Thing_and_Do_It_Well), photon want's to be just a feed viewer, so media extraction is done by external tools. By default [yt-dlp](https://github.com/yt-dlp/yt-dlp) is used. This can be changed with the `--extractor` argument or `PHOTON_EXTRACTOR` environment variable.
+`p` will play the media link
+
+photon is designed strongly for media viewing/playing, it will try to extract the direct media link of the card. By following the unix philosophy, [Do One Thing and Do It Well](https://en.wikipedia.org/wiki/Unix_philosophy#Do_One_Thing_and_Do_It_Well), photon want's to be just a feed viewer, so media extraction is done by external tools. By default [yt-dlp](https://github.com/yt-dlp/yt-dlp) is used. This can be changed with the `--extractor` argument or `PHOTON_EXTRACTOR` environment variable.
 
 By the content type of the media, photon will run it in either a video player (default [mpv](https://mpv.io/)) or a image viewer (default [imv](https://github.com/eXeC64/imv)).
 
