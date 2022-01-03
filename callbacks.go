@@ -1,8 +1,8 @@
 package main
 
 import (
-	"git.sr.ht/~ghost08/photont/lib"
-	"git.sr.ht/~ghost08/photont/lib/states"
+	"git.sr.ht/~ghost08/photon/lib"
+	"git.sr.ht/~ghost08/photon/lib/states"
 )
 
 type Callbacks struct {

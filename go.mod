@@ -3,6 +3,7 @@ module git.sr.ht/~ghost08/photon
 go 1.17
 
 require (
+	git.sr.ht/~ghost08/photont v0.0.0-20211225105344-e70626f37f6c
 	github.com/alecthomas/kong v0.2.22
 	github.com/cixtor/readability v1.0.0
 	github.com/gabriel-vasile/mimetype v1.4.0
