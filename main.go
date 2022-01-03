@@ -163,6 +163,9 @@ func main() {
 			sixelBuf, statusBarText = openedArticle.Draw(ctx, s)
 		}
 		drawStatusBar(s, statusBarText)
+		if commandFocus {
+			s.SetContent(len(command), int(ctx.Rows-1), ' ', nil, tcell.StyleDefault.Reverse(true))
+		}
 		if fullRedraw {
 			s.Sync()
 		} else {

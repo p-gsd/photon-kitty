@@ -19,11 +19,6 @@ func drawCommand(ctx Context, s tcell.Screen) {
 		command,
 		tcell.StyleDefault,
 	)
-	if commandFocus {
-		s.ShowCursor(len(command), int(ctx.Rows-1))
-	} else {
-		s.HideCursor()
-	}
 }
 
 func commandInput(s tcell.Screen, ev *tcell.EventKey) bool {
