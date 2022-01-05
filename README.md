@@ -111,14 +111,26 @@ By pressing `ENTER`, photon will show the article view, where it scraps the card
 
 ![article view](article.png)
 
-`ALT+ENTER` will open the card's link in the default web browser (or default application).
+`o` will open the card's link in the default web browser (or default application).
 
 When the article is opened:
 
 `j` will scroll the article down.
+
 `k` will scroll the article up.
+
+`CTRL+d` scroll half screen down
+
+`CTRL+u` scroll half screen up
+
+`CTRL+f` scroll full screen down
+
+`CTRL+b` scroll full screen up
+
 `gg` scroll the article to the top.
+
 `G` scroll the article to the bottom.
+
 `q` or `Esc` will close the article.
 
 ### cards
@@ -149,7 +161,7 @@ So you can play torrent videos directly from photon. Try: `photon https://nyaa.s
 
 photon will automatically load lua scripts from `~/.config/photon/plugins/*.lua` (on windows it is `C:\Users\<Username>\.config\photon\plugins\*.lua`).
 
-These plugins help to extend the functionality and make photon do whatever the user needs (for now it's just 'beta'). Lua plugins can subscribe for events or register new keybindings and modify the state. Take a look at some [user scripts](https://git.sr.ht/~ghost08/photon/tree/master/item/plugins).
+These plugins help to extend the functionality and make photon do whatever the user needs. Lua plugins can subscribe for events or register new keybindings and modify the state. Take a look at some [user scripts](https://git.sr.ht/~ghost08/photon/tree/master/item/plugins).
 
 example plugin:
 
