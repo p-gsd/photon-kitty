@@ -29,6 +29,7 @@ var CLI struct {
 	VideoCmd      string       `optional:"" default:"mpv $" help:"set default command for opening the item media link in a video player (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_VIDEOCMD"`
 	ImageCmd      string       `optional:"" default:"imv -" help:"set default command for opening the item media link in a image viewer (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_IMAGECMD"`
 	TorrentCmd    string       `optional:"" default:"mpv %" help:"set default command for opening the item media link in a torrent downloader (media link is substituted for %, if link is a torrent file, photon will download it, and substitute the torrent file path for %)" env:"PHOTON_TORRENTCMD"`
+	ArticleMode   string       `optional:"" default:"ARTICLE" enum:"ARTICLE,DESCRIPTION,CONTENT" help:"the default article view mode"`
 	HTTPSettings  HTTPSettings `embed:""`
 	Paths         []string     `arg:"" optional:"" help:"RSS/Atom urls, config path, or - for stdin"`
 	DownloadPath  string       `optional:"" default:"$HOME/Downloads" help:"the default download path"`
@@ -267,6 +268,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	})
 	photon.KeyBindings.Add(states.Normal, "<enter>", func() error {
 		photon.SelectedCard.OpenArticle()
+		openedArticle.Mode = articleModeFromString(CLI.ArticleMode)
 		grid.ClearCardsPosition()
 		return nil
 	})
@@ -470,11 +472,11 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		redraw(true)
 		return nil
 	})
-	photon.KeyBindings.Add(states.Article, "d", func() error {
+	photon.KeyBindings.Add(states.Article, "m", func() error {
 		if openedArticle == nil {
 			return nil
 		}
-		openedArticle.ToggleState()
+		openedArticle.ToggleMode()
 		redraw(true)
 		return nil
 	})

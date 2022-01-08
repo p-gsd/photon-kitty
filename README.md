@@ -22,9 +22,9 @@ AUR: [photon-rss-git](https://aur.archlinux.org/packages/photon-rss-git/)
 
 ## Issues
 
-File bugs and TODOs through the [issue tracker](https://todo.sr.ht/~ghost08/photon) or send an email
-to [~ghost08/photon@todo.sr.ht](mailto:~ghost08/photon@todo.sr.ht). For general discussion, use the
-[mailing list](https://lists.sr.ht/~ghost08/photon): [~ghost08/photon@lists.sr.ht](mailto:~ghost08/photon@lists.sr.ht).
+File bugs and TODOs through the [issue tracker](https://todo.sr.ht/~ghost08/photon) or send an email to [~ghost08/photon@todo.sr.ht](mailto:~ghost08/photon@todo.sr.ht).
+
+For general discussion, use the [mailing list](https://lists.sr.ht/~ghost08/photon): [~ghost08/photon@lists.sr.ht](mailto:~ghost08/photon@lists.sr.ht).
 
 ## Usage
 
@@ -34,7 +34,7 @@ photon's philosophy is to be a some kind of rss viewer. So it doesn't have featu
 
 Or it can be directly fed with the feed data:
 
-    $ wget -O - https://www.reddit.com/r/pics.rss | photon -
+    $ curl -s https://www.reddit.com/r/pics.rss | photon -
 
 Or using [ratt](https://sr.ht/~ghost08/ratt) and playing magnet links directly with mpv:
 
@@ -46,12 +46,13 @@ Or searching youtube using [ratt](https://sr.ht/~ghost08/ratt):
 
 Or it can parse a file with feed urls separated by new line (and comments too):
 
-    $ echo "#youtube - LunusTechTips" > mychannels.txt
-    $ echo "https://www.youtube.com/feeds/videos.xml?user=LinusTechTips" > mychannels.txt
-    $ echo "#youtube - Rob Braxman Tech" > mychannels.txt
-    $ echo "https://www.youtube.com/feeds/videos.xml?channel_id=UCYVU6rModlGxvJbszCclGGw" > mychannels.txt
-    $ echo "#odysee - Lunduke on Tech" > mychannels.txt
-    $ echo "https://lbryfeed.melroy.org/channel/odysee/@Lunduke:e" >> mychannels.txt
+    $ cat mychannels.txt
+    #youtube - LunusTechTips
+    https://www.youtube.com/feeds/videos.xml?user=LinusTechTips
+    #youtube - Rob Braxman Tech
+    https://www.youtube.com/feeds/videos.xml?channel_id=UCYVU6rModlGxvJbszCclGGw
+    #odysee - Lunduke on Tech" > mychannels.txt
+    https://lbryfeed.melroy.org/channel/odysee/@Lunduke:e
     $ photon mychannels.txt
 
 Or it can call a external command, must be specified with the `cmd://` prefix:
@@ -71,13 +72,29 @@ So the feed management is up to the user with arguments, text files and creating
     https://www.reddit.com/r/funny.rss
     https://www.reddit.com/r/memes.rss
 
-Because photon is a "viewer" (like an image viewer, video player, ...) it doesn't have a refresh feature. photon just shows the contents of the feed(s).
+Because photon is a "viewer" (like an image viewer, video player, ...) it doesn't have a refresh feature, doesn't have a 'item readed' feature. photon just shows the contents of the feed(s).
 
 ## Features
 
-### navigation
+### card view
 
-Always one card is highlighted, we call it 'selectedCard'. To navigate to other card you can use `h`,`j`,`k`,`l` (which means: left, down, up, right).
+Always one card is highlighted, we call it `selectedCard`. To navigate to other card you can use `h`,`j`,`k`,`l` (which means: left, down, up, right).
+
+`CTRL+-` will decrease the number of columns of cards.
+
+`CTRL+=` will increase the number of columns of cards.
+
+`o` will open the card's link in the default web browser (or default application).
+
+`yy` - copy card link to clipboard
+
+`yi` - copy the card image
+
+`dm` - download media
+
+`dl` - download link content
+
+`di` - download image
 
 `CTRL+d` - scroll half screen down
 
@@ -91,61 +108,54 @@ Always one card is highlighted, we call it 'selectedCard'. To navigate to other 
 
 `G` - go to the last line
 
-`yy` - copy card link to clipboard
-
-`yi` - copy the card image
-
-`dm` - download media
-
-`dl` - download link content
-
-`di` - download image
+`q` - exit the application
 
 All downloads are saved automatically to the default downloads folder `$HOME/Downloads`. This can be changed with the `--download-dir` argument.
 
 Any keybinding can be prepended with a numeric value, like in vim. So you can type `10j` and the `selectedCard` will move 10 rows down.
 
-### view
-
-By pressing `ENTER`, photon will show the article view, where it scraps the card's link and extracts the title, top image and main text content.
-
-![article view](article.png)
-
-`o` will open the card's link in the default web browser (or default application).
-
-When the article is opened:
-
-`j` will scroll the article down.
-
-`k` will scroll the article up.
-
-`CTRL+d` scroll half screen down
-
-`CTRL+u` scroll half screen up
-
-`CTRL+f` scroll full screen down
-
-`CTRL+b` scroll full screen up
-
-`gg` scroll the article to the top.
-
-`G` scroll the article to the bottom.
-
-`q` or `Esc` will close the article.
-
-### cards
-
-`CTRL+-` will decrease the number of columns of cards.
-
-`CTRL+=` will increase the number of columns of cards.
-
 ### search
 
 Searching is done with pressing `/` and then typing the query. photon will filter the visible cards by finding the query in either the card's title, description, feed's title.
 
+### article view
+
+By pressing `ENTER`, photon will show the article view, where it scraps the card's link and extracts the title, top image and main text content.
+The article view also has three modes:
+
+`ARTICLE` - shows the screpped article content
+
+`DESCRIPTION` - shows the item.Description
+
+`CONTENT` - shows the item.Content
+
+![article view](article.png)
+
+When the article is opened:
+
+`m` - circle trough article view mode
+
+`j` - scroll the article down
+
+`k` - scroll the article up
+
+`CTRL+d` - scroll half screen down
+
+`CTRL+u` - scroll half screen up
+
+`CTRL+f` - scroll full screen down
+
+`CTRL+b` - scroll full screen up
+
+`gg` - scroll the article to the top
+
+`G` - scroll the article to the bottom.
+
+`q` or `Esc` - close the article.
+
 ### media extraction
 
-`p` will play the media link
+`p` will play the media link (in cards view)
 
 photon is designed strongly for media viewing/playing, it will try to extract the direct media link of the card. By following the unix philosophy, [Do One Thing and Do It Well](https://en.wikipedia.org/wiki/Unix_philosophy#Do_One_Thing_and_Do_It_Well), photon want's to be just a feed viewer, so media extraction is done by external tools. By default [yt-dlp](https://github.com/yt-dlp/yt-dlp) is used. This can be changed with the `--extractor` argument or `PHOTON_EXTRACTOR` environment variable.
 

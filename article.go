@@ -16,15 +16,15 @@ import (
 
 var openedArticle *Article
 
-type ArticleState int
+type ArticleMode int
 
 const (
-	ArticleContent ArticleState = iota
+	ArticleContent ArticleMode = iota
 	CardDescription
 	CardContent
 )
 
-func (as ArticleState) String() string {
+func (as ArticleMode) String() string {
 	switch as {
 	case ArticleContent:
 		return "ARTICLE"
@@ -36,12 +36,24 @@ func (as ArticleState) String() string {
 	return ""
 }
 
+func articleModeFromString(s string) ArticleMode {
+	switch s {
+	case "ARTICLE":
+		return ArticleContent
+	case "DESCRIPTION":
+		return CardDescription
+	case "CONTENT":
+		return CardContent
+	}
+	return ArticleContent
+}
+
 type Article struct {
 	*lib.Article
 	scrollOffset int
 	lastLine     int
 	contentLines []richtext
-	state        ArticleState
+	Mode         ArticleMode
 
 	topImageSixel     *Sixel
 	scaledImageBounds image.Rectangle
@@ -52,7 +64,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 	s.Clear()
 	articleWidth := min(72, ctx.Width)
 	if a.contentLines == nil {
-		switch a.state {
+		switch a.Mode {
 		case ArticleContent:
 			a.contentLines = richtextFromArticle(a.Node, a.TextContent, articleWidth)
 		case CardDescription:
@@ -130,7 +142,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 	above := a.scrollOffset
 	below := len(a.contentLines) - a.lastLine - 1
 	statusBarText = richtext{
-		{Text: a.state.String(), Style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed)},
+		{Text: a.Mode.String(), Style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed)},
 		{Text: "   ", Style: tcell.StyleDefault},
 		{Text: scrollPercentage(above, below), Style: tcell.StyleDefault},
 	}
@@ -149,14 +161,14 @@ func (a *Article) scroll(d int) {
 	}
 }
 
-func (a *Article) ToggleState() {
-	switch a.state {
+func (a *Article) ToggleMode() {
+	switch a.Mode {
 	case ArticleContent:
-		a.state = CardDescription
+		a.Mode = CardDescription
 	case CardDescription:
-		a.state = CardContent
+		a.Mode = CardContent
 	case CardContent:
-		a.state = ArticleContent
+		a.Mode = ArticleContent
 	}
 	a.contentLines = nil
 	a.scrollOffset = 0

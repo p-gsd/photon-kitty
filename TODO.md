@@ -1,5 +1,6 @@
 ### article
 
+- parse item.Content to don't show the html (maybe use w3m?)
 -   if article doesn't have a image and card has, than use that
 
 ### status bar
