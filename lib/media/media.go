@@ -167,5 +167,7 @@ func (media *Media) Run() {
 		defer resp.Body.Close()
 		io.Copy(stdin, resp.Body)
 	}()
-	c.Run()
+	if err := c.Run(); err != nil {
+		log.Println("ERROR: media command:", err)
+	}
 }

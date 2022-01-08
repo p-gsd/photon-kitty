@@ -25,15 +25,16 @@ import (
 )
 
 var CLI struct {
-	Extractor     string       `optional:"" default:"yt-dlp --get-url %" help:"command for media link extraction (item link is substituted for %)" env:"PHOTON_EXTRACTOR"`
-	VideoCmd      string       `optional:"" default:"mpv $" help:"set default command for opening the item media link in a video player (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_VIDEOCMD"`
-	ImageCmd      string       `optional:"" default:"imv -" help:"set default command for opening the item media link in a image viewer (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_IMAGECMD"`
-	TorrentCmd    string       `optional:"" default:"mpv %" help:"set default command for opening the item media link in a torrent downloader (media link is substituted for %, if link is a torrent file, photon will download it, and substitute the torrent file path for %)" env:"PHOTON_TORRENTCMD"`
-	ArticleMode   string       `optional:"" default:"ARTICLE" enum:"ARTICLE,DESCRIPTION,CONTENT" help:"the default article view mode"`
-	HTTPSettings  HTTPSettings `embed:""`
-	Paths         []string     `arg:"" optional:"" help:"RSS/Atom urls, config path, or - for stdin"`
-	DownloadPath  string       `optional:"" default:"$HOME/Downloads" help:"the default download path"`
-	TerminalTitle string       `short:"t" optional:"" help:"set the terminal title"`
+	Extractor       string       `optional:"" default:"yt-dlp --get-url %" help:"command for media link extraction (item link is substituted for %)" env:"PHOTON_EXTRACTOR"`
+	VideoCmd        string       `optional:"" default:"mpv $" help:"set default command for opening the item media link in a video player (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_VIDEOCMD"`
+	ImageCmd        string       `optional:"" default:"imv -" help:"set default command for opening the item media link in a image viewer (media link is substituted for %, direct item link is substituted for $, if no % or $ is provided, photon will download the data and pipe it to the stdin of the command)" env:"PHOTON_IMAGECMD"`
+	TorrentCmd      string       `optional:"" default:"mpv %" help:"set default command for opening the item media link in a torrent downloader (media link is substituted for %, if link is a torrent file, photon will download it, and substitute the torrent file path for %)" env:"PHOTON_TORRENTCMD"`
+	ArticleMode     string       `optional:"" default:"ARTICLE" enum:"ARTICLE,DESCRIPTION,CONTENT" help:"the default article view mode" env:"PHOTON_ARTICLE_MODE"`
+	ArticleRenderer string       `optional:"" default:"w3m -T text/html -dump -cols 72" help:"command to render the item.Content/item.Description" env:"PHOTON_ARTICLE_RENDERER"`
+	HTTPSettings    HTTPSettings `embed:""`
+	Paths           []string     `arg:"" optional:"" help:"RSS/Atom urls, config path, or - for stdin"`
+	DownloadPath    string       `optional:"" default:"$HOME/Downloads" help:"the default download path"`
+	TerminalTitle   string       `short:"t" optional:"" help:"set the terminal title"`
 }
 
 var (

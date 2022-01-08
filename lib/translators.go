@@ -21,7 +21,6 @@ func getExt(f func() string) (val string, ok bool) {
 	return f(), true
 }
 
-//find img html element and extract raw text in description and/or content
 func scrapContent(item *gofeed.Item) {
 	var simpleContent string
 	z := html.NewTokenizer(
@@ -62,7 +61,10 @@ loopDomTest:
 			}
 		}
 	}
-	item.Description = simpleContent
+	if item.Custom == nil {
+		item.Custom = make(map[string]string)
+	}
+	item.Custom["simpleContent"] = simpleContent
 }
 
 func findImage(item *gofeed.Item) {

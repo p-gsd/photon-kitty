@@ -153,6 +153,8 @@ When the article is opened:
 
 `q` or `Esc` - close the article.
 
+Article view in `DESCRIPTION` or `CONTENT` mode, can use a external tool to render the text. By default `w3m` is used, but can be changed with the `--article-renderer` argument, or `PHOTON_ARTICLE_RENDERER` environment variable.
+
 ### media extraction
 
 `p` will play the media link (in cards view)

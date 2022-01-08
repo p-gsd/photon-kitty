@@ -58,7 +58,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		drawLinesWordwrap(s, ctx.X+1, ctx.Y, ctx.Width-3, 2, c.Item.Title, style.Bold(true))
 		drawLine(s, ctx.X+1, ctx.Y+2, ctx.Width-3, c.Feed.Title, style.Italic(true))
 		drawLine(s, ctx.X+1, ctx.Y+3, ctx.Width-3, htime.Difference(time.Now(), *c.Item.PublishedParsed), style.Italic(true))
-		drawLinesWordwrap(s, ctx.X+1, ctx.Y+headerHeight+1, ctx.Width-3, ctx.Height-headerHeight-2, c.Item.Description, style)
+		drawLinesWordwrap(s, ctx.X+1, ctx.Y+headerHeight+1, ctx.Width-3, ctx.Height-headerHeight-2, c.Item.Custom["simpleContent"], style)
 		return
 	}
 

@@ -6,6 +6,7 @@ import (
 	"image"
 	"log"
 	"math"
+	"os/exec"
 	"strings"
 
 	"git.sr.ht/~ghost08/photon/lib"
@@ -68,9 +69,9 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 		case ArticleContent:
 			a.contentLines = richtextFromArticle(a.Node, a.TextContent, articleWidth)
 		case CardDescription:
-			a.contentLines = richtextFromText(a.Card.Item.Description, articleWidth)
+			a.contentLines = richtextFromText(renderArticleContent(a.Card.Item.Description), articleWidth)
 		case CardContent:
-			a.contentLines = richtextFromText(a.Card.Item.Content, articleWidth)
+			a.contentLines = richtextFromText(renderArticleContent(a.Card.Item.Content), articleWidth)
 		}
 	}
 	articleWidthPixels := articleWidth * ctx.XCellPixels()
@@ -418,4 +419,31 @@ func maprt(rts []textobject, f func(textobject) textobject) []textobject {
 		res[i] = f(rt)
 	}
 	return res
+}
+
+func renderArticleContent(h string) string {
+	if CLI.ArticleRenderer == "" {
+		return h
+	}
+	args := strings.Split(CLI.ArticleRenderer, " ")
+	if len(args) == 0 {
+		return h
+	}
+	cmd := args[0]
+	args = args[1:]
+	c := exec.Command(cmd, args...)
+	in, err := c.StdinPipe()
+	if err != nil {
+		return fmt.Sprintf("ERROR: article renderer - opening stdin: %s", err)
+	}
+	go func() {
+		defer in.Close()
+		in.Write([]byte(h))
+	}()
+	r, err := c.CombinedOutput()
+	if err != nil {
+		return fmt.Sprintf("ERROR: article renderer: %s (%s)", err, string(r))
+	}
+	log.Println(string(r))
+	return string(r)
 }
