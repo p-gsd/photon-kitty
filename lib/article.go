@@ -12,16 +12,16 @@ import (
 
 type Article struct {
 	*readability.Article
-	Link     string
+	Card     *Card
 	TopImage image.Image
 }
 
-func newArticle(link string, client *http.Client) (*readability.Article, error) {
-	req, err := http.NewRequest("GET", link, nil)
+func newArticle(card *Card, client *http.Client) (*Article, error) {
+	req, err := http.NewRequest("GET", card.Item.Link, nil)
 	if err != nil {
 		return nil, err
 	}
-	uri, err := url.Parse(link)
+	uri, err := url.Parse(card.Item.Link)
 	if err != nil {
 		return nil, err
 	}
@@ -52,11 +52,11 @@ func newArticle(link string, client *http.Client) (*readability.Article, error) 
 		return nil, fmt.Errorf("invalid content-type `%s`", mime)
 	}
 
-	a, err := readability.New().Parse(resp.Body, link)
+	a, err := readability.New().Parse(resp.Body, card.Item.Link)
 	if err != nil {
 		return nil, err
 	}
-	return &a, nil
+	return &Article{Article: &a, Card: card}, nil
 }
 
 func isValidContentType(mime string) bool {

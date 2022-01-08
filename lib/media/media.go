@@ -35,10 +35,7 @@ func (e *Extractor) NewMedia(link string) (*Media, error) {
 	if ct == "application/x-bittorrent" || ct == "magnet-link" {
 		return &Media{e: e, OriginalLink: link, Links: []string{link}, ContentType: ct}, nil
 	}
-	cmd := strings.Split(
-		strings.TrimSpace(strings.ReplaceAll(e.ExtractorCmd, "%", link)),
-		" ",
-	)
+	cmd := strings.Split(strings.TrimSpace(strings.ReplaceAll(e.ExtractorCmd, "%", link)), " ")
 	output, err := exec.Command(cmd[0], cmd[1:]...).Output()
 	if err != nil {
 		return nil, fmt.Errorf("extracting media link: %w (%s)", err, string(output))
@@ -82,20 +79,20 @@ func (e *Extractor) getContentType(link string) (string, error) {
 }
 
 //determineCommand returns videoCmd or imgCmd by the content-type
-func (e *Extractor) determineCommand(contentType string) string {
+func (e *Extractor) determineCommand(contentType string) (command string) {
 	switch {
 	case strings.HasPrefix(contentType, "video/"), contentType == "image/gif", strings.HasSuffix(contentType, "mpegurl"):
-		return e.VideoCmd
+		command = e.VideoCmd
 	case strings.HasPrefix(contentType, "image/"):
-		return e.ImageCmd
+		command = e.ImageCmd
 	case contentType == "application/x-bittorrent", contentType == "magnet-link":
-		return e.TorrentCmd
+		command = e.TorrentCmd
 	}
-	return ""
+	return strings.TrimSpace(command)
 }
 
 func (media *Media) Run() {
-	command := strings.TrimSpace(media.e.determineCommand(media.ContentType))
+	command := media.e.determineCommand(media.ContentType)
 	if command == "" {
 		log.Println("ERROR: could not determine content-type:", media.ContentType)
 		return
@@ -126,14 +123,7 @@ func (media *Media) Run() {
 			log.Printf("ERROR: downloading torrent file - closing file: %s", err)
 			return
 		}
-		cmd := strings.Split(
-			strings.ReplaceAll(
-				command,
-				"%",
-				f.Name(),
-			),
-			" ",
-		)
+		cmd := strings.Split(strings.ReplaceAll(command, "%", f.Name()), " ")
 		exec.Command(cmd[0], cmd[1:]...).Run()
 		return
 	}
@@ -144,27 +134,13 @@ func (media *Media) Run() {
 		if len(media.Links) > 1 {
 			args = fmt.Sprintf("%s --audio-file=%s", media.Links[0], media.Links[1])
 		}
-		cmd := strings.Split(
-			strings.ReplaceAll(
-				command,
-				"%",
-				args,
-			),
-			" ",
-		)
+		cmd := strings.Split(strings.ReplaceAll(command, "%", args), " ")
 		exec.Command(cmd[0], cmd[1:]...).Run()
 		return
 	}
 	//run command with the direct item link
 	if strings.Contains(command, "$") {
-		cmd := strings.Split(
-			strings.ReplaceAll(
-				command,
-				"$",
-				media.OriginalLink,
-			),
-			" ",
-		)
+		cmd := strings.Split(strings.ReplaceAll(command, "$", media.OriginalLink), " ")
 		exec.Command(cmd[0], cmd[1:]...).Run()
 		return
 	}

@@ -16,45 +16,58 @@ import (
 
 var openedArticle *Article
 
+type ArticleState int
+
+const (
+	ArticleContent ArticleState = iota
+	CardDescription
+	CardContent
+)
+
+func (as ArticleState) String() string {
+	switch as {
+	case ArticleContent:
+		return "ARTICLE"
+	case CardDescription:
+		return "DESCRIPTION"
+	case CardContent:
+		return "CONTENT"
+	}
+	return ""
+}
+
 type Article struct {
 	*lib.Article
 	scrollOffset int
 	lastLine     int
 	contentLines []richtext
+	state        ArticleState
 
 	topImageSixel     *Sixel
 	scaledImageBounds image.Rectangle
 	underImageRune    rune
 }
 
-func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, statusBarText string) {
+func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, statusBarText richtext) {
 	s.Clear()
-	if a.contentLines == nil {
-		a.parseArticle(ctx)
-	}
 	articleWidth := min(72, ctx.Width)
+	if a.contentLines == nil {
+		switch a.state {
+		case ArticleContent:
+			a.contentLines = richtextFromArticle(a.Node, a.TextContent, articleWidth)
+		case CardDescription:
+			a.contentLines = richtextFromText(a.Card.Item.Description, articleWidth)
+		case CardContent:
+			a.contentLines = richtextFromText(a.Card.Item.Content, articleWidth)
+		}
+	}
 	articleWidthPixels := articleWidth * ctx.XCellPixels()
 	x := (ctx.Width - articleWidth) / 2
 	contentY := 7
 
 	//header
-	drawLinesWordwrap(
-		s,
-		x,
-		1,
-		articleWidth,
-		2,
-		a.Title,
-		tcell.StyleDefault.Foreground(tcell.ColorWhiteSmoke).Bold(true),
-	)
-	drawLine(
-		s,
-		x,
-		4,
-		articleWidth,
-		a.SiteName,
-		tcell.StyleDefault,
-	)
+	drawLinesWordwrap(s, x, 1, articleWidth, 2, a.Title, tcell.StyleDefault.Foreground(tcell.ColorWhiteSmoke).Bold(true))
+	drawLine(s, x, 4, articleWidth, a.SiteName, tcell.StyleDefault)
 
 	//top image
 	if a.TopImage != nil {
@@ -74,7 +87,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 			if a.scrollOffset*ctx.YCellPixels() < a.scaledImageBounds.Dy() {
 				sixelBuf = bytes.NewBuffer(nil)
 				imageCenterOffset := (articleWidthPixels - a.scaledImageBounds.Dx()) / ctx.XCellPixels() / 2
-				fmt.Fprintf(sixelBuf, "\033[%d;%dH", contentY, x+1+imageCenterOffset) //set cursor to x, y
+				setCursorPos(sixelBuf, x+1+imageCenterOffset, contentY)
 				leaveRows := int(math.Ceil(float64(a.scrollOffset*ctx.YCellPixels())/6.0)) + 1
 				a.topImageSixel.WriteLeaveUpper(sixelBuf, leaveRows)
 				if a.underImageRune == '\u2800' {
@@ -103,13 +116,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 		var lineOffset int
 		var texts []string
 		for _, to := range line {
-			lineOffset += drawString(
-				s,
-				x+lineOffset,
-				contentY+max(0, imageYCells-a.scrollOffset),
-				to.Text,
-				to.Style,
-			)
+			lineOffset += drawString(s, x+lineOffset, contentY+max(0, imageYCells-a.scrollOffset), to.Text, to.Style)
 			texts = append(texts, to.Text)
 		}
 		a.lastLine = i
@@ -119,20 +126,13 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 		}
 	}
 
-	//status bar text - scroll percentage
+	//status bar text - article state + scroll percentage
 	above := a.scrollOffset
 	below := len(a.contentLines) - a.lastLine - 1
-	switch {
-	case below <= 0 && above == 0:
-		statusBarText = "All"
-	case below <= 0 && above > 0:
-		statusBarText = "Bot"
-	case below > 0 && above <= 0:
-		statusBarText = "Top"
-	case above > 1000000:
-		statusBarText = fmt.Sprintf("%d%%", above/((above+below)/100))
-	default:
-		statusBarText = fmt.Sprintf("%d%%", above*100/(above+below))
+	statusBarText = richtext{
+		{Text: a.state.String(), Style: tcell.StyleDefault.Foreground(tcell.ColorOrangeRed)},
+		{Text: "   ", Style: tcell.StyleDefault},
+		{Text: scrollPercentage(above, below), Style: tcell.StyleDefault},
 	}
 	return
 }
@@ -149,98 +149,18 @@ func (a *Article) scroll(d int) {
 	}
 }
 
-func (a *Article) parseArticle(ctx Context) {
-	buf, err := parseArticleContent(a.Node)
-	if err != nil {
-		log.Println(err)
-		return
+func (a *Article) ToggleState() {
+	switch a.state {
+	case ArticleContent:
+		a.state = CardDescription
+	case CardDescription:
+		a.state = CardContent
+	case CardContent:
+		a.state = ArticleContent
 	}
-	if len(buf) == 0 {
-		buf = richtext{
-			{
-				Text:  a.TextContent,
-				Style: tcell.StyleDefault,
-			},
-		}
-	}
-
-	//word wrap with textobjects
-	articleWidth := min(72, ctx.Width)
-	var lines []richtext
-	var line richtext
-	var lineLength, wordLength int
-	var txt, word strings.Builder
-	for _, to := range buf {
-		for _, c := range to.Text {
-			if c != '\n' && c != ' ' && wordLength < articleWidth {
-				word.WriteRune(c)
-				wordLength += runewidth.RuneWidth(c)
-				continue
-			}
-			if lineLength+wordLength == articleWidth {
-				if wordLength > 0 {
-					txt.WriteString(word.String())
-				}
-				line = append(line, textobject{Text: txt.String(), Style: to.Style})
-				lines = append(lines, line)
-				line = nil
-				lineLength = 0
-				txt.Reset()
-				word.Reset()
-				wordLength = 0
-				continue
-			}
-			if c == '\n' || lineLength+wordLength > articleWidth {
-				line = append(line, textobject{Text: txt.String(), Style: to.Style})
-				lines = append(lines, line)
-				line = nil
-				txt.Reset()
-				if wordLength > 0 {
-					txt.WriteString(word.String())
-					if wordLength < articleWidth {
-						txt.WriteRune(' ')
-					}
-					lineLength = wordLength + 1
-					word.Reset()
-					wordLength = 0
-					continue
-				}
-				lineLength = 0
-				continue
-			}
-			if wordLength > 0 {
-				txt.WriteString(word.String())
-				txt.WriteRune(' ')
-				lineLength += wordLength + 1
-				word.Reset()
-				wordLength = 0
-			}
-		}
-		if wordLength == 0 {
-			continue
-		}
-		if lineLength+wordLength > articleWidth {
-			line = append(line, textobject{Text: txt.String(), Style: to.Style})
-			lines = append(lines, line)
-			line = richtext{textobject{
-				Text:  word.String() + " ",
-				Style: to.Style,
-			}}
-			txt.Reset()
-			word.Reset()
-			lineLength = wordLength + 1
-			wordLength = 0
-		} else {
-			txt.WriteString(word.String())
-			txt.WriteRune(' ')
-			line = append(line, textobject{Text: txt.String(), Style: to.Style})
-			txt.Reset()
-			word.Reset()
-			lineLength += wordLength + 1
-			wordLength = 0
-		}
-	}
-	a.contentLines = lines
+	a.contentLines = nil
+	a.scrollOffset = 0
+	a.lastLine = 0
 }
 
 type richtext []textobject
@@ -249,6 +169,37 @@ type textobject struct {
 	Text  string
 	Style tcell.Style
 	link  string
+}
+
+func (rt richtext) Len() (lenght int) {
+	for _, to := range rt {
+		lenght += len(to.Text)
+	}
+	return
+}
+
+func richtextFromText(text string, width int) []richtext {
+	return richtextWordWrap(
+		richtext{{Text: text, Style: tcell.StyleDefault}},
+		width,
+	)
+}
+
+func richtextFromArticle(node *html.Node, textContent string, width int) []richtext {
+	buf, err := parseArticleContent(node)
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+	if len(buf) == 0 {
+		buf = richtext{
+			{
+				Text:  textContent,
+				Style: tcell.StyleDefault,
+			},
+		}
+	}
+	return richtextWordWrap(buf, width)
 }
 
 func parseArticleContent(node *html.Node) (rt richtext, err error) {
@@ -368,6 +319,85 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 		}
 	}
 	return rt, nil
+}
+
+func richtextWordWrap(buf richtext, width int) []richtext {
+	//word wrap with textobjects
+	var lines []richtext
+	var line richtext
+	var lineLength, wordLength int
+	var txt, word strings.Builder
+	for _, to := range buf {
+		for _, c := range to.Text {
+			if c != '\n' && c != ' ' && wordLength < width {
+				word.WriteRune(c)
+				wordLength += runewidth.RuneWidth(c)
+				continue
+			}
+			if lineLength+wordLength == width {
+				if wordLength > 0 {
+					txt.WriteString(word.String())
+				}
+				line = append(line, textobject{Text: txt.String(), Style: to.Style})
+				lines = append(lines, line)
+				line = nil
+				lineLength = 0
+				txt.Reset()
+				word.Reset()
+				wordLength = 0
+				continue
+			}
+			if c == '\n' || lineLength+wordLength > width {
+				line = append(line, textobject{Text: txt.String(), Style: to.Style})
+				lines = append(lines, line)
+				line = nil
+				txt.Reset()
+				if wordLength > 0 {
+					txt.WriteString(word.String())
+					if wordLength < width {
+						txt.WriteRune(' ')
+					}
+					lineLength = wordLength + 1
+					word.Reset()
+					wordLength = 0
+					continue
+				}
+				lineLength = 0
+				continue
+			}
+			if wordLength > 0 {
+				txt.WriteString(word.String())
+				txt.WriteRune(' ')
+				lineLength += wordLength + 1
+				word.Reset()
+				wordLength = 0
+			}
+		}
+		if wordLength == 0 {
+			continue
+		}
+		if lineLength+wordLength > width {
+			line = append(line, textobject{Text: txt.String(), Style: to.Style})
+			lines = append(lines, line)
+			line = richtext{textobject{
+				Text:  word.String() + " ",
+				Style: to.Style,
+			}}
+			txt.Reset()
+			word.Reset()
+			lineLength = wordLength + 1
+			wordLength = 0
+		} else {
+			txt.WriteString(word.String())
+			txt.WriteRune(' ')
+			line = append(line, textobject{Text: txt.String(), Style: to.Style})
+			txt.Reset()
+			word.Reset()
+			lineLength += wordLength + 1
+			wordLength = 0
+		}
+	}
+	return lines
 }
 
 func maprt(rts []textobject, f func(textobject) textobject) []textobject {

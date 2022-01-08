@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"image"
 	"log"
 	"math"
@@ -21,7 +20,7 @@ type Grid struct {
 	childHeight      int
 }
 
-func (g *Grid) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, statusBarText string) {
+func (g *Grid) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, statusBarText richtext) {
 	sixelBuf = bytes.NewBuffer(nil)
 	margin := (int(ctx.Width) % g.Columns) / 2
 	if photon.SelectedCard == nil && photon.VisibleCards != nil {
@@ -77,18 +76,7 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, status
 	above := (g.FirstChildIndex/g.Columns)*g.childHeight - g.FirstChildOffset
 	allRows := int(math.Ceil(float64(len(photon.VisibleCards)) / float64(g.Columns)))
 	below := (allRows-(g.LastChildIndex/g.Columns)-1)*g.childHeight + g.LastChildOffset
-	switch {
-	case below <= 0 && above == 0:
-		statusBarText = "All"
-	case below <= 0 && above > 0:
-		statusBarText = "Bot"
-	case below > 0 && above <= 0:
-		statusBarText = "Top"
-	case above > 1000000:
-		statusBarText = fmt.Sprintf("%d%%", above/((above+below)/100))
-	default:
-		statusBarText = fmt.Sprintf("%d%%", above*100/(above+below))
-	}
+	statusBarText = richtext{{Text: scrollPercentage(above, below), Style: tcell.StyleDefault}}
 	return
 }
 
@@ -256,33 +244,4 @@ func (g *Grid) selectedChildRefresh() {
 		return
 	}
 	photon.SelectedCard = photon.VisibleCards[index]
-}
-
-func fillArea(s tcell.Screen, rect image.Rectangle, r rune) {
-	for x := rect.Min.X; x <= rect.Max.X; x++ {
-		for y := rect.Min.Y; y <= rect.Max.Y; y++ {
-			s.SetContent(x, y, r, nil, tcell.StyleDefault)
-		}
-	}
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }

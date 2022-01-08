@@ -1,6 +1,5 @@
 ### article
 
--   keybinding to circle the card description, card content or the article parsed content
 -   if article doesn't have a image and card has, than use that
 
 ### status bar

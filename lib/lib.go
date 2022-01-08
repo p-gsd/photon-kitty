@@ -221,15 +221,6 @@ func (p *Photon) RefreshFeed() {
 }
 
 func (p *Photon) filterCards() {
-	/*
-		TODO
-		defer func() {
-			p.SelectedCard.Pos.X, p.SelectedCard.Pos.Y = 0, 0
-			if len(p.visibleCards) == 0 {
-				p.SelectedCard.Card = nil
-			}
-		}()
-	*/
 	query := strings.ToLower(strings.TrimPrefix(p.searchQuery, "/"))
 	if query == "" {
 		p.VisibleCards = p.Cards
@@ -237,23 +228,11 @@ func (p *Photon) filterCards() {
 	}
 	p.VisibleCards = nil
 	for _, card := range p.Cards {
-		if strings.Contains(strings.ToLower(card.Item.Title), query) {
+		if strings.Contains(strings.ToLower(card.Item.Title), query) ||
+			strings.Contains(strings.ToLower(card.Item.Description), query) ||
+			strings.Contains(strings.ToLower(card.Feed.Title), query) ||
+			card.Item.Author != nil && strings.Contains(strings.ToLower(card.Item.Author.Name), query) {
 			p.VisibleCards = append(p.VisibleCards, card)
-			continue
-		}
-		if strings.Contains(strings.ToLower(card.Item.Description), query) {
-			p.VisibleCards = append(p.VisibleCards, card)
-			continue
-		}
-		if strings.Contains(strings.ToLower(card.Feed.Title), query) {
-			p.VisibleCards = append(p.VisibleCards, card)
-			continue
-		}
-		if card.Item.Author != nil {
-			if strings.Contains(strings.ToLower(card.Item.Author.Name), query) {
-				p.VisibleCards = append(p.VisibleCards, card)
-				continue
-			}
 		}
 	}
 }

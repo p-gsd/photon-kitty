@@ -12,7 +12,6 @@ import (
 
 	"git.sr.ht/~ghost08/photon/lib/events"
 	"git.sr.ht/~ghost08/photon/lib/media"
-	"github.com/cixtor/readability"
 	"github.com/kennygrant/sanitize"
 	"github.com/mmcdole/gofeed"
 	"github.com/skratchdot/open-golang/open"
@@ -24,7 +23,7 @@ type Card struct {
 	ItemImage image.Image
 	Feed      *gofeed.Feed
 	FeedImage image.Image
-	Article   *readability.Article
+	Article   *Article
 	Media     *media.Media
 }
 
@@ -63,7 +62,7 @@ func (card *Card) OpenArticle() {
 		return
 	}
 	if card.Article == nil {
-		article, err := newArticle(card.Item.Link, card.photon.httpClient)
+		article, err := newArticle(card, card.photon.httpClient)
 		if err != nil {
 			log.Println("ERROR: scraping link:", err)
 			return
@@ -73,8 +72,7 @@ func (card *Card) OpenArticle() {
 			card.Article.TextContent = card.Item.Description
 		}
 	}
-	card.photon.OpenedArticle = &Article{Article: card.Article}
-	card.photon.OpenedArticle.Link = card.Item.Link
+	card.photon.OpenedArticle = card.Article
 	card.photon.cb.ArticleChanged(card.photon.OpenedArticle)
 	if card.photon.OpenedArticle.Image != "" {
 		card.photon.ImgDownloader.Download(
@@ -203,7 +201,6 @@ func (card *Card) downloadLinks(name string, links []string) error {
 		if len(exts) > 0 {
 			name += "." + exts[0]
 		}
-		log.Println(contentType, name)
 		//write data to file
 		f, err := os.Create(filepath.Join(downloadPath, sanitize.Name(name)))
 		if err != nil {

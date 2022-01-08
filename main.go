@@ -152,14 +152,17 @@ func main() {
 
 	ctx.Height -= 1
 	var fullRedraw bool
+	//TODO allocate one global sixelBuf
 	var sixelBuf *bytes.Buffer
-	var statusBarText string
+	var statusBarText richtext
 	for {
 		switch cb.State() {
 		case states.Normal, states.Search:
+			//TODO add sixelBuf as a arg
 			sixelBuf, statusBarText = grid.Draw(ctx, s)
 			drawCommand(ctx, s)
 		case states.Article:
+			//TODO add sixelBuf as a arg
 			sixelBuf, statusBarText = openedArticle.Draw(ctx, s)
 		}
 		drawStatusBar(s, statusBarText)
@@ -174,6 +177,7 @@ func main() {
 		if sixelBuf != nil && sixelBuf.Len() > 0 {
 			os.Stdout.Write(sixelBuf.Bytes())
 		}
+		//TODO after write, reset sixelBuf
 		select {
 		case <-ctx.Done():
 			return
@@ -182,11 +186,14 @@ func main() {
 	}
 }
 
-func drawStatusBar(s tcell.Screen, t string) {
+func drawStatusBar(s tcell.Screen, t richtext) {
 	w, h := s.Size()
-	X := w - len(t)
+	X := w - t.Len()
 	Y := h - 1
-	drawString(s, X, Y, t, tcell.StyleDefault)
+	for _, to := range t {
+		drawString(s, X, Y, to.Text, to.Style)
+		X += len(to.Text)
+	}
 }
 
 var redrawCh = make(chan bool, 1024)
@@ -460,6 +467,14 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		openedArticle = nil
 		photon.OpenedArticle = nil
 		s.Clear()
+		redraw(true)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Article, "d", func() error {
+		if openedArticle == nil {
+			return nil
+		}
+		openedArticle.ToggleState()
 		redraw(true)
 		return nil
 	})
