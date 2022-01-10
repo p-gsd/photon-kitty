@@ -1,6 +1,7 @@
 ### article
 
 -   if article doesn't have a image and card has, than use that
+-   ctrl+shift+u will show link hints like in alacritty
 
 ### status bar
 
@@ -9,18 +10,14 @@
 
 ### lua bindings
 
-- cards maniputaiont (del, sort, add, create card)
-- http requests with HTTP Settings
-
-### plugins
-
--   for reddit link type posts, opening the article with the link to the web page instead of the reddit post
+-   cards manipulation (del, sort, add, create card)
+-   http requests with HTTP Settings
 
 ### documentation
 
 -   man pages (this needs then a makefile and scdoc)
-- lua man pages
--   better readme
+-   lua man pages
+-   lua tutorial in md
 
 ### distribution
 

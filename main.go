@@ -269,7 +269,9 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	})
 	photon.KeyBindings.Add(states.Normal, "<enter>", func() error {
 		photon.SelectedCard.OpenArticle()
-		openedArticle.Mode = articleModeFromString(CLI.ArticleMode)
+		if openedArticle != nil {
+			openedArticle.Mode = articleModeFromString(CLI.ArticleMode)
+		}
 		grid.ClearCardsPosition()
 		return nil
 	})

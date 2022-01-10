@@ -10,7 +10,7 @@ With the current state of rss readers, which are archaic, or use electron for re
 
 ## Installation
 
-You need a sixel supporting terminal emulator (I use [foot](https://codeberg.org/dnkl/foot))
+You need a sixel supporting terminal emulator (I use [foot](https://codeberg.org/dnkl/foot) and started to experiment with [this branch of alacritty](https://github.com/jbenden/alacritty))
 
 ### linux
 
