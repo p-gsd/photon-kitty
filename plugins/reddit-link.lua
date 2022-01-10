@@ -14,9 +14,6 @@ events.subscribe(events.FeedsDownloaded, function(e)
 			--if the link points somewhere else then reddit replace it
 			if link:find("https://www.reddit.com/", 1, true) ~= 1 then
 				card:link(link)
-				f = io.open("/tmp/photon_lua.log", "a")
-				f:write(card:link() .. "\n")
-				f:write(link .. "\n\n")
 			end
 		end
 	end
