@@ -120,6 +120,18 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 				)
 			}
 		}
+	} else if a.Card.ItemImage != nil {
+		imageProcMap.Delete(a)
+		imageProc(
+			a,
+			a.Card.ItemImage,
+			articleWidthPixels,
+			articleWidthPixels,
+			func(b image.Rectangle, s *Sixel) {
+				a.scaledImageBounds, a.topImageSixel = b, s
+				redraw(true)
+			},
+		)
 	}
 
 	//content

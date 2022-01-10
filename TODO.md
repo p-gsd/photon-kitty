@@ -1,6 +1,5 @@
 ### article
 
--   if article doesn't have a image and card has, than use that
 -   ctrl+shift+u will show link hints like in alacritty
 
 ### status bar
