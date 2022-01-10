@@ -12,6 +12,7 @@ import (
 	"git.sr.ht/~ghost08/photon/lib/keybindings"
 	"git.sr.ht/~ghost08/photon/lib/media"
 	"git.sr.ht/~ghost08/photon/lib/states"
+	"github.com/cjoudrey/gluahttp"
 	lua "github.com/yuin/gopher-lua"
 )
 
@@ -65,6 +66,7 @@ func (p *Photon) initLuaState() {
 	luaState.PreloadModule("photon.events", events.Loader)
 	luaState.PreloadModule("photon.feedInputs", inputs.Loader(&p.feedInputs))
 	luaState.PreloadModule("photon.keybindings", keybindings.Loader(p.KeyBindings))
+	luaState.PreloadModule("http", gluahttp.NewHttpModule(p.httpClient).Loader)
 }
 
 func (p *Photon) photonLoader(L *lua.LState) int {

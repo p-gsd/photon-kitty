@@ -8,21 +8,15 @@
 -   show what feed is currently downloading
 -   show media playing
 
-### lua bindings
-
--   cards manipulation (del, sort, add, create card)
--   http requests with HTTP Settings
-
 ### documentation
 
+-   '?' for keybindings
 -   man pages (this needs then a makefile and scdoc)
 -   lua man pages
 -   lua tutorial in md
-
-### distribution
-
--   aur package
+-   lua http tutorial
 
 ### ideas:
 
--   rewrite mercury to go and use that as article extractor
+-   rewrite mercury to go and use that as article extractor?
+-   add arg to use mercury-parser as article extractor?

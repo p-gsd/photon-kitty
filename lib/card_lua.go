@@ -6,11 +6,10 @@ import (
 )
 
 const (
-	luaCardTypeName  = "photon.card"
-	luaCardsTypeName = "photon.cards"
+	luaCardTypeName = "photon.card"
 )
 
-func (p *Photon) cardsLoader(L *lua.LState) int {
+func (p *Photon) cardLoader(L *lua.LState) int {
 	var cardMethods = map[string]lua.LGFunction{
 		"link":        cardItemLink,
 		"image":       cardItemImage,
@@ -38,16 +37,6 @@ func (p *Photon) cardsLoader(L *lua.LState) int {
 	}
 	mt := L.NewTypeMetatable(luaCardTypeName)
 	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), cardMethods))
-
-	var cardsMethods = map[string]lua.LGFunction{
-		"len": cardsLength,
-		"get": cardsGet,
-		"set": cardsSet,
-	}
-	mt = L.NewTypeMetatable(luaCardsTypeName)
-	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), cardsMethods))
-
-	feedLoader(L)
 	return 0
 }
 
@@ -145,44 +134,4 @@ func cardFeed(L *lua.LState) int {
 	card := checkCard(L, 1)
 	L.Push(newFeed(card.Feed, L))
 	return 1
-}
-
-//Cards
-
-func newCards(cards *Cards, L *lua.LState) *lua.LUserData {
-	ud := L.NewUserData()
-	ud.Value = cards
-	L.SetMetatable(ud, L.GetTypeMetatable(luaCardsTypeName))
-	return ud
-}
-
-func checkCards(L *lua.LState) *Cards {
-	ud := L.CheckUserData(1)
-	if v, ok := ud.Value.(*Cards); ok {
-		return v
-	}
-	L.ArgError(1, luaCardsTypeName+" expected")
-	return nil
-}
-
-func cardsLength(L *lua.LState) int {
-	cards := checkCards(L)
-	L.Push(lua.LNumber(len(*cards)))
-	return 1
-}
-
-func cardsGet(L *lua.LState) int {
-	cards := checkCards(L)
-	index := L.ToInt(2)
-	card := (*cards)[index-1]
-	L.Push(newCard(card, L))
-	return 1
-}
-
-func cardsSet(L *lua.LState) int {
-	cards := checkCards(L)
-	index := L.ToInt(2)
-	card := checkCard(L, 3)
-	(*cards)[index-1] = card
-	return 0
 }

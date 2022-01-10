@@ -3,8 +3,9 @@ module git.sr.ht/~ghost08/photon
 go 1.17
 
 require (
-	github.com/alecthomas/kong v0.2.22
+	github.com/alecthomas/kong v0.3.0
 	github.com/cixtor/readability v1.0.0
+	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/kennygrant/sanitize v1.2.4
@@ -16,7 +17,7 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
 	golang.design/x/clipboard v0.5.3
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
-	golang.org/x/net v0.0.0-20211216030914-fe4d6282115f
+	golang.org/x/net v0.0.0-20220107192237-5cfca573fb4d
 )
 
 require (
@@ -30,8 +31,8 @@ require (
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
-	golang.org/x/exp v0.0.0-20211221223016-e29036178569 // indirect
-	golang.org/x/mobile v0.0.0-20211207041440-4e6c2922fdee // indirect
+	golang.org/x/exp v0.0.0-20220104160115-025e73f80486 // indirect
+	golang.org/x/mobile v0.0.0-20220104184238-4a8be17bd2e3 // indirect
 	golang.org/x/sys v0.0.0-20211216021012-1d35b9e2eb4e // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
