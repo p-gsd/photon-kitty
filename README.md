@@ -12,9 +12,13 @@ With the current state of rss readers, which are archaic, or use electron for re
 
 You need a sixel supporting terminal emulator (I use [foot](https://codeberg.org/dnkl/foot) and started to experiment with [this branch of alacritty](https://github.com/jbenden/alacritty))
 
-### linux
+First install `go`, `git` and `scdoc`, then:
 
-    $ go install git.sr.ht/~ghost08/photon@latest
+```
+git clone https://git.sr.ht/~ghost08/photon
+cd photon
+sudo make install
+```
 
 AUR: [photon-rss-git](https://aur.archlinux.org/packages/photon-rss-git/)
 
