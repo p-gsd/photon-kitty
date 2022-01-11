@@ -27,18 +27,18 @@ type Media struct {
 }
 
 func (e *Extractor) NewMedia(link string) (*Media, error) {
-	//if link is a magnet link, or the content type is a torrent file, don't run the extractor
 	ct, err := e.getContentType(link)
 	if err != nil {
 		return nil, fmt.Errorf("media link - getting content-type: %w ", err)
 	}
-	if ct == "application/x-bittorrent" || ct == "magnet-link" {
+	//if link is a image, video, or torrent, don't run the extractor
+	if e.determineCommand(ct) != "" {
 		return &Media{e: e, OriginalLink: link, Links: []string{link}, ContentType: ct}, nil
 	}
 	cmd := strings.Split(strings.TrimSpace(strings.ReplaceAll(e.ExtractorCmd, "%", link)), " ")
 	output, err := exec.Command(cmd[0], cmd[1:]...).Output()
 	if err != nil {
-		return nil, fmt.Errorf("extracting media link: %w (%s)", err, string(output))
+		return nil, fmt.Errorf("extracting media link [%s]: %w (%s)", link, err, string(output))
 	}
 	outputLines := strings.Split(strings.TrimSpace(string(output)), "\n")
 	var links []string
