@@ -124,7 +124,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 				)
 			}
 		}
-	} else if a.Card.ItemImage != nil {
+	} else if a.Article.Article.Image == "" && a.Card.ItemImage != nil {
 		imageProcMap.Delete(a)
 		imageProc(
 			a,
