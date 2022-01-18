@@ -159,6 +159,11 @@ render the text. By default *w3m* is used, but can be changed with the
 *--article-renderer* argument, or *PHOTON_ARTICLE_RENDERER* environment
 variable.
 
+Opening links in the article is done by link hints. Begin with pressing *f*,
+then press the keys shown in the link you want to open. By pressing these keys
+the link will open in the default web browser. You can press *Escape* to leave
+link hints mode.
+
 ## MEDIA EXTRACTION
 
 photon can extract the direct media link of the rss item. Media extraction is by
@@ -217,9 +222,11 @@ downloader/player (default _mpv_ with the _webtorrent-mpv-hook_ script).
 
 *m* circle trough article view mode
 
+*f* start link hints to open link in the browser
+
 *j* scroll the article down
 
-k scroll the article up
+*k* scroll the article up
 
 *CTRL+d* scroll half screen down
 

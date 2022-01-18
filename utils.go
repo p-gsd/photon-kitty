@@ -24,6 +24,20 @@ func max(a, b int) int {
 	return b
 }
 
+//Compute max(1, ceil(log(number, base))).  Use only integer arithmetic in order to avoid numerical error.
+func ceilLog(number, base int) int {
+	if number < 1 || base < 2 {
+		panic("math domain error")
+	}
+	result := 1
+	accum := base
+	for accum < number {
+		result += 1
+		accum *= base
+	}
+	return result
+}
+
 func scrollPercentage(above, below int) string {
 	switch {
 	case below <= 0 && above == 0:

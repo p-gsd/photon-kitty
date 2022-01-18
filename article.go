@@ -12,6 +12,7 @@ import (
 	"git.sr.ht/~ghost08/photon/lib"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
+	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/net/html"
 )
 
@@ -56,9 +57,11 @@ type Article struct {
 	contentLines []richtext
 	Mode         ArticleMode
 
-	topImageSixel     *Sixel
-	scaledImageBounds image.Rectangle
-	underImageRune    rune
+	imgSixel        *Sixel
+	scaledImgBounds image.Rectangle
+	underImageRune  rune
+	hint            *string
+	hints           map[string]string
 }
 
 func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, statusBarText richtext) {
@@ -73,6 +76,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 		case CardContent:
 			a.contentLines = richtextFromText(renderArticleContent(a.Card.Item.Content), articleWidth)
 		}
+		a.HintsParse()
 	}
 	articleWidthPixels := articleWidth * ctx.XCellPixels()
 	x := (ctx.Width - articleWidth) / 2
@@ -84,7 +88,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 
 	//top image
 	if a.TopImage != nil {
-		if a.topImageSixel == nil {
+		if a.imgSixel == nil {
 			imageProcMap.Delete(a)
 			imageProc(
 				a,
@@ -92,17 +96,17 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 				articleWidthPixels,
 				articleWidthPixels,
 				func(b image.Rectangle, s *Sixel) {
-					a.scaledImageBounds, a.topImageSixel = b, s
+					a.scaledImgBounds, a.imgSixel = b, s
 					redraw(true)
 				},
 			)
 		} else {
-			if a.scrollOffset*ctx.YCellPixels() < a.scaledImageBounds.Dy() {
+			if a.scrollOffset*ctx.YCellPixels() < a.scaledImgBounds.Dy() {
 				sixelBuf = bytes.NewBuffer(nil)
-				imageCenterOffset := (articleWidthPixels - a.scaledImageBounds.Dx()) / ctx.XCellPixels() / 2
+				imageCenterOffset := (articleWidthPixels - a.scaledImgBounds.Dx()) / ctx.XCellPixels() / 2
 				setCursorPos(sixelBuf, x+1+imageCenterOffset, contentY)
 				leaveRows := int(math.Ceil(float64(a.scrollOffset*ctx.YCellPixels())/6.0)) + 1
-				a.topImageSixel.WriteLeaveUpper(sixelBuf, leaveRows)
+				a.imgSixel.WriteLeaveUpper(sixelBuf, leaveRows)
 				if a.underImageRune == '\u2800' {
 					a.underImageRune = '\u2007'
 				} else {
@@ -114,7 +118,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 						x,
 						contentY-1,
 						x+articleWidth,
-						contentY+a.scaledImageBounds.Dy()/ctx.YCellPixels()-a.scrollOffset,
+						contentY+a.scaledImgBounds.Dy()/ctx.YCellPixels()-a.scrollOffset,
 					),
 					a.underImageRune,
 				)
@@ -128,20 +132,40 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 			articleWidthPixels,
 			articleWidthPixels,
 			func(b image.Rectangle, s *Sixel) {
-				a.scaledImageBounds, a.topImageSixel = b, s
+				a.scaledImgBounds, a.imgSixel = b, s
 				redraw(true)
 			},
 		)
 	}
 
 	//content
-	imageYCells := a.scaledImageBounds.Dy() / ctx.YCellPixels()
+	imageYCells := a.scaledImgBounds.Dy() / ctx.YCellPixels()
 	for i := max(0, a.scrollOffset-imageYCells); i < len(a.contentLines); i++ {
 		line := a.contentLines[i]
 		var lineOffset int
 		var texts []string
 		for _, to := range line {
-			lineOffset += drawString(s, x+lineOffset, contentY+max(0, imageYCells-a.scrollOffset), to.Text, to.Style)
+			if a.hints != nil && a.hint != nil {
+				if hint, ok := a.hints[to.Link]; ok && strings.HasPrefix(hint, *a.hint) {
+					log.Println(hint, *a.hint)
+					s.SetContent(
+						x+lineOffset,
+						contentY+max(0, imageYCells-a.scrollOffset),
+						[]rune(hint)[len(*a.hint)],
+						nil,
+						tcell.StyleDefault.Background(tcell.ColorYellow).Foreground(tcell.ColorBlack),
+					)
+					lineOffset++
+					to.Text = to.Text[1:]
+				}
+			}
+			lineOffset += drawString(
+				s,
+				x+lineOffset,
+				contentY+max(0, imageYCells-a.scrollOffset),
+				to.Text,
+				to.Style,
+			)
 			texts = append(texts, to.Text)
 		}
 		a.lastLine = i
@@ -162,7 +186,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, sta
 	return
 }
 
-func (a *Article) scroll(d int) {
+func (a *Article) Scroll(d int) {
 	if a.lastLine+d >= len(a.contentLines) {
 		a.scrollOffset = len(a.contentLines) - (a.lastLine - a.scrollOffset) - 1
 		a.lastLine = len(a.contentLines)
@@ -188,12 +212,186 @@ func (a *Article) ToggleMode() {
 	a.lastLine = 0
 }
 
+func (a *Article) Clear() {
+	a.contentLines = nil
+	a.imgSixel = nil
+}
+
+func (a *Article) HintStart() {
+	var tmp string
+	a.hint = &tmp
+}
+
+func (a *Article) HintEvent(ev *tcell.EventKey) bool {
+	if a == nil || a.hint == nil {
+		return false
+	}
+	switch ev.Key() {
+	case tcell.KeyEscape:
+		a.hint = nil
+		redraw(false)
+	case tcell.KeyRune:
+		hint := (*a.hint) + string(ev.Rune())
+		a.hint = &hint
+		if link := a.HintsFind(); link != "" {
+			//found exact hint, openning link and exiting hints mode
+			open.Start(link)
+			a.hint = nil
+		} else if !a.HintsPrefix() {
+			//no hints found with set prefix, exiting hints mode
+			a.hint = nil
+		}
+		redraw(false)
+	}
+	return true
+}
+
+func (a *Article) HintsFind() string {
+	for link, hint := range a.hints {
+		if *a.hint == hint {
+			return link
+		}
+	}
+	return ""
+}
+
+//returns true if there is a hint with the set prefix
+func (a *Article) HintsPrefix() bool {
+	for _, hint := range a.hints {
+		if strings.HasPrefix(hint, *a.hint) {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *Article) HintsParse() {
+	a.hints = nil
+	var (
+		chars      = []rune("asdfghjkl")
+		minChars   = 1
+		shortCount = 0
+	)
+
+	var elems []string
+	for _, line := range a.contentLines {
+		for _, to := range line {
+			if to.Link != "" {
+				elems = append(elems, to.Link)
+			}
+		}
+	}
+	if len(elems) == 0 {
+		return
+	}
+	/*
+	   Determine how many digits the link hints will require in the worst
+	   case. Usually we do not need all of these digits for every link
+	   single hint, so we can show shorter hints for a few of the links.
+	*/
+	needed := max(minChars, ceilLog(len(elems), len(chars)))
+
+	/*
+	   Short hints are the number of hints we can possibly show which are
+	   (needed - 1) digits in length.
+	*/
+	if needed > minChars && needed > 1 {
+		totalSpace := int(math.Pow(float64(len(chars)), float64(needed)))
+		/*
+		 For each 1 short link being added, len(chars) long links are
+		 removed, therefore the space removed is len(chars) - 1.
+		*/
+		shortCount = (totalSpace - len(elems)) // (len(chars) - 1)
+	} else {
+		shortCount = 0
+	}
+
+	longCount := len(elems) - shortCount
+
+	var strings []string
+
+	if needed > 1 {
+		for i := 0; i < shortCount; i++ {
+			strings = append(strings, numberToHintStr(i, chars, needed-1))
+		}
+	}
+
+	start := shortCount * len(chars)
+	for i := start; i < start+longCount; i++ {
+		strings = append(strings, numberToHintStr(i, chars, needed))
+	}
+
+	a.hints = make(map[string]string)
+	for i, hint := range shuffleHints(strings, len(chars)) {
+		if i >= len(elems) {
+			break
+		}
+		a.hints[elems[i]] = hint
+	}
+}
+
+/*
+	Shuffle the given set of hints so that they're scattered.
+	Hints starting with the same character will be spread evenly throughout
+	the array.
+	Inspired by Vimium.
+	Args:
+		hints: A list of hint strings.
+		length: Length of the available charset.
+	Return:
+		A list of shuffled hint strings.
+*/
+func shuffleHints(hints []string, length int) []string {
+	buckets := make([][]string, length)
+	for i, hint := range hints {
+		buckets[i%len(buckets)] = append(buckets[i%len(buckets)], hint)
+	}
+	var result []string
+	for _, bucket := range buckets {
+		result = append(result, bucket...)
+	}
+	return result
+}
+
+/*
+   Convert a number like "8" into a hint string like "JK".
+   This is used to sequentially generate all of the hint text.
+   The hint string will be "padded with zeroes" to ensure its length is >=
+   digits.
+   Inspired by Vimium.
+   Args:
+       number: The hint number.
+       chars: The charset to use.
+       digits: The minimum output length.
+   Return:
+       A hint string.
+*/
+func numberToHintStr(number int, chars []rune, digits int) string {
+	base := len(chars)
+	var hintstr []rune
+	remainder := 0
+	for {
+		remainder = number % base
+		hintstr = append([]rune{chars[remainder]}, hintstr...)
+		number -= remainder
+		number = number / base
+		if number <= 0 {
+			break
+		}
+	}
+	//Pad the hint string we're returning so that it matches digits.
+	for i := 0; i < digits-len(hintstr); i++ {
+		hintstr = append([]rune{chars[0]}, hintstr...)
+	}
+	return string(hintstr)
+}
+
 type richtext []textobject
 
 type textobject struct {
 	Text  string
 	Style tcell.Style
-	link  string
+	Link  string
 }
 
 func (rt richtext) Len() (lenght int) {
@@ -278,7 +476,7 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 				subrt,
 				func(to textobject) textobject {
 					to.Style = to.Style.Foreground(tcell.ColorOrangeRed).Bold(true)
-					to.link = href
+					to.Link = href
 					return to
 				},
 			)
@@ -363,7 +561,7 @@ func richtextWordWrap(buf richtext, width int) []richtext {
 				if wordLength > 0 {
 					txt.WriteString(word.String())
 				}
-				line = append(line, textobject{Text: txt.String(), Style: to.Style})
+				line = append(line, textobject{Text: txt.String(), Style: to.Style, Link: to.Link})
 				lines = append(lines, line)
 				line = nil
 				lineLength = 0
@@ -373,7 +571,7 @@ func richtextWordWrap(buf richtext, width int) []richtext {
 				continue
 			}
 			if c == '\n' || lineLength+wordLength > width {
-				line = append(line, textobject{Text: txt.String(), Style: to.Style})
+				line = append(line, textobject{Text: txt.String(), Style: to.Style, Link: to.Link})
 				lines = append(lines, line)
 				line = nil
 				txt.Reset()
@@ -402,11 +600,12 @@ func richtextWordWrap(buf richtext, width int) []richtext {
 			continue
 		}
 		if lineLength+wordLength > width {
-			line = append(line, textobject{Text: txt.String(), Style: to.Style})
+			line = append(line, textobject{Text: txt.String(), Style: to.Style, Link: to.Link})
 			lines = append(lines, line)
 			line = richtext{textobject{
 				Text:  word.String() + " ",
 				Style: to.Style,
+				Link:  to.Link,
 			}}
 			txt.Reset()
 			word.Reset()
@@ -415,7 +614,7 @@ func richtextWordWrap(buf richtext, width int) []richtext {
 		} else {
 			txt.WriteString(word.String())
 			txt.WriteRune(' ')
-			line = append(line, textobject{Text: txt.String(), Style: to.Style})
+			line = append(line, textobject{Text: txt.String(), Style: to.Style, Link: to.Link})
 			txt.Reset()
 			word.Reset()
 			lineLength += wordLength + 1
@@ -456,6 +655,5 @@ func renderArticleContent(h string) string {
 	if err != nil {
 		return fmt.Sprintf("ERROR: article renderer: %s (%s)", err, string(r))
 	}
-	log.Println(string(r))
 	return string(r)
 }

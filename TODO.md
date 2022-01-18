@@ -1,7 +1,3 @@
-### article
-
--   ctrl+shift+u will show link hints like in alacritty
-
 ### status bar
 
 -   show what feed is currently downloading
@@ -10,9 +6,11 @@
 ### documentation
 
 -   '?' for keybindings
--   man pages (this needs then a makefile and scdoc)
--   lua man pages
 -   lua tutorial in md
+
+### plugins
+
+-   readed plugin: will change the background color of the card if it was opened
 
 ### ideas:
 
