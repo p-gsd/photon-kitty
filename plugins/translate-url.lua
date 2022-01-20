@@ -1,14 +1,13 @@
 --translate-url is a extension that translates known input urls to rss urls
 --now it works on: youtube channels, subreddits, odysee channels
-events = require("photon.events")
-feedInputs = require("photon.feedInputs")
+photon = require("photon")
 
-events.subscribe(events.Init, function(e)
-	for i = 1, feedInputs.len(), 1 do
-		feed = feedInputs.get(i)
+photon.events.subscribe(photon.events.Init, function(e)
+	for i = 1, photon.feedInputs.len(), 1 do
+		feed = photon.feedInputs.get(i)
 		translator = match(feed)
 		if translator ~= nil then
-			feedInputs.set(i, translator(feed))
+			photon.feedInputs.set(i, translator(feed))
 		end
 	end
 end)

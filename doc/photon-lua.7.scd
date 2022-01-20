@@ -19,20 +19,20 @@ Hello world example:
 ~/.config/photon/plugins/hello_world.lua
 
 ```
-events = require("photon.events")
+photon = require("photon")
 
-events.subscribe(events.Init, function()
-	print("Hello world!")
-end)
+photon.events.subscribe(
+	photon.events.Init,
+	function()
+		print("Hello world!")
+	end
+)
 ```
 
-# LIBRARIES
+# LIBRARY
 
-photon includes some libraries to subscribe to events, get and set the state of
+The `photon` can be used to subscribe to events, get and set the state of
 cards and so on.
-
-The libraries are: *photon*, *photon.events*, *photon.feedInputs*,
-*photon.keybindings* and the *http* library.
 
 ## PHOTON
 
@@ -146,6 +146,59 @@ print("new link: " ... card:link())
 
 *run()*
 	runs the _MEDIA_. Opens a default application.
+
+## EVENTS
+
+*subscribe(eventType, function(event))*
+	plugins can subscribe to a event type and a callback function which takes a
+	event object.
+
+Event types:
+
+*Init*
+	when photon has successfully started, and loaded the _INPUTS_ (either from
+	the args or a config file)
+
+*RunMediaStart*
+	when a media link is about to play.
+
+*RunMediaEnd*
+	when a media link is done playing.
+
+*FeedsDownloaded*
+	when all the rss/atom feeds data is downloaded and parsed. _CARDS_ are from
+	now accessible.
+
+## INPUTS
+
+*photon.inputs*
+	an array of links/cmds that photon got from args, or parsed from a config
+	file
+
+It has the following functions:
+
+*len()*
+	returns the length of inputs
+
+*get(index)*
+	returns a link/cmd at *index*
+
+*set(index, string)*
+	sets a link at index
+
+*add(index, string)*
+	add a new link at index
+
+*append(string)*
+	the same as *inputs:add(inputs:len(), link)*
+
+## KEYBINDINGS
+
+TODO
+
+# EXAMPLES
+
+TODO
 
 # SEE ALSO
 

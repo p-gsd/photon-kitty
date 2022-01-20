@@ -63,9 +63,6 @@ func (p *Photon) initLuaState() {
 	media.Loader(luaState)
 	p.cardsLoader(luaState)
 	luaState.PreloadModule("photon", p.photonLoader)
-	luaState.PreloadModule("photon.events", events.Loader)
-	luaState.PreloadModule("photon.feedInputs", inputs.Loader(&p.feedInputs))
-	luaState.PreloadModule("photon.keybindings", keybindings.Loader(p.KeyBindings))
 	luaState.PreloadModule("http", gluahttp.NewHttpModule(p.httpClient).Loader)
 }
 
@@ -81,6 +78,9 @@ func (p *Photon) photonLoader(L *lua.LState) int {
 	L.SetField(mod, "cards", newCards(&p.Cards, L))
 	L.SetField(mod, "visibleCards", newCards(&p.VisibleCards, L))
 	L.SetField(mod, "selectedCard", p.newSelectedCard(L))
+	L.SetField(mod, "events", events.New(L))
+	L.SetField(mod, "keybindings", keybindings.NewLValue(L, p.KeyBindings))
+	L.SetField(mod, "feedInputs", inputs.New(L, p.feedInputs))
 	L.Push(mod)
 
 	return 1

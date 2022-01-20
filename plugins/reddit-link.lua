@@ -1,8 +1,7 @@
 --reddit-link is a plugin, that checks if the reddit post links to a article, and if it does, replaces the item.link with it
 photon = require("photon")
-events = require("photon.events")
 
-events.subscribe(events.FeedsDownloaded, function(e)
+photon.events.subscribe(photon.events.FeedsDownloaded, function(e)
 	for i = 1, photon.cards:len(), 1 do
 		card = photon.cards:get(i)
 		content = card:content()

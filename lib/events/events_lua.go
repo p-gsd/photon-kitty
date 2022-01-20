@@ -4,7 +4,7 @@ import (
 	lua "github.com/yuin/gopher-lua"
 )
 
-func Loader(L *lua.LState) int {
+func New(L *lua.LState) lua.LValue {
 	var exports = map[string]lua.LGFunction{
 		"subscribe": eventsSubscribe,
 	}
@@ -14,9 +14,7 @@ func Loader(L *lua.LState) int {
 	L.SetField(mod, "RunMediaStart", lua.LString(EventTypeRunMediaStart))
 	L.SetField(mod, "RunMediaEnd", lua.LString(EventTypeRunMediaEnd))
 	L.SetField(mod, "FeedsDownloaded", lua.LString(EventTypeFeedsDownloaded))
-	L.Push(mod)
-
-	return 1
+	return mod
 }
 
 func eventsSubscribe(L *lua.LState) int {

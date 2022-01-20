@@ -3,11 +3,6 @@
 -   show what feed is currently downloading
 -   show media playing
 
-### documentation
-
--   '?' for keybindings
--   lua tutorial in md
-
 ### plugins
 
 -   readed plugin: will change the background color of the card if it was opened

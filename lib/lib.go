@@ -20,7 +20,7 @@ import (
 )
 
 type Photon struct {
-	feedInputs     inputs.Inputs
+	feedInputs     *inputs.Inputs
 	ImgDownloader  *ImgDownloader
 	mediaExtractor *media.Extractor
 	httpClient     *http.Client
@@ -51,7 +51,7 @@ func New(cb Callbacks, paths []string, options ...Option) (*Photon, error) {
 	if err != nil {
 		return nil, err
 	}
-	if len(feedInputs) == 0 {
+	if feedInputs.Len() == 0 {
 		return nil, fmt.Errorf("no feeds")
 	}
 	p.feedInputs = feedInputs
@@ -110,7 +110,7 @@ func WithDownloadPath(downloadPath string) Option {
 	}
 }
 
-func (p *Photon) loadFeeds(paths []string) (inputs.Inputs, error) {
+func (p *Photon) loadFeeds(paths []string) (*inputs.Inputs, error) {
 	var ret []string
 	for _, path := range paths {
 		switch {
@@ -134,7 +134,7 @@ func (p *Photon) loadFeeds(paths []string) (inputs.Inputs, error) {
 			ret = append(ret, feeds...)
 		}
 	}
-	return ret, nil
+	return (*inputs.Inputs)(&ret), nil
 }
 
 func (p *Photon) SearchQuery(q string) {
@@ -145,7 +145,7 @@ func (p *Photon) SearchQuery(q string) {
 func (p *Photon) RefreshFeed() {
 	p.Cards = nil
 	feeds := make(chan *gofeed.Feed)
-	for _, feedURL := range p.feedInputs {
+	for _, feedURL := range *p.feedInputs {
 		feedURL := feedURL
 		go func() {
 			fp := gofeed.NewParser()
@@ -194,7 +194,7 @@ func (p *Photon) RefreshFeed() {
 	for f := range feeds {
 		feedsGot++
 		if f == nil {
-			if feedsGot == len(p.feedInputs) {
+			if feedsGot == p.feedInputs.Len() {
 				break
 			}
 			continue
@@ -208,7 +208,7 @@ func (p *Photon) RefreshFeed() {
 			}
 		}
 		p.Cards = append(p.Cards, newCards...)
-		if feedsGot == len(p.feedInputs) {
+		if feedsGot == p.feedInputs.Len() {
 			break
 		}
 	}
