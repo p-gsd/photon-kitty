@@ -9,11 +9,13 @@ func New(L *lua.LState) lua.LValue {
 		"subscribe": eventsSubscribe,
 	}
 	mod := L.SetFuncs(L.NewTable(), exports)
-	registerEventType(L)
+	registerEvents(L)
 	L.SetField(mod, "Init", lua.LString(EventTypeInit))
 	L.SetField(mod, "RunMediaStart", lua.LString(EventTypeRunMediaStart))
 	L.SetField(mod, "RunMediaEnd", lua.LString(EventTypeRunMediaEnd))
 	L.SetField(mod, "FeedsDownloaded", lua.LString(EventTypeFeedsDownloaded))
+	L.SetField(mod, "ArticleOpened", lua.LString(EventTypeArticleOpened))
+	L.SetField(mod, "LinkOpened", lua.LString(EventTypeLinkOpened))
 	return mod
 }
 
@@ -34,35 +36,93 @@ func eventsSubscribe(L *lua.LState) int {
 	return 0
 }
 
-const luaEventTypeName = "photon.event"
+func registerEvents(L *lua.LState) {
+	//Init
+	mt := L.NewTypeMetatable(string(EventTypeInit))
+	L.SetGlobal(string(EventTypeInit), mt)
+	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), nil))
+
+	//FeedsDownloaded
+	mt = L.NewTypeMetatable(string(EventTypeFeedsDownloaded))
+	L.SetGlobal(string(EventTypeInit), mt)
+	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), nil))
+
+	//RunMediaStart
+	methods := map[string]lua.LGFunction{
+		"link": eventLink,
+		"card": eventCard,
+	}
+	mt = L.NewTypeMetatable(string(EventTypeRunMediaStart))
+	L.SetGlobal(string(EventTypeRunMediaStart), mt)
+	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), methods))
+
+	//RunMediaEnd
+	mt = L.NewTypeMetatable(string(EventTypeRunMediaEnd))
+	L.SetGlobal(string(EventTypeRunMediaEnd), mt)
+	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), methods))
+
+	//ArticleOpened
+	mt = L.NewTypeMetatable(string(EventTypeArticleOpened))
+	L.SetGlobal(string(EventTypeArticleOpened), mt)
+	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), methods))
+
+	//LinkOpened
+	mt = L.NewTypeMetatable(string(EventTypeLinkOpened))
+	L.SetGlobal(string(EventTypeLinkOpened), mt)
+	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), methods))
+}
+
+func eventLink(L *lua.LState) int {
+	ud := L.CheckUserData(1)
+	switch e := ud.Value.(type) {
+	case *Init:
+		L.ArgError(1, "init event doesn't have link method")
+		return 0
+	case *RunMediaStart:
+		L.Push(lua.LString(e.Link))
+	case *RunMediaEnd:
+		L.Push(lua.LString(e.Link))
+	case *ArticleOpened:
+		L.Push(lua.LString(e.Link))
+	case *LinkOpened:
+		L.Push(lua.LString(e.Link))
+	case *FeedsDownloaded:
+		L.ArgError(1, "feedsDownloaded event doesn't have link method")
+		return 0
+	default:
+		L.ArgError(1, "event expected")
+		return 0
+	}
+	return 1
+}
+
+func eventCard(L *lua.LState) int {
+	ud := L.CheckUserData(1)
+	switch e := ud.Value.(type) {
+	case *Init:
+		L.ArgError(1, "init event doesn't have link method")
+		return 0
+	case *RunMediaStart:
+		L.Push(e.Card)
+	case *RunMediaEnd:
+		L.Push(e.Card)
+	case *ArticleOpened:
+		L.Push(e.Card)
+	case *LinkOpened:
+		L.Push(e.Card)
+	case *FeedsDownloaded:
+		L.ArgError(1, "feedsDownloaded event doesn't have link method")
+		return 0
+	default:
+		L.ArgError(1, "event expected")
+		return 0
+	}
+	return 1
+}
 
 func eventToLuaValue(L *lua.LState, e Event) lua.LValue {
 	ud := L.NewUserData()
 	ud.Value = e
-	L.SetMetatable(ud, L.GetTypeMetatable(luaEventTypeName))
+	L.SetMetatable(ud, L.GetTypeMetatable(string(e.Type())))
 	return ud
-}
-
-func registerEventType(L *lua.LState) {
-	var eventMethods = map[string]lua.LGFunction{
-		"type": eventType,
-	}
-	mt := L.NewTypeMetatable(luaEventTypeName)
-	L.SetGlobal(luaEventTypeName, mt)
-	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), eventMethods))
-}
-
-func checkEvent(L *lua.LState) Event {
-	ud := L.CheckUserData(1)
-	if v, ok := ud.Value.(Event); ok {
-		return v
-	}
-	L.ArgError(1, "event expected")
-	return nil
-}
-
-func eventType(L *lua.LState) int {
-	e := checkEvent(L)
-	L.Push(lua.LString(e.Type()))
-	return 1
 }

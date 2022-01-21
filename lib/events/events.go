@@ -1,8 +1,10 @@
 package events
 
+import lua "github.com/yuin/gopher-lua"
+
 var registry = make(EventCallbacks)
 
-type EventCallback func(Event) error
+type EventCallback func(e Event) error
 
 type EventCallbacks map[EventType][]EventCallback
 
@@ -35,6 +37,8 @@ const (
 	EventTypeRunMediaStart   = EventType("RunMediaStart")
 	EventTypeRunMediaEnd     = EventType("RunMediaEnd")
 	EventTypeFeedsDownloaded = EventType("FeedsDownloaded")
+	EventTypeArticleOpened   = EventType("ArticleOpened")
+	EventTypeLinkOpened      = EventType("LinkOpened")
 )
 
 var events = make(EventCallbacks)
@@ -47,6 +51,7 @@ func (e *Init) Type() EventType {
 
 type RunMediaStart struct {
 	Link string
+	Card lua.LValue
 }
 
 func (e *RunMediaStart) Type() EventType {
@@ -55,6 +60,7 @@ func (e *RunMediaStart) Type() EventType {
 
 type RunMediaEnd struct {
 	Link string
+	Card lua.LValue
 }
 
 func (e *RunMediaEnd) Type() EventType {
@@ -65,4 +71,22 @@ type FeedsDownloaded struct{}
 
 func (e *FeedsDownloaded) Type() EventType {
 	return EventTypeFeedsDownloaded
+}
+
+type ArticleOpened struct {
+	Link string
+	Card lua.LValue
+}
+
+func (e *ArticleOpened) Type() EventType {
+	return EventTypeArticleOpened
+}
+
+type LinkOpened struct {
+	Link string
+	Card lua.LValue
+}
+
+func (e *LinkOpened) Type() EventType {
+	return EventTypeLinkOpened
 }

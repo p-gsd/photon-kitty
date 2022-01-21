@@ -3,6 +3,7 @@ package main
 import (
 	"image"
 	"io"
+	"log"
 	"time"
 
 	"git.sr.ht/~ghost08/photon/lib"
@@ -46,6 +47,13 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
 		return
 	}
 	style := tcell.StyleDefault
+	if c.Foreground != -1 {
+		log.Println("FOREGROUND!!!!!!!", c.Foreground)
+		style = style.Foreground(tcell.ColorValid + tcell.Color(c.Foreground))
+	}
+	if c.Background != -1 {
+		style = style.Background(tcell.ColorValid + tcell.Color(c.Background))
+	}
 	if selected {
 		style = tcell.StyleDefault.Background(selectedColor)
 	}

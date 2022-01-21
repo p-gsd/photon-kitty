@@ -7,6 +7,7 @@ require (
 	github.com/cixtor/readability v1.0.0
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
 	github.com/gabriel-vasile/mimetype v1.4.0
+	github.com/gdamore/tcell v1.4.0
 	github.com/gdamore/tcell/v2 v2.4.0
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/mattn/go-runewidth v0.0.13

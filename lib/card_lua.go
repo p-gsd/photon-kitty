@@ -34,6 +34,20 @@ func (p *Photon) cardLoader(L *lua.LState) int {
 			card.OpenArticle()
 			return 0
 		},
+		"foreground": func(L *lua.LState) int {
+			card := checkCard(L, 1)
+			color := L.CheckInt(2)
+			card.Foreground = color
+			p.cb.Redraw()
+			return 0
+		},
+		"background": func(L *lua.LState) int {
+			card := checkCard(L, 1)
+			color := L.CheckInt(2)
+			card.Background = color
+			p.cb.Redraw()
+			return 0
+		},
 	}
 	mt := L.NewTypeMetatable(luaCardTypeName)
 	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), cardMethods))

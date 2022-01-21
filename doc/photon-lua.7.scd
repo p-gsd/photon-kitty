@@ -31,7 +31,7 @@ photon.events.subscribe(
 
 # LIBRARY
 
-The `photon` can be used to subscribe to events, get and set the state of
+The _photon_ can be used to subscribe to events, get and set the state of
 cards and so on.
 
 ## PHOTON
@@ -122,6 +122,12 @@ Object representing one card in the feed.
 *openArticle()*
 	opens the _ARTICLE VIEW_ for the card.
 
+*foreground(colorConstant)*
+	sets the card foreground color to a _COLOR CONSTANT_
+
+*background(colorConstant)*
+	sets the card background color to a _COLOR CONSTANT_
+
 All getters and setters can be used as so:
 
 ```
@@ -132,6 +138,14 @@ print("old link: " ... card:link())
 card:link("https://newlink.com")
 print("new link: " ... card:link())
 ```
+
+## COLOR CONSTANTS
+
+ColorBlack, ColorMaroon, ColorGreen, ColorOlive, ColorNavy, ColorPurple,
+
+ColorTeal, ColorSilver, ColorGray, ColorRed, ColorLime, ColorYellow, ColorBlue,
+
+ColorFuchsia, ColorAqua, ColorWhite
 
 ## MEDIA
 
@@ -169,6 +183,12 @@ Event types:
 	when all the rss/atom feeds data is downloaded and parsed. _CARDS_ are from
 	now accessible.
 
+*ArticleOpened*
+	when a article was opened
+
+*LinkOpened*
+	when the card link was opened in the default webbrowser
+
 ## INPUTS
 
 *photon.inputs*
@@ -193,6 +213,20 @@ It has the following functions:
 	the same as *inputs:add(inputs:len(), link)*
 
 ## KEYBINDINGS
+
+TODO
+
+## FS LIBRARY
+
+The _fs_ library implements various filesystem functions
+
+*stat(path)*
+	returns a file info describing the named file.
+
+*mkdirAll(path)*
+	creates a directory named path, along with any necessary parents
+
+## HTTP LIBRARY
 
 TODO
 

@@ -20,13 +20,15 @@ import (
 )
 
 type Card struct {
-	photon    *Photon
-	Item      *gofeed.Item
-	ItemImage image.Image
-	Feed      *gofeed.Feed
-	FeedImage image.Image
-	Article   *Article
-	Media     *media.Media
+	photon     *Photon
+	Item       *gofeed.Item
+	ItemImage  image.Image
+	Feed       *gofeed.Feed
+	FeedImage  image.Image
+	Article    *Article
+	Media      *media.Media
+	Foreground int
+	Background int
 }
 
 type Cards []*Card
@@ -76,6 +78,10 @@ func (card *Card) OpenArticle() {
 	}
 	card.photon.OpenedArticle = card.Article
 	card.photon.cb.ArticleChanged(card.photon.OpenedArticle)
+	events.Emit(&events.ArticleOpened{
+		Link: card.Item.Link,
+		Card: newCard(card, card.photon.luaState),
+	})
 	if card.photon.OpenedArticle.Image != "" {
 		card.photon.ImgDownloader.Download(
 			card.photon.OpenedArticle.Image,
@@ -109,12 +115,18 @@ func (card *Card) RunMedia() {
 	if card == nil {
 		return
 	}
-	events.Emit(&events.RunMediaStart{Link: card.Item.Link})
+	events.Emit(&events.RunMediaStart{
+		Link: card.Item.Link,
+		Card: newCard(card, card.photon.luaState),
+	})
 	card.photon.cb.Status(fmt.Sprintf("Media start: %s", card.Item.Link))
 	go func() {
 		var err error
 		defer func() {
-			events.Emit(&events.RunMediaEnd{Link: card.Item.Link})
+			events.Emit(&events.RunMediaEnd{
+				Link: card.Item.Link,
+				Card: newCard(card, card.photon.luaState),
+			})
 			if err == nil {
 				card.photon.StatusWithTimeout(
 					fmt.Sprintf("Media end: %s", card.Item.Link),
@@ -235,4 +247,8 @@ func (card *Card) OpenBrowser() {
 		return
 	}
 	open.Start(card.Item.Link)
+	events.Emit(&events.LinkOpened{
+		Link: card.Item.Link,
+		Card: newCard(card, card.photon.luaState),
+	})
 }

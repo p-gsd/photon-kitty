@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"git.sr.ht/~ghost08/photon/lib/events"
+	"git.sr.ht/~ghost08/photon/lib/fs"
 	"git.sr.ht/~ghost08/photon/lib/inputs"
 	"git.sr.ht/~ghost08/photon/lib/keybindings"
 	"git.sr.ht/~ghost08/photon/lib/media"
@@ -15,8 +16,6 @@ import (
 	"github.com/cjoudrey/gluahttp"
 	lua "github.com/yuin/gopher-lua"
 )
-
-var luaState *lua.LState
 
 func (p *Photon) loadPlugins() error {
 	plugins, err := findPlugins()
@@ -28,7 +27,7 @@ func (p *Photon) loadPlugins() error {
 	}
 	p.initLuaState()
 	for _, pluginPath := range plugins {
-		if err := luaState.DoFile(pluginPath); err != nil {
+		if err := p.luaState.DoFile(pluginPath); err != nil {
 			return fmt.Errorf("loading plugin: %s\n%s", pluginPath, err)
 		}
 	}
@@ -59,11 +58,12 @@ func findPlugins() ([]string, error) {
 }
 
 func (p *Photon) initLuaState() {
-	luaState = lua.NewState()
-	media.Loader(luaState)
-	p.cardsLoader(luaState)
-	luaState.PreloadModule("photon", p.photonLoader)
-	luaState.PreloadModule("http", gluahttp.NewHttpModule(p.httpClient).Loader)
+	p.luaState = lua.NewState()
+	media.Loader(p.luaState)
+	p.cardsLoader(p.luaState)
+	p.luaState.PreloadModule("photon", p.photonLoader)
+	p.luaState.PreloadModule("http", gluahttp.NewHttpModule(p.httpClient).Loader)
+	p.luaState.PreloadModule("fs", fs.Loader)
 }
 
 func (p *Photon) photonLoader(L *lua.LState) int {
@@ -71,16 +71,37 @@ func (p *Photon) photonLoader(L *lua.LState) int {
 		"state": p.photonState,
 	}
 	mod := L.SetFuncs(L.NewTable(), exports)
+
+	//types and fields
 	p.registerTypeSelectedCard(L)
-	L.SetField(mod, "Normal", lua.LNumber(states.Normal))
-	L.SetField(mod, "Article", lua.LNumber(states.Article))
-	L.SetField(mod, "Search", lua.LNumber(states.Search))
 	L.SetField(mod, "cards", newCards(&p.Cards, L))
 	L.SetField(mod, "visibleCards", newCards(&p.VisibleCards, L))
 	L.SetField(mod, "selectedCard", p.newSelectedCard(L))
 	L.SetField(mod, "events", events.New(L))
 	L.SetField(mod, "keybindings", keybindings.NewLValue(L, p.KeyBindings))
 	L.SetField(mod, "feedInputs", inputs.New(L, p.feedInputs))
+
+	//constants
+	L.SetField(mod, "Normal", lua.LNumber(states.Normal))
+	L.SetField(mod, "Article", lua.LNumber(states.Article))
+	L.SetField(mod, "Search", lua.LNumber(states.Search))
+	L.SetField(mod, "ColorBlack", lua.LNumber(0))
+	L.SetField(mod, "ColorMaroon", lua.LNumber(1))
+	L.SetField(mod, "ColorGreen", lua.LNumber(2))
+	L.SetField(mod, "ColorOlive", lua.LNumber(3))
+	L.SetField(mod, "ColorNavy", lua.LNumber(4))
+	L.SetField(mod, "ColorPurple", lua.LNumber(5))
+	L.SetField(mod, "ColorTeal", lua.LNumber(6))
+	L.SetField(mod, "ColorSilver", lua.LNumber(7))
+	L.SetField(mod, "ColorGray", lua.LNumber(8))
+	L.SetField(mod, "ColorRed", lua.LNumber(9))
+	L.SetField(mod, "ColorLime", lua.LNumber(10))
+	L.SetField(mod, "ColorYellow", lua.LNumber(11))
+	L.SetField(mod, "ColorBlue", lua.LNumber(12))
+	L.SetField(mod, "ColorFuchsia", lua.LNumber(13))
+	L.SetField(mod, "ColorAqua", lua.LNumber(14))
+	L.SetField(mod, "ColorWhite", lua.LNumber(15))
+
 	L.Push(mod)
 
 	return 1

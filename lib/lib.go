@@ -18,6 +18,7 @@ import (
 	"git.sr.ht/~ghost08/photon/lib/media"
 	"git.sr.ht/~ghost08/photon/lib/states"
 	"github.com/mmcdole/gofeed"
+	lua "github.com/yuin/gopher-lua"
 )
 
 type Photon struct {
@@ -28,6 +29,7 @@ type Photon struct {
 	KeyBindings    *keybindings.Registry
 	downloadPath   string
 	cb             Callbacks
+	luaState       *lua.LState
 
 	Cards           Cards
 	VisibleCards    Cards
@@ -222,9 +224,11 @@ func (p *Photon) DownloadFeeds() {
 		newCards := make(Cards, len(f.Items))
 		for i, item := range f.Items {
 			newCards[i] = &Card{
-				photon: p,
-				Item:   item,
-				Feed:   f,
+				photon:     p,
+				Item:       item,
+				Feed:       f,
+				Foreground: -1,
+				Background: -1,
 			}
 		}
 		p.Cards = append(p.Cards, newCards...)
