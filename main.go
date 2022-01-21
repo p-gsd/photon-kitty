@@ -156,18 +156,15 @@ func main() {
 
 	ctx.Height -= 1
 	var fullRedraw bool
-	//TODO allocate one global sixelBuf
-	var sixelBuf *bytes.Buffer
+	sixelBuf := bytes.NewBuffer(nil)
 	var statusBarText richtext
 	for {
 		switch cb.State() {
 		case states.Normal, states.Search:
-			//TODO add sixelBuf as a arg
-			sixelBuf, statusBarText = grid.Draw(ctx, s)
+			statusBarText = grid.Draw(ctx, s, sixelBuf)
 			drawCommand(ctx, s)
 		case states.Article:
-			//TODO add sixelBuf as a arg
-			sixelBuf, statusBarText = openedArticle.Draw(ctx, s)
+			statusBarText = openedArticle.Draw(ctx, s, sixelBuf)
 		}
 		drawStatusBar(s, statusBarText)
 		if commandFocus {
@@ -181,7 +178,7 @@ func main() {
 		if sixelBuf != nil && sixelBuf.Len() > 0 {
 			os.Stdout.Write(sixelBuf.Bytes())
 		}
-		//TODO after write, reset sixelBuf
+		sixelBuf.Reset()
 		select {
 		case <-ctx.Done():
 			return

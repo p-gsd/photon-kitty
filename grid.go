@@ -20,8 +20,7 @@ type Grid struct {
 	childHeight      int
 }
 
-func (g *Grid) Draw(ctx Context, s tcell.Screen) (sixelBuf *bytes.Buffer, statusBarText richtext) {
-	sixelBuf = bytes.NewBuffer(nil)
+func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer) (statusBarText richtext) {
 	margin := (int(ctx.Width) % g.Columns) / 2
 	if photon.SelectedCard == nil && photon.VisibleCards != nil {
 		photon.SelectedCardPos = image.Point{
