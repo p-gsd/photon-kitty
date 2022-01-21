@@ -1,6 +1,7 @@
 package lib
 
 import (
+	"fmt"
 	"image"
 	"io"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"git.sr.ht/~ghost08/photon/lib/events"
 	"git.sr.ht/~ghost08/photon/lib/media"
@@ -108,14 +110,25 @@ func (card *Card) RunMedia() {
 		return
 	}
 	events.Emit(&events.RunMediaStart{Link: card.Item.Link})
-	card.photon.cb.Redraw()
+	card.photon.cb.Status(fmt.Sprintf("Media start: %s", card.Item.Link))
 	go func() {
+		var err error
 		defer func() {
 			events.Emit(&events.RunMediaEnd{Link: card.Item.Link})
-			card.photon.cb.Redraw()
+			if err == nil {
+				card.photon.StatusWithTimeout(
+					fmt.Sprintf("Media end: %s", card.Item.Link),
+					time.Second*5,
+				)
+			}
 		}()
-		if _, err := card.GetMedia(); err != nil {
+		_, err = card.GetMedia()
+		if err != nil {
 			log.Println("ERROR: extracting media link:", err)
+			card.photon.StatusWithTimeout(
+				fmt.Sprintf("ERROR: extracting media link: %s", err),
+				time.Second*5,
+			)
 			return
 		}
 		card.Media.Run()

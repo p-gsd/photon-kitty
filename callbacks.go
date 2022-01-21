@@ -30,6 +30,10 @@ func (cb Callbacks) ArticleChanged(article *lib.Article) {
 }
 
 func (cb Callbacks) Status(text string) {
-	statusBarText = richtext{{Text: text, Style: tcell.StyleDefault}}
+	if text == "" {
+		statusBarText = nil
+	} else {
+		statusBarText = richtext{{Text: text, Style: tcell.StyleDefault}}
+	}
 	redraw(false)
 }

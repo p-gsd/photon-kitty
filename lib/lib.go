@@ -233,6 +233,7 @@ func (p *Photon) DownloadFeeds() {
 		}
 		f = nil
 	}
+	p.Status("")
 	sort.Sort(p.Cards)
 	p.filterCards()
 	if len(p.VisibleCards) > 0 {
@@ -256,4 +257,16 @@ func (p *Photon) filterCards() {
 			p.VisibleCards = append(p.VisibleCards, card)
 		}
 	}
+}
+
+func (p *Photon) Status(text string) {
+	p.cb.Status(text)
+}
+
+func (p *Photon) StatusWithTimeout(text string, d time.Duration) {
+	p.Status(text)
+	go func() {
+		<-time.After(d)
+		p.Status("")
+	}()
 }

@@ -159,19 +159,17 @@ func main() {
 	var fullRedraw bool
 	sixelBuf := bytes.NewBuffer(nil)
 	for {
+		//draw main widget + status bar
+		var widgetStatus richtext
 		switch cb.State() {
 		case states.Normal, states.Search:
-			if len(statusBarText) == 0 {
-				statusBarText = grid.Draw(ctx, s, sixelBuf)
-			} else {
-				grid.Draw(ctx, s, sixelBuf)
-			}
+			widgetStatus = grid.Draw(ctx, s, sixelBuf)
 			drawCommand(ctx, s)
 		case states.Article:
-			statusBarText = openedArticle.Draw(ctx, s, sixelBuf)
+			widgetStatus = openedArticle.Draw(ctx, s, sixelBuf)
 		}
-		drawStatusBar(s, statusBarText)
-		statusBarText = nil
+		drawStatusBar(s, append(statusBarText, widgetStatus...))
+		//command line cursor
 		if commandFocus {
 			s.SetContent(len(command), int(ctx.Rows-1), ' ', nil, tcell.StyleDefault.Reverse(true))
 		}
@@ -180,9 +178,11 @@ func main() {
 		} else {
 			s.Show()
 		}
+		//draw sixels
 		if sixelBuf != nil && sixelBuf.Len() > 0 {
 			os.Stdout.Write(sixelBuf.Bytes())
 		}
+		//wait for another redraw event or quit
 		sixelBuf.Reset()
 		select {
 		case <-ctx.Done():
