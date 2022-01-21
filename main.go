@@ -38,10 +38,11 @@ var CLI struct {
 }
 
 var (
-	photon       *lib.Photon
-	cb           Callbacks
-	command      string
-	commandFocus bool
+	photon        *lib.Photon
+	cb            Callbacks
+	command       string
+	commandFocus  bool
+	statusBarText richtext
 )
 
 func main() {
@@ -111,7 +112,7 @@ func main() {
 	grid.Resize(int(ctx.Width), int(ctx.Height))
 
 	go func() {
-		photon.RefreshFeed()
+		photon.DownloadFeeds()
 		redraw(true)
 	}()
 
@@ -157,16 +158,20 @@ func main() {
 	ctx.Height -= 1
 	var fullRedraw bool
 	sixelBuf := bytes.NewBuffer(nil)
-	var statusBarText richtext
 	for {
 		switch cb.State() {
 		case states.Normal, states.Search:
-			statusBarText = grid.Draw(ctx, s, sixelBuf)
+			if len(statusBarText) == 0 {
+				statusBarText = grid.Draw(ctx, s, sixelBuf)
+			} else {
+				grid.Draw(ctx, s, sixelBuf)
+			}
 			drawCommand(ctx, s)
 		case states.Article:
 			statusBarText = openedArticle.Draw(ctx, s, sixelBuf)
 		}
 		drawStatusBar(s, statusBarText)
+		statusBarText = nil
 		if commandFocus {
 			s.SetContent(len(command), int(ctx.Rows-1), ' ', nil, tcell.StyleDefault.Reverse(true))
 		}

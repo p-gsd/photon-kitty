@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"sort"
 	"strings"
+	"time"
 
 	"git.sr.ht/~ghost08/photon/lib/events"
 	"git.sr.ht/~ghost08/photon/lib/inputs"
@@ -40,6 +41,7 @@ type Callbacks interface {
 	Redraw()
 	State() states.Enum
 	ArticleChanged(*Article)
+	Status(string)
 }
 
 func New(cb Callbacks, paths []string, options ...Option) (*Photon, error) {
@@ -142,7 +144,7 @@ func (p *Photon) SearchQuery(q string) {
 	p.filterCards()
 }
 
-func (p *Photon) RefreshFeed() {
+func (p *Photon) DownloadFeeds() {
 	p.Cards = nil
 	feeds := make(chan *gofeed.Feed)
 	for _, feedURL := range *p.feedInputs {
@@ -190,9 +192,27 @@ func (p *Photon) RefreshFeed() {
 			feeds <- f
 		}()
 	}
-	var feedsGot int
-	for f := range feeds {
-		feedsGot++
+	var (
+		feedsGot     int
+		spinnerArray = []rune{'⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'}
+		spinnerIndex int
+	)
+	for {
+		var f *gofeed.Feed
+		select {
+		case f = <-feeds:
+			feedsGot++
+		case <-time.Tick(time.Millisecond * 150):
+			spinnerIndex = (spinnerIndex + 1) % len(spinnerArray)
+		}
+		p.cb.Status(
+			fmt.Sprintf(
+				"Downloading feeds %d/%d %c",
+				feedsGot,
+				p.feedInputs.Len(),
+				spinnerArray[spinnerIndex],
+			),
+		)
 		if f == nil {
 			if feedsGot == p.feedInputs.Len() {
 				break
@@ -211,6 +231,7 @@ func (p *Photon) RefreshFeed() {
 		if feedsGot == p.feedInputs.Len() {
 			break
 		}
+		f = nil
 	}
 	sort.Sort(p.Cards)
 	p.filterCards()

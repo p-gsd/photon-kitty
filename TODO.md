@@ -1,6 +1,5 @@
 ### status bar
 
--   show what feed is currently downloading
 -   show media playing
 
 ### plugins

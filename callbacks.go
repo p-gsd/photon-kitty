@@ -3,6 +3,7 @@ package main
 import (
 	"git.sr.ht/~ghost08/photon/lib"
 	"git.sr.ht/~ghost08/photon/lib/states"
+	"github.com/gdamore/tcell/v2"
 )
 
 type Callbacks struct {
@@ -26,4 +27,9 @@ func (cb Callbacks) State() states.Enum {
 
 func (cb Callbacks) ArticleChanged(article *lib.Article) {
 	openedArticle = &Article{Article: article}
+}
+
+func (cb Callbacks) Status(text string) {
+	statusBarText = richtext{{Text: text, Style: tcell.StyleDefault}}
+	redraw(false)
 }
