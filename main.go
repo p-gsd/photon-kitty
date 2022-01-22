@@ -11,7 +11,6 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
-	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -38,11 +37,11 @@ var CLI struct {
 }
 
 var (
-	photon        *lib.Photon
-	cb            Callbacks
-	command       string
-	commandFocus  bool
-	statusBarText richtext
+	photon       *lib.Photon
+	cb           Callbacks
+	command      string
+	commandFocus bool
+	redrawCh     = make(chan bool, 1024)
 )
 
 func main() {
@@ -132,8 +131,7 @@ func main() {
 				if openedArticle.HintEvent(ev) {
 					continue
 				}
-				ke := newKeyEvent(ev)
-				photon.KeyBindings.Run(ke)
+				photon.KeyBindings.Run(newKeyEvent(ev))
 			case *tcell.EventResize:
 				newCtx := Background()
 				grid.Resize(int(newCtx.Width), int(newCtx.Height))
@@ -168,7 +166,13 @@ func main() {
 		case states.Article:
 			widgetStatus = openedArticle.Draw(ctx, s, sixelBuf)
 		}
-		drawStatusBar(s, append(statusBarText, widgetStatus...))
+		drawStatusBar(
+			s,
+			append(
+				richtext{{Text: photon.GetStatus(), Style: tcell.StyleDefault}},
+				widgetStatus...,
+			),
+		)
 		//command line cursor
 		if commandFocus {
 			s.SetContent(len(command), int(ctx.Rows-1), ' ', nil, tcell.StyleDefault.Reverse(true))
@@ -202,25 +206,11 @@ func drawStatusBar(s tcell.Screen, t richtext) {
 	}
 }
 
-var redrawCh = make(chan bool, 1024)
-
 func redraw(full bool) {
 	redrawCh <- full
 }
 
-func redrawWorker() {
-	redrawReq := make(chan bool)
-	go func() {
-		var timestamp time.Time
-		for f := range redrawCh {
-			if time.Now().Sub(timestamp) < time.Second/30 {
-				continue
-			}
-			redrawReq <- f
-		}
-	}()
-}
-
+//converts tcell.EventKey to keybindings.KeyEvent
 func newKeyEvent(e *tcell.EventKey) keybindings.KeyEvent {
 	var mod keybindings.Modifiers
 	switch {

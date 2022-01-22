@@ -31,19 +31,20 @@ type Photon struct {
 	cb             Callbacks
 	luaState       *lua.LState
 
-	Cards           Cards
-	VisibleCards    Cards
-	SelectedCard    *Card
-	SelectedCardPos image.Point
-	searchQuery     string
-	OpenedArticle   *Article
+	Cards               Cards
+	VisibleCards        Cards
+	SelectedCard        *Card
+	SelectedCardPos     image.Point
+	searchQuery         string
+	OpenedArticle       *Article
+	status              string
+	statusTimeoutCancel chan struct{}
 }
 
 type Callbacks interface {
 	Redraw()
 	State() states.Enum
 	ArticleChanged(*Article)
-	Status(string)
 }
 
 func New(cb Callbacks, paths []string, options ...Option) (*Photon, error) {
@@ -207,7 +208,7 @@ func (p *Photon) DownloadFeeds() {
 		case <-time.Tick(time.Millisecond * 150):
 			spinnerIndex = (spinnerIndex + 1) % len(spinnerArray)
 		}
-		p.cb.Status(
+		p.setStatus(
 			fmt.Sprintf(
 				"Downloading feeds %d/%d %c",
 				feedsGot,
@@ -237,7 +238,7 @@ func (p *Photon) DownloadFeeds() {
 		}
 		f = nil
 	}
-	p.Status("")
+	p.setStatus("")
 	sort.Sort(p.Cards)
 	p.filterCards()
 	if len(p.VisibleCards) > 0 {
@@ -263,14 +264,28 @@ func (p *Photon) filterCards() {
 	}
 }
 
-func (p *Photon) Status(text string) {
-	p.cb.Status(text)
+func (p *Photon) GetStatus() string {
+	return p.status
+}
+
+func (p *Photon) setStatus(text string) {
+	if p.statusTimeoutCancel != nil {
+		p.statusTimeoutCancel <- struct{}{}
+		p.statusTimeoutCancel = nil
+	}
+	p.status = text
+	p.cb.Redraw()
 }
 
 func (p *Photon) StatusWithTimeout(text string, d time.Duration) {
-	p.Status(text)
+	p.setStatus(text)
+	p.statusTimeoutCancel = make(chan struct{})
 	go func() {
-		<-time.After(d)
-		p.Status("")
+		select {
+		case <-p.statusTimeoutCancel:
+			return
+		case <-time.After(d):
+			p.setStatus("")
+		}
 	}()
 }

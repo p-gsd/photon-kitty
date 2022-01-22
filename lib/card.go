@@ -48,15 +48,6 @@ func (cards Cards) Swap(i, k int) {
 func (card *Card) SaveImage() func(image.Image) {
 	return func(img image.Image) {
 		card.ItemImage = img
-		/*
-			TODO check if this is needed
-			for _, vi := range onScreenCards {
-				if vi == card {
-					card.photon.cb.Redraw()
-					break
-				}
-			}
-		*/
 		card.photon.cb.Redraw()
 	}
 }
@@ -119,7 +110,7 @@ func (card *Card) RunMedia() {
 		Link: card.Item.Link,
 		Card: newCardFunc(card),
 	})
-	card.photon.cb.Status(fmt.Sprintf("Media start: %s", card.Item.Link))
+	card.photon.setStatus(fmt.Sprintf("Media start: %s", card.Item.Link))
 	go func() {
 		var err error
 		defer func() {

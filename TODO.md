@@ -1,3 +1,8 @@
+### plugins
+
+-   kv lua lib
+-   events.subscribe with priority
+
 ### status bar
 
 -   prettier (maybe colors?)
