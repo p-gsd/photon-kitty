@@ -80,7 +80,7 @@ func (card *Card) OpenArticle() {
 	card.photon.cb.ArticleChanged(card.photon.OpenedArticle)
 	events.Emit(&events.ArticleOpened{
 		Link: card.Item.Link,
-		Card: newCard(card, card.photon.luaState),
+		Card: newCardFunc(card),
 	})
 	if card.photon.OpenedArticle.Image != "" {
 		card.photon.ImgDownloader.Download(
@@ -117,7 +117,7 @@ func (card *Card) RunMedia() {
 	}
 	events.Emit(&events.RunMediaStart{
 		Link: card.Item.Link,
-		Card: newCard(card, card.photon.luaState),
+		Card: newCardFunc(card),
 	})
 	card.photon.cb.Status(fmt.Sprintf("Media start: %s", card.Item.Link))
 	go func() {
@@ -125,7 +125,7 @@ func (card *Card) RunMedia() {
 		defer func() {
 			events.Emit(&events.RunMediaEnd{
 				Link: card.Item.Link,
-				Card: newCard(card, card.photon.luaState),
+				Card: newCardFunc(card),
 			})
 			if err == nil {
 				card.photon.StatusWithTimeout(
@@ -249,6 +249,6 @@ func (card *Card) OpenBrowser() {
 	open.Start(card.Item.Link)
 	events.Emit(&events.LinkOpened{
 		Link: card.Item.Link,
-		Card: newCard(card, card.photon.luaState),
+		Card: newCardFunc(card),
 	})
 }

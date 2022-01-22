@@ -51,7 +51,7 @@ func (e *Init) Type() EventType {
 
 type RunMediaStart struct {
 	Link string
-	Card lua.LValue
+	Card func(*lua.LState) lua.LValue
 }
 
 func (e *RunMediaStart) Type() EventType {
@@ -60,7 +60,7 @@ func (e *RunMediaStart) Type() EventType {
 
 type RunMediaEnd struct {
 	Link string
-	Card lua.LValue
+	Card func(*lua.LState) lua.LValue
 }
 
 func (e *RunMediaEnd) Type() EventType {
@@ -75,7 +75,7 @@ func (e *FeedsDownloaded) Type() EventType {
 
 type ArticleOpened struct {
 	Link string
-	Card lua.LValue
+	Card func(*lua.LState) lua.LValue
 }
 
 func (e *ArticleOpened) Type() EventType {
@@ -84,7 +84,7 @@ func (e *ArticleOpened) Type() EventType {
 
 type LinkOpened struct {
 	Link string
-	Card lua.LValue
+	Card func(*lua.LState) lua.LValue
 }
 
 func (e *LinkOpened) Type() EventType {

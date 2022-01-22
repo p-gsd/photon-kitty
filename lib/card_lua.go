@@ -70,6 +70,12 @@ func newCard(card *Card, L *lua.LState) *lua.LUserData {
 	return ud
 }
 
+func newCardFunc(card *Card) func(*lua.LState) lua.LValue {
+	return func(L *lua.LState) lua.LValue {
+		return newCard(card, L)
+	}
+}
+
 func cardItemLink(L *lua.LState) int {
 	card := checkCard(L, 1)
 	if L.GetTop() == 2 {

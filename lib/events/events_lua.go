@@ -103,13 +103,13 @@ func eventCard(L *lua.LState) int {
 		L.ArgError(1, "init event doesn't have link method")
 		return 0
 	case *RunMediaStart:
-		L.Push(e.Card)
+		L.Push(e.Card(L))
 	case *RunMediaEnd:
-		L.Push(e.Card)
+		L.Push(e.Card(L))
 	case *ArticleOpened:
-		L.Push(e.Card)
+		L.Push(e.Card(L))
 	case *LinkOpened:
-		L.Push(e.Card)
+		L.Push(e.Card(L))
 	case *FeedsDownloaded:
 		L.ArgError(1, "feedsDownloaded event doesn't have link method")
 		return 0
