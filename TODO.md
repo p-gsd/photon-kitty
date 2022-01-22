@@ -1,6 +1,9 @@
+### documentation
+
+-   lua man pages
+
 ### plugins
 
--   kv lua lib
 -   events.subscribe with priority
 
 ### status bar

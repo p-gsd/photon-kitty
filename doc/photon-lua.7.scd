@@ -216,15 +216,9 @@ It has the following functions:
 
 TODO
 
-## FS LIBRARY
+## LOCAL STORAGE
 
-The _fs_ library implements various filesystem functions
-
-*stat(path)*
-	returns a file info describing the named file.
-
-*mkdirAll(path)*
-	creates a directory named path, along with any necessary parents
+TODO
 
 ## HTTP LIBRARY
 

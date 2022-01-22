@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"git.sr.ht/~ghost08/photon/lib/events"
-	"git.sr.ht/~ghost08/photon/lib/fs"
 	"git.sr.ht/~ghost08/photon/lib/inputs"
 	"git.sr.ht/~ghost08/photon/lib/keybindings"
+	"git.sr.ht/~ghost08/photon/lib/ls"
 	"git.sr.ht/~ghost08/photon/lib/media"
 	"git.sr.ht/~ghost08/photon/lib/states"
 	"github.com/cjoudrey/gluahttp"
@@ -57,13 +57,18 @@ func findPlugins() ([]string, error) {
 	return plugins, nil
 }
 
+var localStorage *ls.LocalStorage
+
 func (p *Photon) initLuaState() {
 	p.luaState = lua.NewState()
 	media.Loader(p.luaState)
 	p.cardsLoader(p.luaState)
 	p.luaState.PreloadModule("photon", p.photonLoader)
 	p.luaState.PreloadModule("http", gluahttp.NewHttpModule(p.httpClient).Loader)
-	p.luaState.PreloadModule("fs", fs.Loader)
+	home, _ := os.UserHomeDir()
+	os.MkdirAll(filepath.Join(home, ".cache/photon"), 0755)
+	localStorage = ls.New(filepath.Join(home, ".cache/photon/localStorage"))
+	p.luaState.PreloadModule("localStorage", localStorage.Loader)
 }
 
 func (p *Photon) photonLoader(L *lua.LState) int {
