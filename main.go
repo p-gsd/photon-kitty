@@ -42,7 +42,15 @@ var (
 	command      string
 	commandFocus bool
 	redrawCh     = make(chan bool, 1024)
+	clip         = true
 )
+
+func init() {
+	if err := clipboard.Init(); err != nil {
+		log.Printf("ERROR: initializing clipboard: %s", err)
+		clip = false
+	}
+}
 
 func main() {
 	//args
@@ -330,6 +338,9 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if photon.SelectedCard == nil {
 			return nil
 		}
+		if !clip {
+			return nil
+		}
 		clipboard.Write(clipboard.FmtText, []byte(photon.SelectedCard.Item.Link))
 		return nil
 	})
@@ -339,6 +350,9 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 			return nil
 		}
 		if photon.SelectedCard.ItemImage == nil {
+			return nil
+		}
+		if !clip {
 			return nil
 		}
 		var buf bytes.Buffer
