@@ -10,13 +10,14 @@ With the current state of rss readers, which are archaic, or use electron for re
 
 ## Installation
 
-You need a sixel supporting terminal emulator (I use [foot](https://codeberg.org/dnkl/foot) and started to experiment with [this branch of alacritty](https://github.com/jbenden/alacritty))
+You need a sixel supporting terminal emulator (Use [foot](https://codeberg.org/dnkl/foot) or try [alacritty-sixel](https://github.com/microo8/alacritty-sixel) also on [AUR](https://aur.archlinux.org/packages/alacritty-sixel-git/).
 
 First install `go`, `git` and `scdoc`, then:
 
 ```
 git clone https://git.sr.ht/~ghost08/photon
 cd photon
+make
 sudo make install
 ```
 
