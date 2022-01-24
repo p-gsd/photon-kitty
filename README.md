@@ -10,7 +10,7 @@ With the current state of rss readers, which are archaic, or use electron for re
 
 ## Installation
 
-You need a sixel supporting terminal emulator (Use [foot](https://codeberg.org/dnkl/foot) or try [alacritty-sixel](https://github.com/microo8/alacritty-sixel) also on [AUR](https://aur.archlinux.org/packages/alacritty-sixel-git/).
+You need a sixel supporting terminal emulator (Use [foot](https://codeberg.org/dnkl/foot) or try [alacritty-sixel](https://github.com/microo8/alacritty-sixel) also on [AUR](https://aur.archlinux.org/packages/alacritty-sixel-git/)).
 
 First install `go`, `git` and `scdoc`, then:
 
@@ -177,6 +177,8 @@ For this photon has some http setting for every request that will be send:
 File bugs and TODOs through the [issue tracker](https://todo.sr.ht/~ghost08/photon) or send an email to [~ghost08/photon@todo.sr.ht](mailto:~ghost08/photon@todo.sr.ht).
 
 For general discussion or pathes, use the [mailing list](https://lists.sr.ht/~ghost08/photon): [~ghost08/photon@lists.sr.ht](mailto:~ghost08/photon@lists.sr.ht).
+
+Join the IRC channel: [#photon on irc.libera.chat](http://web.libera.chat/?channels=photon&uio=d4)
 
 ## Contributing
 
