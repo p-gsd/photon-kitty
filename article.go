@@ -8,6 +8,7 @@ import (
 	"math"
 	"os/exec"
 	"strings"
+	"unicode/utf8"
 
 	"git.sr.ht/~ghost08/photon/lib"
 	"github.com/gdamore/tcell/v2"
@@ -155,7 +156,8 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer) (sta
 						tcell.StyleDefault.Background(tcell.ColorYellow).Foreground(tcell.ColorBlack),
 					)
 					lineOffset++
-					to.Text = to.Text[1:]
+					_, s := utf8.DecodeRuneInString(to.Text)
+					to.Text = to.Text[s:]
 				}
 			}
 			lineOffset += drawString(

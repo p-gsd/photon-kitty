@@ -39,7 +39,6 @@ type Photon struct {
 	searchQuery     string
 	OpenedArticle   *Article
 	status          string
-	statusCtx       context.Context
 	statusCancel    context.CancelFunc
 }
 
@@ -273,7 +272,6 @@ func (p *Photon) GetStatus() string {
 func (p *Photon) setStatus(text string) {
 	if p.statusCancel != nil {
 		p.statusCancel()
-		p.statusCtx = nil
 		p.statusCancel = nil
 	}
 	p.status = text
@@ -282,10 +280,11 @@ func (p *Photon) setStatus(text string) {
 
 func (p *Photon) StatusWithTimeout(text string, d time.Duration) {
 	p.setStatus(text)
-	p.statusCtx, p.statusCancel = context.WithCancel(context.Background())
+	var ctx context.Context
+	ctx, p.statusCancel = context.WithCancel(context.Background())
 	go func() {
 		select {
-		case <-p.statusCtx.Done():
+		case <-ctx.Done():
 			return
 		case <-time.After(d):
 			p.setStatus("")
