@@ -2,6 +2,7 @@ package lib
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"image"
 	"log"
@@ -31,14 +32,15 @@ type Photon struct {
 	cb             Callbacks
 	luaState       *lua.LState
 
-	Cards               Cards
-	VisibleCards        Cards
-	SelectedCard        *Card
-	SelectedCardPos     image.Point
-	searchQuery         string
-	OpenedArticle       *Article
-	status              string
-	statusTimeoutCancel chan struct{}
+	Cards           Cards
+	VisibleCards    Cards
+	SelectedCard    *Card
+	SelectedCardPos image.Point
+	searchQuery     string
+	OpenedArticle   *Article
+	status          string
+	statusCtx       context.Context
+	statusCancel    context.CancelFunc
 }
 
 type Callbacks interface {
@@ -269,9 +271,10 @@ func (p *Photon) GetStatus() string {
 }
 
 func (p *Photon) setStatus(text string) {
-	if p.statusTimeoutCancel != nil {
-		p.statusTimeoutCancel <- struct{}{}
-		p.statusTimeoutCancel = nil
+	if p.statusCancel != nil {
+		p.statusCancel()
+		p.statusCtx = nil
+		p.statusCancel = nil
 	}
 	p.status = text
 	p.cb.Redraw()
@@ -279,10 +282,10 @@ func (p *Photon) setStatus(text string) {
 
 func (p *Photon) StatusWithTimeout(text string, d time.Duration) {
 	p.setStatus(text)
-	p.statusTimeoutCancel = make(chan struct{})
+	p.statusCtx, p.statusCancel = context.WithCancel(context.Background())
 	go func() {
 		select {
-		case <-p.statusTimeoutCancel:
+		case <-p.statusCtx.Done():
 			return
 		case <-time.After(d):
 			p.setStatus("")
