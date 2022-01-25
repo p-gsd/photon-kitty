@@ -110,7 +110,7 @@ func (card *Card) RunMedia() {
 		Link: card.Item.Link,
 		Card: newCardFunc(card),
 	})
-	card.photon.setStatus(fmt.Sprintf("Media start: %s", card.Item.Link))
+	card.photon.SetStatusWithSpinner(fmt.Sprintf("Play \u25B6 %s", card.Item.Title))
 	go func() {
 		var err error
 		defer func() {
@@ -120,7 +120,7 @@ func (card *Card) RunMedia() {
 			})
 			if err == nil {
 				card.photon.StatusWithTimeout(
-					fmt.Sprintf("Media end: %s", card.Item.Link),
+					fmt.Sprintf("Stop \u25AA %s", card.Item.Title),
 					time.Second*5,
 				)
 			}
@@ -130,7 +130,7 @@ func (card *Card) RunMedia() {
 			log.Println("ERROR: extracting media link:", err)
 			card.photon.StatusWithTimeout(
 				fmt.Sprintf("ERROR: extracting media link: %s", err),
-				time.Second*5,
+				time.Second*3,
 			)
 			return
 		}

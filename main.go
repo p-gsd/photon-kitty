@@ -174,10 +174,14 @@ func main() {
 		case states.Article:
 			widgetStatus = openedArticle.Draw(ctx, s, sixelBuf)
 		}
+		status := photon.GetStatus()
+		if utf8.RuneCountInString(status) > (ctx.Width / 2) {
+			status = string([]rune(status)[:ctx.Width/2])
+		}
 		drawStatusBar(
 			s,
 			append(
-				richtext{{Text: photon.GetStatus(), Style: tcell.StyleDefault}},
+				richtext{{Text: status, Style: tcell.StyleDefault}},
 				widgetStatus...,
 			),
 		)

@@ -39,6 +39,7 @@ type Photon struct {
 	searchQuery     string
 	OpenedArticle   *Article
 	status          string
+	statusCtx       context.Context
 	statusCancel    context.CancelFunc
 }
 
@@ -198,20 +199,22 @@ func (p *Photon) DownloadFeeds() {
 	}
 	var (
 		feedsGot     int
-		spinnerArray = []rune{'⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'}
+		ticker       = time.NewTicker(time.Millisecond * 150)
 		spinnerIndex int
 	)
+	defer ticker.Stop()
 	for {
 		var f *gofeed.Feed
 		select {
 		case f = <-feeds:
 			feedsGot++
-		case <-time.Tick(time.Millisecond * 150):
+		case <-ticker.C:
 			spinnerIndex = (spinnerIndex + 1) % len(spinnerArray)
 		}
-		p.setStatus(
+		p.SetStatus(
 			fmt.Sprintf(
-				"Downloading feeds %d/%d %c",
+				"Downloading feeds%3s%d/%d %c",
+				" ",
 				feedsGot,
 				p.feedInputs.Len(),
 				spinnerArray[spinnerIndex],
@@ -239,7 +242,7 @@ func (p *Photon) DownloadFeeds() {
 		}
 		f = nil
 	}
-	p.setStatus("")
+	p.SetStatus("")
 	sort.Sort(p.Cards)
 	p.filterCards()
 	if len(p.VisibleCards) > 0 {
@@ -269,25 +272,49 @@ func (p *Photon) GetStatus() string {
 	return p.status
 }
 
-func (p *Photon) setStatus(text string) {
+func (p *Photon) SetStatus(text string) {
 	if p.statusCancel != nil {
 		p.statusCancel()
+		p.statusCtx = nil
 		p.statusCancel = nil
 	}
 	p.status = text
 	p.cb.Redraw()
 }
 
+var spinnerArray = []rune{'⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'}
+
+func (p *Photon) SetStatusWithSpinner(text string) {
+	if p.statusCancel != nil {
+		p.statusCancel()
+	}
+	p.statusCtx, p.statusCancel = context.WithCancel(context.Background())
+	go func() {
+		ticker := time.NewTicker(time.Millisecond * 150)
+		defer ticker.Stop()
+		var spinnerIndex int
+		for {
+			select {
+			case <-p.statusCtx.Done():
+				return
+			case <-ticker.C:
+				spinnerIndex = (spinnerIndex + 1) % len(spinnerArray)
+				p.status = fmt.Sprintf("%c %s", spinnerArray[spinnerIndex], text)
+				p.cb.Redraw()
+			}
+		}
+	}()
+}
+
 func (p *Photon) StatusWithTimeout(text string, d time.Duration) {
-	p.setStatus(text)
-	var ctx context.Context
-	ctx, p.statusCancel = context.WithCancel(context.Background())
+	p.SetStatus(text)
+	p.statusCtx, p.statusCancel = context.WithCancel(context.Background())
 	go func() {
 		select {
-		case <-ctx.Done():
+		case <-p.statusCtx.Done():
 			return
 		case <-time.After(d):
-			p.setStatus("")
+			p.SetStatus("")
 		}
 	}()
 }
