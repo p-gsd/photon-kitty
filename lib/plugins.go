@@ -141,6 +141,22 @@ func (p *Photon) registerTypeSelectedCard(L *lua.LState) {
 			L.Push(newCard(p.SelectedCard, L))
 			return 1
 		},
+		"moveLeft": func(L *lua.LState) int {
+			p.cb.Move().Left()
+			return 0
+		},
+		"moveRight": func(L *lua.LState) int {
+			p.cb.Move().Right()
+			return 0
+		},
+		"moveUp": func(L *lua.LState) int {
+			p.cb.Move().Up()
+			return 0
+		},
+		"moveDown": func(L *lua.LState) int {
+			p.cb.Move().Down()
+			return 0
+		},
 	}
 	newClass := L.SetFuncs(L.NewTable(), selectedCardMethods)
 	mt := L.NewTypeMetatable(luaSelectedCardTypeName)

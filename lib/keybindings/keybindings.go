@@ -28,6 +28,14 @@ func (s KeyEvent) String() string {
 		k = "<esc>"
 	case '\n':
 		k = "<enter>"
+	case 37:
+		k = "<left>"
+	case 38:
+		k = "<up>"
+	case 39:
+		k = "<right>"
+	case 40:
+		k = "<down>"
 	}
 	return s.Modifiers.String() + k
 }

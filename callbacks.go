@@ -27,3 +27,31 @@ func (cb Callbacks) State() states.Enum {
 func (cb Callbacks) ArticleChanged(article *lib.Article) {
 	openedArticle = &Article{Article: article}
 }
+
+func (cb Callbacks) Move() lib.Move {
+	return Move{grid: cb.grid}
+}
+
+type Move struct {
+	grid *Grid
+}
+
+func (m Move) Left() {
+	m.grid.SelectedChildMoveLeft()
+	redraw(false)
+}
+
+func (m Move) Right() {
+	m.grid.SelectedChildMoveRight()
+	redraw(false)
+}
+
+func (m Move) Up() {
+	m.grid.SelectedChildMoveUp()
+	redraw(false)
+}
+
+func (m Move) Down() {
+	m.grid.SelectedChildMoveDown()
+	redraw(false)
+}

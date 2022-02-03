@@ -237,21 +237,29 @@ func newKeyEvent(e *tcell.EventKey) keybindings.KeyEvent {
 	}
 
 	var r rune
-	switch {
-	case e.Key() == tcell.KeyBackspace:
+	switch e.Key() {
+	case tcell.KeyBackspace:
 		return keybindings.KeyEvent{Key: '\u0008'}
-	case e.Key() == tcell.KeyTab:
+	case tcell.KeyTab:
 		return keybindings.KeyEvent{Key: '\t'}
-	case e.Key() == tcell.KeyEsc:
+	case tcell.KeyEsc:
 		return keybindings.KeyEvent{Key: '\u00b1'}
-	case e.Key() == tcell.KeyEnter:
+	case tcell.KeyEnter:
 		return keybindings.KeyEvent{Key: '\n'}
-	case e.Key() == tcell.KeyRune:
+	case tcell.KeyRune:
 		if unicode.IsUpper(e.Rune()) {
 			mod = keybindings.ModShift
 		}
 		r = unicode.ToLower(e.Rune())
 		return keybindings.KeyEvent{Key: r, Modifiers: mod}
+	case tcell.KeyLeft:
+		return keybindings.KeyEvent{Key: 37}
+	case tcell.KeyUp:
+		return keybindings.KeyEvent{Key: 38}
+	case tcell.KeyRight:
+		return keybindings.KeyEvent{Key: 39}
+	case tcell.KeyDown:
+		return keybindings.KeyEvent{Key: 40}
 	default:
 		s, ok := tcell.KeyNames[e.Key()]
 		if ok && strings.HasPrefix(s, "Ctrl-") {

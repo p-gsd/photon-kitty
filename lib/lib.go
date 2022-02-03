@@ -47,6 +47,15 @@ type Callbacks interface {
 	Redraw()
 	State() states.Enum
 	ArticleChanged(*Article)
+	Move() Move
+}
+
+//used for moving the selected card
+type Move interface {
+	Left()
+	Right()
+	Up()
+	Down()
 }
 
 func New(cb Callbacks, paths []string, options ...Option) (*Photon, error) {
