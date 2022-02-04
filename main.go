@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"image"
 	"image/png"
+	"io"
 	"log"
 	"os"
 	"os/user"
@@ -17,6 +18,7 @@ import (
 	"git.sr.ht/~ghost08/photon/lib"
 	"git.sr.ht/~ghost08/photon/lib/keybindings"
 	"git.sr.ht/~ghost08/photon/lib/states"
+	"golang.org/x/sys/unix"
 
 	"github.com/alecthomas/kong"
 	"github.com/gdamore/tcell/v2"
@@ -63,10 +65,15 @@ func main() {
 			Summary: true,
 		}))
 
-	f, _ := os.Create("/tmp/photon.log")
-	log.SetOutput(f)
+	if _, err := unix.IoctlGetTermios(int(os.Stdout.Fd()), unix.TCGETS); err == nil {
+		//don't log to terminal
+		log.SetOutput(io.Discard)
+		os.Stdout, _ = os.Open(os.DevNull)
+	} else {
+		//log to redirected stdout
+		log.SetOutput(os.Stdout)
+	}
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	defer f.Close()
 
 	if CLI.TerminalTitle != "" {
 		setTerminalTitle(CLI.TerminalTitle)
@@ -196,7 +203,7 @@ func main() {
 		}
 		//draw sixels
 		if sixelBuf != nil && sixelBuf.Len() > 0 {
-			os.Stdout.Write(sixelBuf.Bytes())
+			os.Stderr.Write(sixelBuf.Bytes())
 		}
 		//wait for another redraw event or quit
 		sixelBuf.Reset()
