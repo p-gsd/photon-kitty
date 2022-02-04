@@ -16,7 +16,7 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/soniakeys/quant v1.0.0
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
-	golang.design/x/clipboard v0.6.0
+	golang.design/x/clipboard v0.6.1-0.20220131123109-179c35fa8947
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
 )
@@ -44,7 +44,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20220128181451-c853b6ddb95e // indirect
+	golang.org/x/exp v0.0.0-20220203164150-d4f80a91470e // indirect
 	golang.org/x/mobile v0.0.0-20220112015953-858099ff7816 // indirect
 	golang.org/x/sys v0.0.0-20220128215802-99c3d69c2c27 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
