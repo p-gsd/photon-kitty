@@ -169,7 +169,7 @@ func main() {
 		var widgetStatus richtext
 		switch cb.State() {
 		case states.Normal, states.Search:
-			widgetStatus = grid.Draw(ctx, s, sixelBuf)
+			widgetStatus = grid.Draw(ctx, s, sixelBuf, fullRedraw)
 			drawCommand(ctx, s)
 		case states.Article:
 			widgetStatus = openedArticle.Draw(ctx, s, sixelBuf)

@@ -37,12 +37,12 @@ type Card struct {
 	previousSelected bool
 }
 
-func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer) {
+func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer, full bool) {
 	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels()
 	offset := (ctx.Width - imageWidthInCells) / 2
 	newImagePos := image.Point{ctx.X + 1 + offset, ctx.Y + 1}
 	selected := c.Card == photon.SelectedCard
-	if c.previousImagePos.Eq(newImagePos) && selected == c.previousSelected {
+	if !full && c.previousImagePos.Eq(newImagePos) && selected == c.previousSelected {
 		return
 	}
 	style := tcell.StyleDefault
