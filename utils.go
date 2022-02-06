@@ -24,20 +24,6 @@ func max(a, b int) int {
 	return b
 }
 
-//Compute max(1, ceil(log(number, base))).  Use only integer arithmetic in order to avoid numerical error.
-func ceilLog(number, base int) int {
-	if number < 1 || base < 2 {
-		panic("math domain error")
-	}
-	result := 1
-	accum := base
-	for accum < number {
-		result += 1
-		accum *= base
-	}
-	return result
-}
-
 func scrollPercentage(above, below int) string {
 	switch {
 	case below <= 0 && above == 0:
@@ -140,7 +126,7 @@ func drawLinesWordwrap(s tcell.Screen, X, Y, maxWidth, maxLines int, text string
 	if y >= maxLines {
 		return
 	}
-	drawString(s, x+X, y+Y, word.String(), style)
+	drawLine(s, x+X, y+Y, maxWidth, word.String(), style)
 }
 
 func drawString(s tcell.Screen, x, y int, text string, style tcell.Style) (width int) {

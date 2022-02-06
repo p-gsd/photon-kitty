@@ -331,6 +331,20 @@ func (a *Article) HintsParse() {
 	}
 }
 
+//Compute max(1, ceil(log(number, base))).  Use only integer arithmetic in order to avoid numerical error.
+func ceilLog(number, base int) int {
+	if number < 1 || base < 2 {
+		panic("math domain error")
+	}
+	result := 1
+	accum := base
+	for accum < number {
+		result += 1
+		accum *= base
+	}
+	return result
+}
+
 /*
 	Shuffle the given set of hints so that they're scattered.
 	Hints starting with the same character will be spread evenly throughout
