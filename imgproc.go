@@ -20,6 +20,8 @@ type imageProcReq struct {
 	callback  func(image.Rectangle, *Sixel)
 }
 
+const numColors = 255
+
 var (
 	imageProcChan = make(chan imageProcReq, 1024)
 	//map that holds cards that are right now processed
@@ -42,7 +44,7 @@ func imageProcWorker() {
 		if img == nil {
 			continue
 		}
-		sixel := EncodeSixel(img)
+		sixel := EncodeSixel(numColors, img)
 		if !imageProcStillThere(req.ident) {
 			continue
 		}
@@ -80,7 +82,7 @@ func resize(ident, obj interface{}, maxWidth, maxHeight int) image.Image {
 		}
 		return dst
 	case *clir.ImageResizer:
-		img, err := i.ResizePaletted(254, uint(maxWidth), uint(maxHeight))
+		img, err := i.ResizePaletted(numColors-1, uint(maxWidth), uint(maxHeight))
 		if err != nil {
 			log.Printf("ERROR: opencl image resizer error, falling back to CPU image scaling: %v", err)
 			imageCache.gotError = true

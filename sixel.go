@@ -49,9 +49,7 @@ func (s *Sixel) WriteLeaveLower(w io.Writer, leaveRows int) {
 	s.write(w, 0, len(s.rows)-leaveRows)
 }
 
-func EncodeSixel(img image.Image) *Sixel {
-	const nc int = 255 // (>= 2, 8bit, index 0 is reserved for transparent key color)
-
+func EncodeSixel(nc int, img image.Image) *Sixel {
 	width, height := img.Bounds().Dx(), img.Bounds().Dy()
 	if width == 0 || height == 0 {
 		return nil
