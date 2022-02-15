@@ -2,9 +2,11 @@ package main
 
 import (
 	"image"
+	"log"
 	"runtime"
 	"sync"
 
+	"git.sr.ht/~ghost08/clir"
 	"golang.org/x/image/draw"
 )
 
@@ -12,7 +14,7 @@ import (
 
 type imageProcReq struct {
 	ident     interface{}
-	src       image.Image
+	src       interface{}
 	maxWidth  int
 	maxHeight int
 	callback  func(image.Rectangle, *Sixel)
@@ -36,42 +38,64 @@ func imageProcWorker() {
 		if _, ok := imageProcMap.LoadOrStore(req.ident, struct{}{}); ok {
 			continue
 		}
-		origBounds := req.src.Bounds()
+		img := resize(req.ident, req.src, req.maxWidth, req.maxHeight)
+		if img == nil {
+			continue
+		}
+		sixel := EncodeSixel(img)
+		if !imageProcStillThere(req.ident) {
+			continue
+		}
+		req.callback(img.Bounds(), sixel)
+	}
+}
+
+func resize(ident, obj interface{}, maxWidth, maxHeight int) image.Image {
+	switch i := obj.(type) {
+	case image.Image:
+		origBounds := i.Bounds()
 		origWidth := origBounds.Dx()
 		origHeight := origBounds.Dy()
 		newWidth, newHeight := origWidth, origHeight
 		// Preserve aspect ratio
 		if origWidth >= origHeight {
-			newHeight = origHeight * req.maxWidth / origWidth
-			newWidth = req.maxWidth
+			newHeight = origHeight * maxWidth / origWidth
+			newWidth = maxWidth
 		} else {
-			newWidth = origWidth * req.maxHeight / origHeight
-			newHeight = req.maxHeight
+			newWidth = origWidth * maxHeight / origHeight
+			newHeight = maxHeight
 		}
-		if newHeight > req.maxHeight {
-			newHeight = req.maxHeight
-			newWidth = origWidth * req.maxHeight / origHeight
+		if newHeight > maxHeight {
+			newHeight = maxHeight
+			newWidth = origWidth * maxHeight / origHeight
 		}
 		rect := image.Rect(0, 0, newWidth, newHeight)
 		dst := image.NewRGBA(rect)
-		if !imageProcStillThere(req.ident) {
-			continue
+		if !imageProcStillThere(ident) {
+			return nil
 		}
-		draw.ApproxBiLinear.Scale(dst, rect, req.src, origBounds, draw.Over, nil)
-		if !imageProcStillThere(req.ident) {
-			continue
+		draw.NearestNeighbor.Scale(dst, rect, i, origBounds, draw.Over, nil)
+		if !imageProcStillThere(ident) {
+			return nil
 		}
-		sixel := EncodeSixel(dst)
-		if !imageProcStillThere(req.ident) {
-			continue
+		return dst
+	case *clir.ImageResizer:
+		img, err := i.ResizePaletted(254, uint(maxWidth), uint(maxHeight))
+		if err != nil {
+			log.Printf("ERROR: opencl image resizer error, falling back to CPU image scaling: %v", err)
+			imageCache.gotError = true
+			return nil
 		}
-		req.callback(dst.Bounds(), sixel)
+		return img
+	default:
+		log.Panicf("scale image got %T", i)
+		return nil
 	}
 }
 
 func imageProc(
 	ident interface{},
-	src image.Image,
+	src interface{},
 	maxWidth,
 	maxHeight int,
 	callback func(image.Rectangle, *Sixel),
@@ -98,4 +122,38 @@ func imageProcClear() {
 func imageProcStillThere(ident interface{}) bool {
 	_, ok := imageProcMap.Load(ident)
 	return ok
+}
+
+type ClirCache struct {
+	m        sync.Map
+	gotError bool
+}
+
+func (cc *ClirCache) Load(key interface{}) (interface{}, bool) {
+	return cc.m.Load(key)
+}
+
+func (cc *ClirCache) Store(key interface{}, val interface{}) {
+	switch i := val.(type) {
+	case image.Image:
+		if cc.gotError {
+			cc.m.Store(key, val)
+			break
+		}
+		v, err := clir.NewImageResizer(i)
+		if err != nil {
+			log.Println("ERROR: opencl image resizer, falling back to CPU scaling: %w", err)
+			cc.gotError = true
+			cc.m.Store(key, val)
+			break
+		}
+		cc.m.Store(key, v)
+	case *clir.ImageResizer:
+		cc.m.Store(key, i)
+	case nil:
+		cc.m.Store(key, nil)
+		return
+	default:
+		log.Panicf("ERROR: ClirCache got val type %T", val)
+	}
 }

@@ -50,10 +50,7 @@ func (s *Sixel) WriteLeaveLower(w io.Writer, leaveRows int) {
 }
 
 func EncodeSixel(img image.Image) *Sixel {
-	nc := 255 // (>= 2, 8bit, index 0 is reserved for transparent key color)
-	if nc < 2 {
-		nc = 255
-	}
+	const nc int = 255 // (>= 2, 8bit, index 0 is reserved for transparent key color)
 
 	width, height := img.Bounds().Dx(), img.Bounds().Dy()
 	if width == 0 || height == 0 {

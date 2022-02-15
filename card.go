@@ -135,8 +135,8 @@ func (c *Card) DownloadImage(ctx Context, s tcell.Screen) bool {
 	}
 	photon.ImgDownloader.Download(
 		c.Item.Image.URL,
-		func(img image.Image) {
-			c.ItemImage = img
+		func(i interface{}) {
+			c.ItemImage = i
 			c.makeSixel(ctx, s)
 		},
 	)

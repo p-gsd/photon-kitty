@@ -2,7 +2,6 @@ package lib
 
 import (
 	"fmt"
-	"image"
 	"net/http"
 	"net/url"
 	"time"
@@ -13,7 +12,7 @@ import (
 type Article struct {
 	*readability.Article
 	Card     *Card
-	TopImage image.Image
+	TopImage interface{}
 }
 
 func newArticle(card *Card, client *http.Client) (*Article, error) {

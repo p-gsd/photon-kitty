@@ -3,6 +3,7 @@ module git.sr.ht/~ghost08/photon
 go 1.17
 
 require (
+	git.sr.ht/~ghost08/clir v0.2.4
 	github.com/alecthomas/kong v0.4.0
 	github.com/cixtor/readability v1.0.0
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
@@ -12,6 +13,7 @@ require (
 	github.com/kennygrant/sanitize v1.2.4
 	github.com/mattn/go-runewidth v0.0.13
 	github.com/mmcdole/gofeed v1.1.3
+	github.com/pkg/profile v1.6.0
 	github.com/sbani/go-humanizer v0.3.2
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/soniakeys/quant v1.0.0

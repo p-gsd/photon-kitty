@@ -22,9 +22,9 @@ import (
 type Card struct {
 	photon     *Photon
 	Item       *gofeed.Item
-	ItemImage  image.Image
+	ItemImage  interface{}
 	Feed       *gofeed.Feed
-	FeedImage  image.Image
+	FeedImage  interface{}
 	Article    *Article
 	Media      *media.Media
 	Foreground int
@@ -76,11 +76,11 @@ func (card *Card) OpenArticle() {
 	if card.photon.OpenedArticle.Image != "" {
 		card.photon.ImgDownloader.Download(
 			card.photon.OpenedArticle.Image,
-			func(img image.Image) {
+			func(i interface{}) {
 				if card.photon.OpenedArticle == nil {
 					return
 				}
-				card.photon.OpenedArticle.TopImage = img
+				card.photon.OpenedArticle.TopImage = i
 				card.photon.cb.Redraw()
 			},
 		)

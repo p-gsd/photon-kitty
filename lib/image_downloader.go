@@ -16,12 +16,17 @@ import (
 type ImgDownloader struct {
 	client    *http.Client
 	receiveCh chan imgDownloadReq
-	imgCache  sync.Map
+	imgCache  ImageCache
+}
+
+type ImageCache interface {
+	Load(interface{}) (interface{}, bool)
+	Store(interface{}, interface{})
 }
 
 type imgDownloadReq struct {
 	URL      string
-	Callback func(image.Image)
+	Callback func(interface{})
 }
 
 func newImgDownloader(client *http.Client) *ImgDownloader {
@@ -36,7 +41,7 @@ func newImgDownloader(client *http.Client) *ImgDownloader {
 			if i, ok := d.imgCache.Load(req.URL); ok {
 				if i != nil {
 					if req.Callback != nil {
-						req.Callback(i.(image.Image))
+						req.Callback(i)
 					}
 				}
 				continue
@@ -71,7 +76,11 @@ func newImgDownloader(client *http.Client) *ImgDownloader {
 				}
 				d.imgCache.Store(req.URL, i)
 				if req.Callback != nil {
-					req.Callback(i)
+					if img, ok := d.imgCache.Load(req.URL); ok {
+						req.Callback(img)
+					} else {
+						req.Callback(i)
+					}
 				}
 			}
 		}()
@@ -79,7 +88,10 @@ func newImgDownloader(client *http.Client) *ImgDownloader {
 	return d
 }
 
-func (d *ImgDownloader) Download(url string, callback func(image.Image)) {
+func (d *ImgDownloader) Download(url string, callback func(interface{})) {
+	if d.imgCache == nil {
+		d.imgCache = &sync.Map{}
+	}
 	img, ok := d.imgCache.Load(url)
 	if !ok || img == nil {
 		d.receiveCh <- imgDownloadReq{
@@ -88,15 +100,7 @@ func (d *ImgDownloader) Download(url string, callback func(image.Image)) {
 		}
 	} else {
 		if callback != nil {
-			callback(img.(image.Image))
+			callback(img)
 		}
 	}
-}
-
-func (d *ImgDownloader) GetImg(url string) (image.Image, bool) {
-	i, ok := d.imgCache.Load(url)
-	if !ok || i == nil {
-		return nil, false
-	}
-	return i.(image.Image), true
 }

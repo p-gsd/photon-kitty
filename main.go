@@ -15,6 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"git.sr.ht/~ghost08/clir"
 	"git.sr.ht/~ghost08/photon/lib"
 	"git.sr.ht/~ghost08/photon/lib/keybindings"
 	"git.sr.ht/~ghost08/photon/lib/states"
@@ -45,16 +46,15 @@ var (
 	commandFocus bool
 	redrawCh     = make(chan bool, 1024)
 	clip         = true
+	imageCache   *ClirCache
 )
 
 func init() {
-	if err := clipboard.Init(); err != nil {
-		log.Printf("ERROR: initializing clipboard: %s", err)
-		clip = false
-	}
+	clip = clipboard.Init() != nil
 }
 
 func main() {
+	//defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
 	//args
 	kong.Parse(&CLI,
 		kong.Name("photon"),
@@ -95,16 +95,21 @@ func main() {
 	grid := &Grid{Columns: 5}
 	cb = Callbacks{grid: grid}
 	var err error
-	photon, err = lib.New(
-		cb,
-		CLI.Paths,
+	options := []lib.Option{
 		lib.WithHTTPClient(CLI.HTTPSettings.Client()),
 		lib.WithMediaExtractor(CLI.Extractor),
 		lib.WithMediaVideoCmd(CLI.VideoCmd),
 		lib.WithMediaImageCmd(CLI.ImageCmd),
 		lib.WithMediaTorrentCmd(CLI.TorrentCmd),
 		lib.WithDownloadPath(CLI.DownloadPath),
-	)
+	}
+	if err := clir.Init(); err != nil {
+		log.Println("INFO: error loading opencl image resizer, falling back to CPU scaling: %w", err)
+	} else {
+		imageCache = &ClirCache{}
+		options = append(options, lib.WithImageCache(imageCache))
+	}
+	photon, err = lib.New(cb, CLI.Paths, options...)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -375,7 +380,8 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 			return nil
 		}
 		var buf bytes.Buffer
-		if err := png.Encode(&buf, photon.SelectedCard.ItemImage); err != nil {
+		//TODO ItemImage can be clir.ImageResizer
+		if err := png.Encode(&buf, photon.SelectedCard.ItemImage.(image.Image)); err != nil {
 			return fmt.Errorf("encoding image: %w", err)
 		}
 		clipboard.Write(clipboard.FmtImage, buf.Bytes())

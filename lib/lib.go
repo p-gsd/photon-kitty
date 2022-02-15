@@ -126,6 +126,12 @@ func WithDownloadPath(downloadPath string) Option {
 	}
 }
 
+func WithImageCache(ic ImageCache) Option {
+	return func(p *Photon) {
+		p.ImgDownloader.imgCache = ic
+	}
+}
+
 func (p *Photon) loadFeeds(paths []string) (*inputs.Inputs, error) {
 	var ret []string
 	for _, path := range paths {
@@ -200,9 +206,11 @@ func (p *Photon) DownloadFeeds() {
 				feeds <- nil
 				return
 			}
-			if f.Image != nil && f.Image.URL != "" {
-				p.ImgDownloader.Download(f.Image.URL, nil)
-			}
+			/*
+				if f.Image != nil && f.Image.URL != "" {
+					p.ImgDownloader.Download(f.Image.URL, nil)
+				}
+			*/
 			feeds <- f
 		}()
 	}

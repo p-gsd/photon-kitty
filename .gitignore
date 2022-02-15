@@ -3,3 +3,4 @@ photon
 *.1
 *.5
 *.7
+*.pprof

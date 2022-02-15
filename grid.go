@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"image"
-	"log"
 	"math"
 
 	"github.com/gdamore/tcell/v2"
@@ -26,6 +25,9 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer, full bo
 		photon.SelectedCardPos = image.Point{
 			X: g.FirstChildIndex % g.Columns,
 			Y: g.FirstChildIndex / g.Columns,
+		}
+		if g.FirstChildIndex >= len(photon.VisibleCards) {
+			g.FirstChildIndex = len(photon.VisibleCards) - 1
 		}
 		photon.SelectedCard = photon.VisibleCards[g.FirstChildIndex]
 	}
@@ -91,14 +93,12 @@ func (g *Grid) ClearImages() {
 }
 
 func (g *Grid) ClearCardsPosition() {
-	for _, card := range photon.VisibleCards {
+	for _, card := range photon.Cards {
 		getCard(card).previousImagePos = image.Point{-2, -2}
 	}
 }
 
 func (g *Grid) Scroll(d int) {
-	log.Println(d)
-	defer log.Println(photon.SelectedCardPos, g.FirstChildIndex, g.FirstChildOffset)
 	defer g.selectedChildRefresh()
 	cardDiff := (d / g.childHeight) * g.Columns
 	cellDiff := d % g.childHeight

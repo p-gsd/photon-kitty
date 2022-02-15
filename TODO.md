@@ -1,3 +1,14 @@
+### perf
+
+-   sixelBuf -> SixelPrinter - an array of position + pointer to sixel data
+
+```go
+type SixelPrinter []struct{
+	pos image.Point
+	sixelData []byte
+}
+```
+
 ### documentation
 
 -   lua man pages
