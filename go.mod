@@ -3,7 +3,7 @@ module git.sr.ht/~ghost08/photon
 go 1.17
 
 require (
-	git.sr.ht/~ghost08/clir v0.2.8
+	git.sr.ht/~ghost08/clir v0.2.9
 	github.com/alecthomas/kong v0.4.0
 	github.com/cixtor/readability v1.0.0
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
