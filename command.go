@@ -33,9 +33,16 @@ func commandInput(s tcell.Screen, ev *tcell.EventKey) bool {
 	} else {
 		command += string(ev.Rune())
 	}
-	photon.SearchQuery(command[1:])
-	photon.SelectedCard = nil
-	if len(photon.VisibleCards) > 0 {
+	if len(command) > 0 {
+		photon.SearchQuery(command[1:])
+		photon.SelectedCard = nil
+		if len(photon.VisibleCards) > 0 {
+			photon.SelectedCard = photon.VisibleCards[0]
+			photon.SelectedCardPos = image.Point{}
+		}
+	} else {
+		commandFocus = false
+		photon.VisibleCards = photon.Cards
 		photon.SelectedCard = photon.VisibleCards[0]
 		photon.SelectedCardPos = image.Point{}
 	}
