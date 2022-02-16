@@ -1,8 +1,8 @@
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20201218220906-28db891af037/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-git.sr.ht/~ghost08/clir v0.2.8 h1:QxJaigM2degcPKTT9eIKK5/2AcjME98PdvjnpijkhV0=
-git.sr.ht/~ghost08/clir v0.2.8/go.mod h1:wguSb/vWdK6cW6gIJ4tJHG93UViNmaPVHBNUMsP+EuY=
+git.sr.ht/~ghost08/clir v0.2.9 h1:2U5eeNUTHpnmdAPMV/sdb2y03wKNTQ7PK9pyLXlQN1E=
+git.sr.ht/~ghost08/clir v0.2.9/go.mod h1:wguSb/vWdK6cW6gIJ4tJHG93UViNmaPVHBNUMsP+EuY=
 github.com/BurntSushi/toml v0.3.1/go.mod h1:xHWCNGjB5oqiDr8zfno3MHue2Ht5sIBksp03qcyfWMU=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
 github.com/Knetic/govaluate v3.0.1-0.20171022003610-9aa49832a739+incompatible/go.mod h1:r7JcOSlj0wfOMncg0iLm8Leh48TZaKVeNIfJntJ2wa0=
