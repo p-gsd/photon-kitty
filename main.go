@@ -177,6 +177,8 @@ func main() {
 	var fullRedraw bool
 	sixelBuf := bytes.NewBuffer(nil)
 	for {
+		//Begin synchronized update (BSU) ESC P = 1 s ESC \
+		os.Stderr.Write([]byte("\033P=1s\033\\"))
 		//draw main widget + status bar
 		var widgetStatus richtext
 		switch cb.State() {
@@ -209,9 +211,11 @@ func main() {
 		//draw sixels
 		if sixelBuf != nil && sixelBuf.Len() > 0 {
 			os.Stderr.Write(sixelBuf.Bytes())
+			sixelBuf.Reset()
 		}
+		//End synchronized update (ESU) ESC P = 2 s ESC \
+		os.Stderr.Write([]byte("\033P=2s\033\\"))
 		//wait for another redraw event or quit
-		sixelBuf.Reset()
 		select {
 		case <-ctx.Done():
 			return
