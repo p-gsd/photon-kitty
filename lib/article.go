@@ -6,7 +6,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/cixtor/readability"
+	"github.com/go-shiori/go-readability"
 )
 
 type Article struct {
@@ -51,7 +51,7 @@ func newArticle(card *Card, client *http.Client) (*Article, error) {
 		return nil, fmt.Errorf("invalid content-type `%s`", mime)
 	}
 
-	a, err := readability.New().Parse(resp.Body, card.Item.Link)
+	a, err := readability.FromReader(resp.Body, uri)
 	if err != nil {
 		return nil, err
 	}
