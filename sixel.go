@@ -28,7 +28,7 @@ func (s *Sixel) Rows() int {
 
 func (s *Sixel) write(w io.Writer, from, to int) {
 	// DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
-	w.Write([]byte{0x1b, 0x50, 0x30, 0x3b, 0x30, 0x3b, 0x38, 0x71, 0x22, 0x31, 0x3b, 0x31})
+	w.Write([]byte{0x1b, 0x50, 0x30, 0x3b, 0x31, 0x3b, 0x38, 0x71, 0x22, 0x31, 0x3b, 0x31})
 	w.Write(s.palette)
 	for i := from; i < to; i++ {
 		w.Write(s.rows[i])
@@ -84,9 +84,6 @@ func EncodeSixel(nc int, img image.Image) *Sixel {
 	w := bytes.NewBuffer(nil)
 	for z := 0; z < (height+5)/6; z++ {
 		// DECGNL (-): Graphics Next Line
-		if z > 0 {
-			w.Write([]byte{0x2d})
-		}
 		for p := 0; p < 6; p++ {
 			y := z*6 + p
 			for x := 0; x < width; x++ {
@@ -195,6 +192,9 @@ func EncodeSixel(nc int, img image.Image) *Sixel {
 				}
 			}
 			ch0 = specialChCr
+		}
+		if z > 0 {
+			w.Write([]byte{0x2d})
 		}
 		rws[z] = make([]byte, w.Len())
 		copy(rws[z], w.Bytes())

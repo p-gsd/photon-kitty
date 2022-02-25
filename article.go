@@ -79,7 +79,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer) (sta
 		}
 		a.HintsParse()
 	}
-	articleWidthPixels := articleWidth * ctx.XCellPixels()
+	articleWidthPixels := articleWidth * ctx.XCellPixels
 	x := (ctx.Width - articleWidth) / 2
 	contentY := 7
 
@@ -102,10 +102,10 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer) (sta
 				},
 			)
 		} else {
-			if a.scrollOffset*ctx.YCellPixels() < a.scaledImgBounds.Dy() {
-				imageCenterOffset := (articleWidthPixels - a.scaledImgBounds.Dx()) / ctx.XCellPixels() / 2
+			if a.scrollOffset*ctx.YCellPixels < a.scaledImgBounds.Dy() {
+				imageCenterOffset := (articleWidthPixels - a.scaledImgBounds.Dx()) / ctx.XCellPixels / 2
 				setCursorPos(sixelBuf, x+1+imageCenterOffset, contentY)
-				leaveRows := int(math.Ceil(float64(a.scrollOffset*ctx.YCellPixels())/6.0)) + 1
+				leaveRows := int(math.Ceil(float64(a.scrollOffset*ctx.YCellPixels)/6.0)) + 1
 				a.imgSixel.WriteLeaveUpper(sixelBuf, leaveRows)
 				if a.underImageRune == '\u2800' {
 					a.underImageRune = '\u2007'
@@ -118,7 +118,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer) (sta
 						x,
 						contentY-1,
 						x+articleWidth,
-						contentY+a.scaledImgBounds.Dy()/ctx.YCellPixels()-a.scrollOffset,
+						contentY+a.scaledImgBounds.Dy()/ctx.YCellPixels-a.scrollOffset,
 					),
 					a.underImageRune,
 				)
@@ -139,7 +139,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer) (sta
 	}
 
 	//content
-	imageYCells := a.scaledImgBounds.Dy() / ctx.YCellPixels()
+	imageYCells := a.scaledImgBounds.Dy() / ctx.YCellPixels
 	for i := max(0, a.scrollOffset-imageYCells); i < len(a.contentLines); i++ {
 		line := a.contentLines[i]
 		var lineOffset int

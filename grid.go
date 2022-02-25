@@ -34,11 +34,13 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer, full bo
 	for i := g.FirstChildIndex; i < len(photon.VisibleCards); i++ {
 		child := photon.VisibleCards[i]
 		chctx := Context{
-			WinSize: ctx.WinSize,
-			X:       margin + (i%g.Columns)*g.childWidth,
-			Y:       g.FirstChildOffset + ((i-g.FirstChildIndex)/g.Columns)*g.childHeight,
-			Width:   g.childWidth,
-			Height:  g.childHeight,
+			WinSize:     ctx.WinSize,
+			X:           margin + (i%g.Columns)*g.childWidth,
+			Y:           g.FirstChildOffset + ((i-g.FirstChildIndex)/g.Columns)*g.childHeight,
+			Width:       g.childWidth,
+			Height:      g.childHeight,
+			XCellPixels: ctx.XCellPixels,
+			YCellPixels: ctx.YCellPixels,
 		}
 		if chctx.Y >= int(ctx.Height) {
 			break
@@ -67,9 +69,11 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer, full bo
 	for i := g.LastChildIndex + 1; i < len(photon.VisibleCards) && i < g.LastChildIndex+(g.RowsCount*g.Columns)+1; i++ {
 		child := photon.VisibleCards[i]
 		chctx := Context{
-			WinSize: ctx.WinSize,
-			Width:   g.childWidth,
-			Height:  g.childHeight,
+			WinSize:     ctx.WinSize,
+			Width:       g.childWidth,
+			Height:      g.childHeight,
+			XCellPixels: ctx.XCellPixels,
+			YCellPixels: ctx.YCellPixels,
 		}
 		getCard(child).DownloadImage(chctx, s)
 	}
@@ -81,9 +85,9 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer, full bo
 	return
 }
 
-func (g *Grid) Resize(w, h int) {
-	g.childWidth = w / g.Columns
-	g.childHeight = int(float32(g.childWidth) / 2.2)
+func (g *Grid) Resize(ctx Context) {
+	g.childWidth = ctx.Width / g.Columns
+	g.childHeight = g.childWidth * ctx.XCellPixels / ctx.YCellPixels
 }
 
 func (g *Grid) ClearImages() {

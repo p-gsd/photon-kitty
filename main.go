@@ -128,7 +128,7 @@ func main() {
 	defer s.Fini()
 
 	ctx, quit := WithCancel(Background())
-	grid.Resize(int(ctx.Width), int(ctx.Height))
+	grid.Resize(ctx)
 
 	go func() {
 		photon.DownloadFeeds()
@@ -153,8 +153,9 @@ func main() {
 				}
 				photon.KeyBindings.Run(newKeyEvent(ev))
 			case *tcell.EventResize:
+				s.Clear()
 				newCtx := Background()
-				grid.Resize(int(newCtx.Width), int(newCtx.Height))
+				grid.Resize(newCtx)
 				switch cb.State() {
 				case states.Normal:
 					if newCtx.Cols != ctx.Cols {
@@ -332,8 +333,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	photon.KeyBindings.Add(states.Normal, "=", func() error {
 		grid.Columns++
 		grid.ClearImages()
-		w, h := s.Size()
-		grid.Resize(w, h)
+		grid.Resize(Background())
 		imageProcClear()
 		redraw(true)
 		return nil
@@ -344,8 +344,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		}
 		grid.Columns--
 		grid.ClearImages()
-		w, h := s.Size()
-		grid.Resize(w, h)
+		grid.Resize(Background())
 		imageProcClear()
 		redraw(true)
 		return nil

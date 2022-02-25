@@ -38,9 +38,9 @@ type Card struct {
 }
 
 func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer, full bool) {
-	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels()
-	offset := (ctx.Width - imageWidthInCells) / 2
-	newImagePos := image.Point{ctx.X + 1 + offset, ctx.Y + 1}
+	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels
+	imageMargin := (ctx.Width - imageWidthInCells) / 2
+	newImagePos := image.Point{ctx.X + 1 + imageMargin, ctx.Y + 1}
 	selected := c.Card == photon.SelectedCard
 	if !full && c.previousImagePos.Eq(newImagePos) && selected == c.previousSelected {
 		return
@@ -97,12 +97,12 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer, full bool) {
 	case newImagePos.Y < 0:
 		//if the image upper left corner is outside of the screen leave some upper sixel rows
 		setCursorPos(w, newImagePos.X, 0)
-		leaveRows := int((ctx.YCellPixels()*(-newImagePos.Y))/6) + 4
+		leaveRows := int(float64(ctx.YCellPixels)*float64(-newImagePos.Y)/6.0) + 3
 		c.sixelData.WriteLeaveUpper(w, leaveRows)
-	case ctx.YCellPixels()*newImagePos.Y+c.scaledImageBounds.Dy() > int(ctx.YPixel):
+	case ctx.YCellPixels*newImagePos.Y+c.scaledImageBounds.Dy() > int(ctx.YPixel):
 		//if the image lover pars is outside of the screen leave some lower sixel rows
 		setCursorPos(w, newImagePos.X, newImagePos.Y)
-		leaveRows := ((ctx.YCellPixels()*newImagePos.Y+c.scaledImageBounds.Dy())-int(ctx.YPixel))/6 + 2
+		leaveRows := ((ctx.YCellPixels*newImagePos.Y+c.scaledImageBounds.Dy())-int(ctx.YPixel))/6 + 2
 		c.sixelData.WriteLeaveLower(w, leaveRows)
 	default:
 		setCursorPos(w, newImagePos.X, newImagePos.Y)
@@ -147,8 +147,8 @@ func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 	if c.sixelData != nil || c.ItemImage == nil {
 		return
 	}
-	targetWidth := ctx.Width * ctx.XCellPixels()
-	targetHeight := (ctx.Height - headerHeight) * ctx.YCellPixels()
+	targetWidth := ctx.Width * ctx.XCellPixels
+	targetHeight := (ctx.Height - headerHeight) * ctx.YCellPixels
 	imageProc(
 		c,
 		c.ItemImage,

@@ -13,9 +13,11 @@ func Background() Context {
 		panic(err)
 	}
 	return Context{
-		WinSize: ws,
-		Width:   int(ws.Cols),
-		Height:  int(ws.Rows),
+		WinSize:     ws,
+		Width:       int(ws.Cols),
+		Height:      int(ws.Rows),
+		XCellPixels: int(ws.XPixel) / int(ws.Cols),
+		YCellPixels: int(ws.YPixel) / int(ws.Rows),
 	}
 }
 
@@ -29,9 +31,10 @@ func WithCancel(ctx Context) (Context, context.CancelFunc) {
 
 type Context struct {
 	WinSize
-	X, Y          int
-	Width, Height int
-	cancelChan    chan struct{}
+	X, Y                     int
+	Width, Height            int
+	YCellPixels, XCellPixels int
+	cancelChan               chan struct{}
 }
 
 func (ctx Context) Deadline() (deadline time.Time, ok bool) {
@@ -48,14 +51,6 @@ func (ctx Context) Err() error {
 
 func (ctx Context) Value(key interface{}) interface{} {
 	return nil
-}
-
-func (ctx Context) YCellPixels() int {
-	return int(ctx.YPixel) / int(ctx.Rows)
-}
-
-func (ctx Context) XCellPixels() int {
-	return int(ctx.XPixel) / int(ctx.Cols)
 }
 
 const tiocgwinsz = 0x5413
