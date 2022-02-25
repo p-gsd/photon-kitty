@@ -46,12 +46,10 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/pkg/profile v1.6.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20220203164150-d4f80a91470e // indirect
-	golang.org/x/exp/shiny v0.0.0-20220218215828-6cf2b201936e // indirect
 	golang.org/x/mobile v0.0.0-20220224134551-8a0a1e50732f // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
