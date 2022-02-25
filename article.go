@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"image"
 	"log"
@@ -65,7 +64,7 @@ type Article struct {
 	hints           map[string]string
 }
 
-func (a *Article) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer) (statusBarText richtext) {
+func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (statusBarText richtext) {
 	s.Clear()
 	articleWidth := min(72, ctx.Width)
 	if a.contentLines == nil {
@@ -104,9 +103,8 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer) (sta
 		} else {
 			if a.scrollOffset*ctx.YCellPixels < a.scaledImgBounds.Dy() {
 				imageCenterOffset := (articleWidthPixels - a.scaledImgBounds.Dx()) / ctx.XCellPixels / 2
-				setCursorPos(sixelBuf, x+1+imageCenterOffset, contentY)
 				leaveRows := int(math.Ceil(float64(a.scrollOffset*ctx.YCellPixels)/6.0)) + 1
-				a.imgSixel.WriteLeaveUpper(sixelBuf, leaveRows)
+				sixelScreen.Add(a.imgSixel, x+1+imageCenterOffset, contentY, leaveRows, -1)
 				if a.underImageRune == '\u2800' {
 					a.underImageRune = '\u2007'
 				} else {

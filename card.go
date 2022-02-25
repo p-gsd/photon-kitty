@@ -2,7 +2,6 @@ package main
 
 import (
 	"image"
-	"io"
 	"time"
 
 	"git.sr.ht/~ghost08/photon/lib"
@@ -37,7 +36,7 @@ type Card struct {
 	previousSelected bool
 }
 
-func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer, full bool) {
+func (c *Card) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen, full bool) {
 	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels
 	imageMargin := (ctx.Width - imageWidthInCells) / 2
 	newImagePos := image.Point{ctx.X + 1 + imageMargin, ctx.Y + 1}
@@ -96,17 +95,14 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, w io.Writer, full bool) {
 	switch {
 	case newImagePos.Y < 0:
 		//if the image upper left corner is outside of the screen leave some upper sixel rows
-		setCursorPos(w, newImagePos.X, 0)
 		leaveRows := int(float64(ctx.YCellPixels)*float64(-newImagePos.Y)/6.0) + 3
-		c.sixelData.WriteLeaveUpper(w, leaveRows)
+		sixelScreen.Add(c.sixelData, newImagePos.X, 0, leaveRows, -1)
 	case ctx.YCellPixels*newImagePos.Y+c.scaledImageBounds.Dy() > int(ctx.YPixel):
 		//if the image lover pars is outside of the screen leave some lower sixel rows
-		setCursorPos(w, newImagePos.X, newImagePos.Y)
 		leaveRows := ((ctx.YCellPixels*newImagePos.Y+c.scaledImageBounds.Dy())-int(ctx.YPixel))/6 + 2
-		c.sixelData.WriteLeaveLower(w, leaveRows)
+		sixelScreen.Add(c.sixelData, newImagePos.X, newImagePos.Y, 0, len(c.sixelData.rows)-leaveRows)
 	default:
-		setCursorPos(w, newImagePos.X, newImagePos.Y)
-		c.sixelData.Write(w)
+		sixelScreen.Add(c.sixelData, newImagePos.X, newImagePos.Y, 0, -1)
 	}
 }
 

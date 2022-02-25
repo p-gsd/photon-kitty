@@ -20,7 +20,7 @@ require (
 	golang.design/x/clipboard v0.6.1-0.20220131123109-179c35fa8947
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
 	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
-	golang.org/x/sys v0.0.0-20220224003255-dbe011f71a99
+	golang.org/x/sys v0.0.0-20220224120231-95c6836cb0e7
 )
 
 require (
@@ -46,12 +46,13 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/pkg/profile v1.6.0 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20220203164150-d4f80a91470e // indirect
 	golang.org/x/exp/shiny v0.0.0-20220218215828-6cf2b201936e // indirect
-	golang.org/x/mobile v0.0.0-20220223142100-032b21455fcf // indirect
+	golang.org/x/mobile v0.0.0-20220224134551-8a0a1e50732f // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect

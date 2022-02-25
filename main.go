@@ -176,7 +176,7 @@ func main() {
 
 	ctx.Height -= 1
 	var fullRedraw bool
-	sixelBuf := bytes.NewBuffer(nil)
+	sixelScreen := &SixelScreen{}
 	for {
 		//Begin synchronized update (BSU) ESC P = 1 s ESC \
 		os.Stderr.Write([]byte("\033P=1s\033\\"))
@@ -184,10 +184,10 @@ func main() {
 		var widgetStatus richtext
 		switch cb.State() {
 		case states.Normal, states.Search:
-			widgetStatus = grid.Draw(ctx, s, sixelBuf, fullRedraw)
+			widgetStatus = grid.Draw(ctx, s, sixelScreen, fullRedraw)
 			drawCommand(ctx, s)
 		case states.Article:
-			widgetStatus = openedArticle.Draw(ctx, s, sixelBuf)
+			widgetStatus = openedArticle.Draw(ctx, s, sixelScreen)
 		}
 		status := photon.GetStatus()
 		if utf8.RuneCountInString(status) > (ctx.Width / 2) {
@@ -210,10 +210,8 @@ func main() {
 			s.Show()
 		}
 		//draw sixels
-		if sixelBuf != nil && sixelBuf.Len() > 0 {
-			os.Stderr.Write(sixelBuf.Bytes())
-			sixelBuf.Reset()
-		}
+		sixelScreen.Write(os.Stderr)
+		sixelScreen.Reset()
 		//End synchronized update (ESU) ESC P = 2 s ESC \
 		os.Stderr.Write([]byte("\033P=2s\033\\"))
 		//wait for another redraw event or quit

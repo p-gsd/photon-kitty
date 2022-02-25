@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"image"
 	"math"
 
@@ -19,7 +18,7 @@ type Grid struct {
 	childHeight      int
 }
 
-func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer, full bool) (statusBarText richtext) {
+func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen, full bool) (statusBarText richtext) {
 	margin := (int(ctx.Width) % g.Columns) / 2
 	if photon.SelectedCard == nil && photon.VisibleCards != nil {
 		photon.SelectedCardPos = image.Point{
@@ -48,7 +47,7 @@ func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelBuf *bytes.Buffer, full bo
 		g.LastChildIndex = i
 		g.RowsCount = i / g.Columns
 		g.LastChildOffset = chctx.Y + g.childHeight - int(ctx.Height)
-		getCard(child).Draw(chctx, s, sixelBuf, full)
+		getCard(child).Draw(chctx, s, sixelScreen, full)
 	}
 	//clear remaining card space
 	if g.LastChildIndex == len(photon.VisibleCards)-1 {

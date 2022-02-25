@@ -15,38 +15,61 @@ const (
 	specialChCr = byte(0x64)
 )
 
+var (
+	// DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
+	sixelHeader = []byte{0x1b, 0x50, 0x30, 0x3b, 0x31, 0x3b, 0x38, 0x71, 0x22, 0x31, 0x3b, 0x31}
+	sixelFooter = []byte{0x1b, 0x5c}
+)
+
+//SixelScreen collects sixel data and it's positions then to be printed to the screen
+type SixelScreen struct {
+	capacity, length int
+	data             [][]byte
+}
+
+func (ss *SixelScreen) Add(s *Sixel, x, y, from, to int) {
+	if to == -1 {
+		to = len(s.rows)
+	}
+	if to-from <= 0 {
+		return
+	}
+	//cursor/image position
+	ss.append([]byte(fmt.Sprintf("\033[%d;%dH", y, x)))
+	ss.append(sixelHeader)
+	//palette
+	ss.append(s.palette)
+	//sixel row data
+	for i := from; i < to; i++ {
+		ss.append(s.rows[i])
+	}
+	ss.append(sixelFooter)
+}
+
+func (ss *SixelScreen) Reset() {
+	ss.length = 0
+}
+
+func (ss *SixelScreen) append(d []byte) {
+	if ss.length == ss.capacity {
+		ss.data = append(ss.data, make([][]byte, max(2, ss.capacity))...)
+		ss.capacity += max(2, ss.capacity)
+	}
+	ss.data[ss.length] = d
+	ss.length++
+}
+
+func (ss *SixelScreen) Write(w io.Writer) {
+	for i := 0; i < ss.length; i++ {
+		w.Write(ss.data[i])
+	}
+}
+
 //Sixel are the bytes of a image encoded in sixel format
 //it has the ability to draw just specified rows of the image
 type Sixel struct {
 	palette []byte
 	rows    [][]byte
-}
-
-func (s *Sixel) Rows() int {
-	return len(s.rows)
-}
-
-func (s *Sixel) write(w io.Writer, from, to int) {
-	// DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
-	w.Write([]byte{0x1b, 0x50, 0x30, 0x3b, 0x31, 0x3b, 0x38, 0x71, 0x22, 0x31, 0x3b, 0x31})
-	w.Write(s.palette)
-	for i := from; i < to; i++ {
-		w.Write(s.rows[i])
-	}
-	// string terminator(ST)
-	w.Write([]byte{0x1b, 0x5c})
-}
-
-func (s *Sixel) Write(w io.Writer) {
-	s.write(w, 0, len(s.rows))
-}
-
-func (s *Sixel) WriteLeaveUpper(w io.Writer, leaveRows int) {
-	s.write(w, leaveRows, len(s.rows))
-}
-
-func (s *Sixel) WriteLeaveLower(w io.Writer, leaveRows int) {
-	s.write(w, 0, len(s.rows)-leaveRows)
 }
 
 func EncodeSixel(nc int, img image.Image) *Sixel {

@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"image"
-	"io"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -45,10 +44,6 @@ func fillArea(s tcell.Screen, rect image.Rectangle, r rune) {
 			s.SetContent(x, y, r, nil, tcell.StyleDefault)
 		}
 	}
-}
-
-func setCursorPos(w io.Writer, x, y int) {
-	fmt.Fprintf(w, "\033[%d;%dH", y, x)
 }
 
 func drawLine(s tcell.Screen, X, Y, maxWidth int, text string, style tcell.Style) (width int) {
