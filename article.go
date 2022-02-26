@@ -80,6 +80,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (s
 	}
 	articleWidthPixels := articleWidth * ctx.XCellPixels
 	x := (ctx.Width - articleWidth) / 2
+	imageYCells := a.scaledImgBounds.Dy() / ctx.YCellPixels
 	contentY := 7
 
 	//header
@@ -87,42 +88,40 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (s
 	drawLine(s, x, 4, articleWidth, a.SiteName, tcell.StyleDefault)
 
 	//top image
-	if a.TopImage != nil {
-		if a.imgSixel == nil {
-			imageProcMap.Delete(a)
-			imageProc(
-				a,
-				a.TopImage,
-				articleWidthPixels,
-				articleWidthPixels,
-				func(b image.Rectangle, s *Sixel) {
-					a.scaledImgBounds, a.imgSixel = b, s
-					redraw(true)
-				},
-			)
-		} else {
-			if a.scrollOffset*ctx.YCellPixels < a.scaledImgBounds.Dy() {
-				imageCenterOffset := (articleWidthPixels - a.scaledImgBounds.Dx()) / ctx.XCellPixels / 2
-				leaveRows := int(math.Ceil(float64(a.scrollOffset*ctx.YCellPixels)/6.0)) + 1
-				sixelScreen.Add(a.imgSixel, x+1+imageCenterOffset, contentY, leaveRows, -1)
-				if a.underImageRune == '\u2800' {
-					a.underImageRune = '\u2007'
-				} else {
-					a.underImageRune = '\u2800'
-				}
-				fillArea(
-					s,
-					image.Rect(
-						x,
-						contentY-1,
-						x+articleWidth,
-						contentY+a.scaledImgBounds.Dy()/ctx.YCellPixels-a.scrollOffset,
-					),
-					a.underImageRune,
-				)
-			}
+	switch {
+	case a.TopImage != nil && a.imgSixel == nil:
+		//image isn't null but it isn't yet downloaded
+		imageProcMap.Delete(a)
+		imageProc(
+			a,
+			a.TopImage,
+			articleWidthPixels,
+			articleWidthPixels,
+			func(b image.Rectangle, s *Sixel) {
+				a.scaledImgBounds, a.imgSixel = b, s
+				redraw(true)
+			},
+		)
+	case a.TopImage != nil && a.imgSixel != nil:
+		//image is downloaded
+		if a.scrollOffset*ctx.YCellPixels >= a.scaledImgBounds.Dy() {
+			break
 		}
-	} else if a.Article.Article.Image == "" && a.Card.ItemImage != nil {
+		imageCenterOffset := (articleWidthPixels - a.scaledImgBounds.Dx()) / ctx.XCellPixels / 2
+		leaveRows := int(math.Ceil(float64(a.scrollOffset*ctx.YCellPixels)/6.0)) + 1
+		sixelScreen.Add(a.imgSixel, x+1+imageCenterOffset, contentY, leaveRows, -1)
+		if a.underImageRune == '\u2800' {
+			a.underImageRune = '\u2007'
+		} else {
+			a.underImageRune = '\u2800'
+		}
+		fillArea(
+			s,
+			image.Rect(x, contentY-1, x+articleWidth, contentY+imageYCells-a.scrollOffset),
+			a.underImageRune,
+		)
+	case a.TopImage == nil && a.Article.Article.Image == "" && a.Card.ItemImage != nil:
+		//top image is null, but the item image isn't, do we use that
 		imageProcMap.Delete(a)
 		imageProc(
 			a,
@@ -137,9 +136,9 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (s
 	}
 
 	//content
-	imageYCells := a.scaledImgBounds.Dy() / ctx.YCellPixels
 	for i := max(0, a.scrollOffset-imageYCells); i < len(a.contentLines); i++ {
 		line := a.contentLines[i]
+		contentOffset := contentY + max(0, imageYCells-a.scrollOffset)
 		var lineOffset int
 		var texts []string
 		for _, to := range line {
@@ -148,7 +147,7 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (s
 					log.Println(hint, *a.hint)
 					s.SetContent(
 						x+lineOffset,
-						contentY+max(0, imageYCells-a.scrollOffset),
+						contentOffset,
 						[]rune(hint)[len(*a.hint)],
 						nil,
 						tcell.StyleDefault.Background(tcell.ColorYellow).Foreground(tcell.ColorBlack),
@@ -158,18 +157,12 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (s
 					to.Text = to.Text[s:]
 				}
 			}
-			lineOffset += drawString(
-				s,
-				x+lineOffset,
-				contentY+max(0, imageYCells-a.scrollOffset),
-				to.Text,
-				to.Style,
-			)
+			lineOffset += drawString(s, x+lineOffset, contentOffset, to.Text, to.Style)
 			texts = append(texts, to.Text)
 		}
 		a.lastLine = i
 		contentY++
-		if contentY+max(0, imageYCells-a.scrollOffset) >= int(ctx.Height) {
+		if contentOffset >= int(ctx.Height) {
 			break
 		}
 	}
