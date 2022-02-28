@@ -144,7 +144,6 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (s
 		for _, to := range line {
 			if a.hints != nil && a.hint != nil {
 				if hint, ok := a.hints[to.Link]; ok && strings.HasPrefix(hint, *a.hint) {
-					log.Println(hint, *a.hint)
 					s.SetContent(
 						x+lineOffset,
 						contentOffset,

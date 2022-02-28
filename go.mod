@@ -3,7 +3,7 @@ module git.sr.ht/~ghost08/photon
 go 1.17
 
 require (
-	git.sr.ht/~ghost08/clir v0.2.9
+	git.sr.ht/~ghost08/clir v0.3.0
 	github.com/alecthomas/kong v0.4.1
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
 	github.com/dgraph-io/badger/v3 v3.2103.2
@@ -19,8 +19,8 @@ require (
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
 	golang.design/x/clipboard v0.6.1-0.20220131123109-179c35fa8947
 	golang.org/x/image v0.0.0-20211028202545-6944b10bf410
-	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd
-	golang.org/x/sys v0.0.0-20220224120231-95c6836cb0e7
+	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
+	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9
 )
 
 require (
@@ -50,6 +50,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
 	golang.org/x/exp v0.0.0-20220203164150-d4f80a91470e // indirect
+	golang.org/x/exp/shiny v0.0.0-20220218215828-6cf2b201936e // indirect
 	golang.org/x/mobile v0.0.0-20220224134551-8a0a1e50732f // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
