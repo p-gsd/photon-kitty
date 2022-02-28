@@ -19,10 +19,10 @@ import (
 	"git.sr.ht/~ghost08/photon/lib"
 	"git.sr.ht/~ghost08/photon/lib/keybindings"
 	"git.sr.ht/~ghost08/photon/lib/states"
-	"golang.org/x/sys/unix"
 
 	"github.com/alecthomas/kong"
 	"github.com/gdamore/tcell/v2"
+	"github.com/mattn/go-isatty"
 	"golang.design/x/clipboard"
 )
 
@@ -65,7 +65,7 @@ func main() {
 			Summary: true,
 		}))
 
-	if _, err := unix.IoctlGetTermios(int(os.Stdout.Fd()), unix.TCGETS); err == nil {
+	if isatty.IsTerminal(os.Stdout.Fd()) {
 		//don't log to terminal
 		log.SetOutput(io.Discard)
 		os.Stdout, _ = os.Open(os.DevNull)
