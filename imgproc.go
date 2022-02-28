@@ -81,7 +81,7 @@ func resize(ident, obj interface{}, maxWidth, maxHeight int) image.Image {
 			return nil
 		}
 		return dst
-	case *clir.ImageResizer:
+	case clir.ImageResizer:
 		img, err := i.ResizePaletted(numColors-1, uint(maxWidth), uint(maxHeight))
 		if err != nil {
 			log.Printf("ERROR: opencl image resizer error, falling back to CPU image scaling: %v", err)

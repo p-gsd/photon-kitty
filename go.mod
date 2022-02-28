@@ -3,7 +3,7 @@ module git.sr.ht/~ghost08/photon
 go 1.17
 
 require (
-	git.sr.ht/~ghost08/clir v0.3.2
+	git.sr.ht/~ghost08/clir v0.3.3
 	github.com/alecthomas/kong v0.4.1
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
 	github.com/dgraph-io/badger/v3 v3.2103.2
