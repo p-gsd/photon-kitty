@@ -1,8 +1,10 @@
 package main
 
 import (
+	"encoding/base64"
 	"fmt"
 	"image"
+	"os"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -139,4 +141,10 @@ func drawString(s tcell.Screen, x, y int, text string, style tcell.Style) (width
 		x += w
 	}
 	return
+}
+
+func osc52(text string) {
+	fmt.Fprint(os.Stderr, "\033]52;c;") // Start OSC52
+	base64.NewEncoder(base64.StdEncoding, os.Stderr).Write([]byte(text))
+	fmt.Fprint(os.Stderr, "\a") // End OSC52
 }

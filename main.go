@@ -1,11 +1,9 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"image"
-	"image/png"
 	"io"
 	"log"
 	"os"
@@ -23,7 +21,6 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-isatty"
-	"golang.design/x/clipboard"
 )
 
 var CLI struct {
@@ -45,12 +42,7 @@ var (
 	command      string
 	commandFocus bool
 	redrawCh     = make(chan bool, 1024)
-	clip         = true
 )
-
-func init() {
-	clip = clipboard.Init() != nil
-}
 
 func main() {
 	//defer profile.Start(profile.CPUProfile, profile.ProfilePath(".")).Stop()
@@ -361,30 +353,29 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		if photon.SelectedCard == nil {
 			return nil
 		}
-		if !clip {
-			return nil
-		}
-		clipboard.Write(clipboard.FmtText, []byte(photon.SelectedCard.Item.Link))
+		osc52(photon.SelectedCard.Item.Link)
 		return nil
 	})
 	//copy item image
-	photon.KeyBindings.Add(states.Normal, "yi", func() error {
-		if photon.SelectedCard == nil {
+	/*
+		photon.KeyBindings.Add(states.Normal, "yi", func() error {
+			if photon.SelectedCard == nil {
+				return nil
+			}
+			if photon.SelectedCard.ItemImage == nil {
+				return nil
+			}
+			if !clip {
+				return nil
+			}
+			var buf bytes.Buffer
+			if err := png.Encode(&buf, photon.SelectedCard.ItemImage.(image.Image)); err != nil {
+				return fmt.Errorf("encoding image: %w", err)
+			}
+			clipboard.Write(clipboard.FmtImage, buf.Bytes())
 			return nil
-		}
-		if photon.SelectedCard.ItemImage == nil {
-			return nil
-		}
-		if !clip {
-			return nil
-		}
-		var buf bytes.Buffer
-		if err := png.Encode(&buf, photon.SelectedCard.ItemImage.(image.Image)); err != nil {
-			return fmt.Errorf("encoding image: %w", err)
-		}
-		clipboard.Write(clipboard.FmtImage, buf.Bytes())
-		return nil
-	})
+		})
+	*/
 	//download media
 	photon.KeyBindings.Add(states.Normal, "dm", func() error {
 		photon.SelectedCard.DownloadMedia()

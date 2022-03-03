@@ -17,7 +17,6 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/soniakeys/quant v1.0.0
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
-	golang.design/x/clipboard v0.6.1-0.20220131123109-179c35fa8947
 	golang.org/x/image v0.0.0-20220302094943-723b81ca9867
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 )
@@ -38,6 +37,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/flatbuffers v2.0.6+incompatible // indirect
+	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.14.4 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
@@ -48,8 +48,6 @@ require (
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	golang.org/x/exp v0.0.0-20220203164150-d4f80a91470e // indirect
-	golang.org/x/mobile v0.0.0-20220224134551-8a0a1e50732f // indirect
 	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect

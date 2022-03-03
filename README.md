@@ -8,6 +8,8 @@ photon is a RSS/Atom reader with the focus on speed, usability and a bit of unix
 
 With the current state of rss readers, which are archaic, or use electron for rendering, photon wants to bring a "fresh look" within terminal, with pictures!
 
+It's extensible with lua plugins and can use opencl for image scaling and making paletted image.
+
 ## Installation
 
 You need a sixel supporting terminal emulator (Use [foot](https://codeberg.org/dnkl/foot) or try [alacritty-sixel](https://github.com/microo8/alacritty-sixel) also on [AUR](https://aur.archlinux.org/packages/alacritty-sixel-git/)).
@@ -73,7 +75,7 @@ So the feed management is up to the user with arguments, text files and creating
 
 Config files documentation: `man photon.5`.
 
-Because photon is a "viewer" (like an image viewer, video player, ...) it doesn't have a refresh feature, doesn't have a 'item readed' feature. photon just shows the contents of the feed(s).
+Because photon is a "viewer" (like an image viewer, video player, ...) it doesn't have a refresh feature, doesn't have a 'item read' feature. photon just shows the contents of the feed(s).
 
 ## Features
 
@@ -95,8 +97,6 @@ Always one card is highlighted, we call it `selectedCard`. To navigate to other 
 
 `yy` - copy card link to clipboard
 
-`yi` - copy the card image
-
 Card media/link/image can be downloaded. All downloads are saved automatically to the default downloads folder `$HOME/Downloads`. This can be changed with the `--download-dir` argument.
 
 `dm` - download media
@@ -116,7 +116,7 @@ Searching is done with pressing `/` and then typing the query. photon will filte
 By pressing `ENTER`, photon will show the article view, where it scraps the card's link and extracts the title, top image and main text content.
 The article view also has three modes:
 
-`ARTICLE` - shows the screpped article content
+`ARTICLE` - shows the scrapped article content
 
 `DESCRIPTION` - shows the item.Description
 
@@ -146,7 +146,7 @@ These plugins help to extend the functionality and make photon do whatever the u
 
 Plugins documentation: `man photon-lua.5`.
 
-example plugin:
+Example plugin:
 
 ```lua
 --import the photon events module for subscribing on events
@@ -176,7 +176,7 @@ For this photon has some http setting for every request that will be send:
 
 File bugs and TODOs through the [issue tracker](https://todo.sr.ht/~ghost08/photon) or send an email to [~ghost08/photon@todo.sr.ht](mailto:~ghost08/photon@todo.sr.ht).
 
-For general discussion or pathes, use the [mailing list](https://lists.sr.ht/~ghost08/photon): [~ghost08/photon@lists.sr.ht](mailto:~ghost08/photon@lists.sr.ht).
+For general discussion or patches, use the [mailing list](https://lists.sr.ht/~ghost08/photon): [~ghost08/photon@lists.sr.ht](mailto:~ghost08/photon@lists.sr.ht).
 
 Join the IRC channel: [#photon on irc.libera.chat](http://web.libera.chat/?channels=photon&uio=d4)
 

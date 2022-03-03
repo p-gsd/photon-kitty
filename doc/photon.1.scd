@@ -11,9 +11,11 @@ _photon_ [OPTION] [<paths> ...]
 # DESCRIPTION
 
 photon is a RSS/Atom reader with the focus on speed, usability and a bit of unix
-philosophy. It shows the items in a card grid, with one selected card. User can
-then scroll through it, read the article, play media or open in default
-application.
+philosophy.
+It shows the items in a card grid, with one selected card. User can then scroll
+through it, read the article, play media or open in default application.
+For extending functionality lua plugins can be used. photon also can dynamically
+load opencl for image scaling.
 
 # OPTIONS
 
@@ -195,8 +197,6 @@ downloader/player (default _mpv_ with the _webtorrent-mpv-hook_ script).
 *o* will open the card's link in the default web browser (or default application).
 
 *yy* - copy card link to clipboard
-
-*yi* - copy the card image
 
 *dm* - download media
 
