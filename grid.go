@@ -4,6 +4,7 @@ import (
 	"image"
 	"math"
 
+	"git.sr.ht/~ghost08/photon/imgproc"
 	"github.com/gdamore/tcell/v2"
 )
 
@@ -18,7 +19,7 @@ type Grid struct {
 	childHeight      int
 }
 
-func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen, full bool) (statusBarText richtext) {
+func (g *Grid) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScreen, full bool) (statusBarText richtext) {
 	margin := (int(ctx.Width) % g.Columns) / 2
 	if photon.SelectedCard == nil && photon.VisibleCards != nil {
 		photon.SelectedCardPos = image.Point{

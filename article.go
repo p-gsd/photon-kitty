@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"git.sr.ht/~ghost08/photon/imgproc"
 	"git.sr.ht/~ghost08/photon/lib"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
@@ -57,14 +58,14 @@ type Article struct {
 	contentLines []richtext
 	Mode         ArticleMode
 
-	imgSixel        *Sixel
+	imgSixel        *imgproc.Sixel
 	scaledImgBounds image.Rectangle
 	underImageRune  rune
 	hint            *string
 	hints           map[string]string
 }
 
-func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (statusBarText richtext) {
+func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScreen) (statusBarText richtext) {
 	s.Clear()
 	articleWidth := min(72, ctx.Width)
 	if a.contentLines == nil {
@@ -91,13 +92,13 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (s
 	switch {
 	case a.TopImage != nil && a.imgSixel == nil:
 		//image isn't null but it isn't yet downloaded
-		imageProcMap.Delete(a)
-		imageProc(
+		imgproc.ProcDelete(a)
+		imgproc.Proc(
 			a,
 			a.TopImage,
 			articleWidthPixels,
 			articleWidthPixels,
-			func(b image.Rectangle, s *Sixel) {
+			func(b image.Rectangle, s *imgproc.Sixel) {
 				a.scaledImgBounds, a.imgSixel = b, s
 				redraw(true)
 			},
@@ -122,13 +123,13 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen) (s
 		)
 	case a.TopImage == nil && a.Article.Article.Image == "" && a.Card.ItemImage != nil:
 		//top image is null, but the item image isn't, do we use that
-		imageProcMap.Delete(a)
-		imageProc(
+		imgproc.ProcDelete(a)
+		imgproc.Proc(
 			a,
 			a.Card.ItemImage,
 			articleWidthPixels,
 			articleWidthPixels,
-			func(b image.Rectangle, s *Sixel) {
+			func(b image.Rectangle, s *imgproc.Sixel) {
 				a.scaledImgBounds, a.imgSixel = b, s
 				redraw(true)
 			},

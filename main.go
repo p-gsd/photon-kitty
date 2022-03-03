@@ -15,7 +15,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"git.sr.ht/~ghost08/clir"
+	"git.sr.ht/~ghost08/photon/imgproc"
 	"git.sr.ht/~ghost08/photon/lib"
 	"git.sr.ht/~ghost08/photon/lib/keybindings"
 	"git.sr.ht/~ghost08/photon/lib/states"
@@ -46,7 +46,6 @@ var (
 	commandFocus bool
 	redrawCh     = make(chan bool, 1024)
 	clip         = true
-	imageCache   *ClirCache
 )
 
 func init() {
@@ -103,11 +102,10 @@ func main() {
 		lib.WithMediaTorrentCmd(CLI.TorrentCmd),
 		lib.WithDownloadPath(CLI.DownloadPath),
 	}
-	if err := clir.Init(); err != nil {
+	if err := imgproc.Init(); err != nil {
 		log.Println("INFO: error loading opencl image resizer, falling back to CPU scaling: %w", err)
 	} else {
-		imageCache = &ClirCache{}
-		options = append(options, lib.WithImageCache(imageCache))
+		options = append(options, lib.WithImageCache(&imgproc.Cache{}))
 	}
 	photon, err = lib.New(cb, CLI.Paths, options...)
 	if err != nil {
@@ -160,7 +158,7 @@ func main() {
 				case states.Normal:
 					if newCtx.Cols != ctx.Cols {
 						grid.ClearImages()
-						imageProcClear()
+						imgproc.ProcClear()
 					} else {
 						grid.ClearCardsPosition()
 					}
@@ -176,7 +174,7 @@ func main() {
 
 	ctx.Height -= 1
 	var fullRedraw bool
-	sixelScreen := &SixelScreen{}
+	sixelScreen := &imgproc.SixelScreen{}
 	for {
 		//Begin synchronized update (BSU) ESC P = 1 s ESC \
 		os.Stderr.Write([]byte("\033P=1s\033\\"))
@@ -332,7 +330,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		grid.Columns++
 		grid.ClearImages()
 		grid.Resize(Background())
-		imageProcClear()
+		imgproc.ProcClear()
 		redraw(true)
 		return nil
 	})
@@ -343,7 +341,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		grid.Columns--
 		grid.ClearImages()
 		grid.Resize(Background())
-		imageProcClear()
+		imgproc.ProcClear()
 		redraw(true)
 		return nil
 	})
@@ -381,7 +379,6 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 			return nil
 		}
 		var buf bytes.Buffer
-		//TODO ItemImage can be clir.ImageResizer
 		if err := png.Encode(&buf, photon.SelectedCard.ItemImage.(image.Image)); err != nil {
 			return fmt.Errorf("encoding image: %w", err)
 		}

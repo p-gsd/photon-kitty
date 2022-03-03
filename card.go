@@ -4,6 +4,7 @@ import (
 	"image"
 	"time"
 
+	"git.sr.ht/~ghost08/photon/imgproc"
 	"git.sr.ht/~ghost08/photon/lib"
 	"github.com/gdamore/tcell/v2"
 	htime "github.com/sbani/go-humanizer/time"
@@ -29,14 +30,14 @@ const (
 
 type Card struct {
 	*lib.Card
-	sixelData         *Sixel
+	sixelData         *imgproc.Sixel
 	scaledImageBounds image.Rectangle
 	//isOnScreen        func(*lib.Card)
 	previousImagePos image.Point
 	previousSelected bool
 }
 
-func (c *Card) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen, full bool) {
+func (c *Card) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScreen, full bool) {
 	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels
 	imageMargin := (ctx.Width - imageWidthInCells) / 2
 	newImagePos := image.Point{ctx.X + 1 + imageMargin, ctx.Y + 1}
@@ -100,7 +101,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, sixelScreen *SixelScreen, full 
 	case ctx.YCellPixels*newImagePos.Y+c.scaledImageBounds.Dy() > int(ctx.YPixel):
 		//if the image lover pars is outside of the screen leave some lower sixel rows
 		leaveRows := ((ctx.YCellPixels*newImagePos.Y+c.scaledImageBounds.Dy())-int(ctx.YPixel))/6 + 2
-		sixelScreen.Add(c.sixelData, newImagePos.X, newImagePos.Y, 0, len(c.sixelData.rows)-leaveRows)
+		sixelScreen.Add(c.sixelData, newImagePos.X, newImagePos.Y, 0, c.sixelData.Rows()-leaveRows)
 	default:
 		sixelScreen.Add(c.sixelData, newImagePos.X, newImagePos.Y, 0, -1)
 	}
@@ -145,12 +146,12 @@ func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 	}
 	targetWidth := ctx.Width * ctx.XCellPixels
 	targetHeight := (ctx.Height - headerHeight) * ctx.YCellPixels
-	imageProc(
+	imgproc.Proc(
 		c,
 		c.ItemImage,
 		targetWidth,
 		targetHeight,
-		func(b image.Rectangle, s *Sixel) {
+		func(b image.Rectangle, s *imgproc.Sixel) {
 			c.scaledImageBounds, c.sixelData = b, s
 			//if c.isOnScreen(c.Card) {
 			redraw(false)
