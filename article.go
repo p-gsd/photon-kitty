@@ -51,6 +51,18 @@ func articleModeFromString(s string) ArticleMode {
 	return ArticleContent
 }
 
+func (as ArticleMode) Next() ArticleMode {
+	switch as {
+	case ArticleContent:
+		return CardDescription
+	case CardDescription:
+		return CardContent
+	case CardContent:
+		return ArticleContent
+	}
+	return ArticleContent
+}
+
 type Article struct {
 	*lib.Article
 	scrollOffset int
@@ -58,11 +70,10 @@ type Article struct {
 	contentLines []richtext
 	Mode         ArticleMode
 
-	imgSixel        *imgproc.Sixel
-	scaledImgBounds image.Rectangle
-	underImageRune  rune
-	hint            *string
-	hints           map[string]string
+	imgSixel       *imgproc.Sixel
+	underImageRune rune
+	hint           *string
+	hints          map[string]string
 }
 
 func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScreen) (statusBarText richtext) {
@@ -81,7 +92,10 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelSc
 	}
 	articleWidthPixels := articleWidth * ctx.XCellPixels
 	x := (ctx.Width - articleWidth) / 2
-	imageYCells := a.scaledImgBounds.Dy() / ctx.YCellPixels
+	var imageYCells int
+	if a.imgSixel != nil {
+		imageYCells = a.imgSixel.Bounds.Dy() / ctx.YCellPixels
+	}
 	contentY := 7
 
 	//header
@@ -98,17 +112,17 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelSc
 			a.TopImage,
 			articleWidthPixels,
 			articleWidthPixels,
-			func(b image.Rectangle, s *imgproc.Sixel) {
-				a.scaledImgBounds, a.imgSixel = b, s
+			func(s *imgproc.Sixel) {
+				a.imgSixel = s
 				redraw(true)
 			},
 		)
 	case a.TopImage != nil && a.imgSixel != nil:
 		//image is downloaded
-		if a.scrollOffset*ctx.YCellPixels >= a.scaledImgBounds.Dy() {
+		if a.scrollOffset*ctx.YCellPixels >= a.imgSixel.Bounds.Dy() {
 			break
 		}
-		imageCenterOffset := (articleWidthPixels - a.scaledImgBounds.Dx()) / ctx.XCellPixels / 2
+		imageCenterOffset := (articleWidthPixels - a.imgSixel.Bounds.Dx()) / ctx.XCellPixels / 2
 		leaveRows := int(math.Ceil(float64(a.scrollOffset*ctx.YCellPixels)/6.0)) + 1
 		sixelScreen.Add(a.imgSixel, x+1+imageCenterOffset, contentY, leaveRows, -1)
 		if a.underImageRune == '\u2800' {
@@ -129,8 +143,8 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelSc
 			a.Card.ItemImage,
 			articleWidthPixels,
 			articleWidthPixels,
-			func(b image.Rectangle, s *imgproc.Sixel) {
-				a.scaledImgBounds, a.imgSixel = b, s
+			func(s *imgproc.Sixel) {
+				a.imgSixel = s
 				redraw(true)
 			},
 		)
@@ -191,14 +205,7 @@ func (a *Article) Scroll(d int) {
 }
 
 func (a *Article) ToggleMode() {
-	switch a.Mode {
-	case ArticleContent:
-		a.Mode = CardDescription
-	case CardDescription:
-		a.Mode = CardContent
-	case CardContent:
-		a.Mode = ArticleContent
-	}
+	a.Mode = a.Mode.Next()
 	a.contentLines = nil
 	a.scrollOffset = 0
 	a.lastLine = 0

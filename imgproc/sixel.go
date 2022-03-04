@@ -5,9 +5,6 @@ import (
 	"fmt"
 	"image"
 	"io"
-
-	"github.com/soniakeys/quant/median"
-	"golang.org/x/image/draw"
 )
 
 const (
@@ -68,6 +65,7 @@ func (ss *SixelScreen) Write(w io.Writer) {
 //Sixel are the bytes of a image encoded in sixel format
 //it has the ability to draw just specified rows of the image
 type Sixel struct {
+	Bounds  image.Rectangle
 	palette []byte
 	rows    [][]byte
 }
@@ -76,26 +74,14 @@ func (s *Sixel) Rows() int {
 	return len(s.rows)
 }
 
-func EncodeSixel(nc int, img image.Image) *Sixel {
+func EncodeSixel(nc int, img *image.Paletted) *Sixel {
 	width, height := img.Bounds().Dx(), img.Bounds().Dy()
 	if width == 0 || height == 0 {
 		return nil
 	}
 
-	var paletted *image.Paletted
-
-	// fast path for paletted images
-	if p, ok := img.(*image.Paletted); ok && len(p.Palette) < int(nc) {
-		paletted = p
-	} else {
-		// make adaptive palette using median cut alogrithm
-		q := median.Quantizer(nc - 1)
-		paletted = q.Paletted(img)
-		draw.Draw(paletted, img.Bounds(), img, image.Point{}, draw.Over)
-	}
-
 	pw := bytes.NewBuffer(nil)
-	for n, v := range paletted.Palette {
+	for n, v := range img.Palette {
 		r, g, b, _ := v.RGBA()
 		r = r * 100 / 0xFFFF
 		g = g * 100 / 0xFFFF
@@ -116,7 +102,7 @@ func EncodeSixel(nc int, img image.Image) *Sixel {
 			for x := 0; x < width; x++ {
 				_, _, _, alpha := img.At(x, y).RGBA()
 				if alpha != 0 {
-					idx := paletted.ColorIndexAt(x, y) + 1
+					idx := img.ColorIndexAt(x, y) + 1
 					cset[idx] = false // mark as used
 					buf[width*int(idx)+x] |= 1 << uint(p)
 				}
@@ -229,6 +215,7 @@ func EncodeSixel(nc int, img image.Image) *Sixel {
 	}
 
 	return &Sixel{
+		Bounds:  img.Bounds(),
 		palette: pw.Bytes(),
 		rows:    rws,
 	}

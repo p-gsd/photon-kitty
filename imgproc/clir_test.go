@@ -21,7 +21,7 @@ func TestResize(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ir, err := NewImageResizer(img)
+	ir, err := NewOpenCLImageResizer(img)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -74,7 +74,7 @@ func TestResize(t *testing.T) {
 		}
 	}()
 
-	ir2, err := NewImageResizer(img)
+	ir2, err := NewOpenCLImageResizer(img)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -113,7 +113,7 @@ func TestResizePaletted(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ir, err := NewImageResizer(img)
+	ir, err := NewOpenCLImageResizer(img)
 	if err != nil {
 		t.Fatal(err)
 	}

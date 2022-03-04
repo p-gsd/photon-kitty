@@ -3,6 +3,7 @@ package imgproc
 import (
 	"image"
 	"image/color"
+	"log"
 )
 
 //global variable that stores if loading opencl returned an error
@@ -12,6 +13,23 @@ type ImageResizer interface {
 	Release() error
 	Resize(maxWidth, maxHeight uint) (image.Image, error)
 	ResizePaletted(p, maxWidth, maxHeight uint) (*image.Paletted, error)
+}
+
+func NewImageResizer(i interface{}) ImageResizer {
+	if ir, ok := i.(ImageResizer); ok {
+		return ir
+	}
+	img := i.(image.Image)
+	if gotError {
+		return &CPUImageResizer{img: img}
+	}
+	ir, err := NewOpenCLImageResizer(img)
+	if err != nil {
+		gotError = true
+		log.Println("ERROR: opencl image resizer:", err)
+		return &CPUImageResizer{img: img}
+	}
+	return ir
 }
 
 func outSize(origWidth, origHeight, maxWidth, maxHeight uint) (uint, uint) {

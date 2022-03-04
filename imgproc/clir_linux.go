@@ -33,7 +33,7 @@ type ImageResizerOpenCL struct {
 	pixelSize uint
 }
 
-func NewImageResizer(img image.Image) (ImageResizer, error) {
+func NewOpenCLImageResizer(img image.Image) (ImageResizer, error) {
 	ir := &ImageResizerOpenCL{bounds: img.Bounds()}
 	var rowPitch uint
 	if g, ok := img.(*image.Gray); ok {

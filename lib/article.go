@@ -6,13 +6,14 @@ import (
 	"net/url"
 	"time"
 
+	"git.sr.ht/~ghost08/photon/imgproc"
 	"github.com/go-shiori/go-readability"
 )
 
 type Article struct {
 	*readability.Article
 	Card     *Card
-	TopImage interface{}
+	TopImage imgproc.ImageResizer
 }
 
 func newArticle(card *Card, client *http.Client) (*Article, error) {

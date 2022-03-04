@@ -30,15 +30,17 @@ const (
 
 type Card struct {
 	*lib.Card
-	sixelData         *imgproc.Sixel
-	scaledImageBounds image.Rectangle
+	sixelData *imgproc.Sixel
 	//isOnScreen        func(*lib.Card)
 	previousImagePos image.Point
 	previousSelected bool
 }
 
 func (c *Card) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScreen, full bool) {
-	imageWidthInCells := c.scaledImageBounds.Dx() / ctx.XCellPixels
+	var imageWidthInCells int
+	if c.sixelData != nil {
+		imageWidthInCells = c.sixelData.Bounds.Dx() / ctx.XCellPixels
+	}
 	imageMargin := (ctx.Width - imageWidthInCells) / 2
 	newImagePos := image.Point{ctx.X + 1 + imageMargin, ctx.Y + 1}
 	selected := c.Card == photon.SelectedCard
@@ -98,9 +100,9 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScree
 		//if the image upper left corner is outside of the screen leave some upper sixel rows
 		leaveRows := int(float64(ctx.YCellPixels)*float64(-newImagePos.Y)/6.0) + 3
 		sixelScreen.Add(c.sixelData, newImagePos.X, 0, leaveRows, -1)
-	case ctx.YCellPixels*newImagePos.Y+c.scaledImageBounds.Dy() > int(ctx.YPixel):
+	case ctx.YCellPixels*newImagePos.Y+c.sixelData.Bounds.Dy() > int(ctx.YPixel):
 		//if the image lover pars is outside of the screen leave some lower sixel rows
-		leaveRows := ((ctx.YCellPixels*newImagePos.Y+c.scaledImageBounds.Dy())-int(ctx.YPixel))/6 + 2
+		leaveRows := ((ctx.YCellPixels*newImagePos.Y+c.sixelData.Bounds.Dy())-int(ctx.YPixel))/6 + 2
 		sixelScreen.Add(c.sixelData, newImagePos.X, newImagePos.Y, 0, c.sixelData.Rows()-leaveRows)
 	default:
 		sixelScreen.Add(c.sixelData, newImagePos.X, newImagePos.Y, 0, -1)
@@ -133,7 +135,7 @@ func (c *Card) DownloadImage(ctx Context, s tcell.Screen) bool {
 	photon.ImgDownloader.Download(
 		c.Item.Image.URL,
 		func(i interface{}) {
-			c.ItemImage = i
+			c.ItemImage = imgproc.NewImageResizer(i)
 			c.makeSixel(ctx, s)
 		},
 	)
@@ -151,8 +153,8 @@ func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 		c.ItemImage,
 		targetWidth,
 		targetHeight,
-		func(b image.Rectangle, s *imgproc.Sixel) {
-			c.scaledImageBounds, c.sixelData = b, s
+		func(s *imgproc.Sixel) {
+			c.sixelData = s
 			//if c.isOnScreen(c.Card) {
 			redraw(false)
 			//}

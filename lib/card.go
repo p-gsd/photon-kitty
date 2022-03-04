@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"git.sr.ht/~ghost08/photon/imgproc"
 	"git.sr.ht/~ghost08/photon/lib/events"
 	"git.sr.ht/~ghost08/photon/lib/media"
 	"github.com/kennygrant/sanitize"
@@ -22,9 +23,9 @@ import (
 type Card struct {
 	photon     *Photon
 	Item       *gofeed.Item
-	ItemImage  interface{}
+	ItemImage  imgproc.ImageResizer
 	Feed       *gofeed.Feed
-	FeedImage  interface{}
+	FeedImage  imgproc.ImageResizer
 	Article    *Article
 	Media      *media.Media
 	Foreground int
@@ -47,7 +48,7 @@ func (cards Cards) Swap(i, k int) {
 
 func (card *Card) SaveImage() func(image.Image) {
 	return func(img image.Image) {
-		card.ItemImage = img
+		card.ItemImage = imgproc.NewImageResizer(img)
 		card.photon.cb.Redraw()
 	}
 }
@@ -80,7 +81,7 @@ func (card *Card) OpenArticle() {
 				if card.photon.OpenedArticle == nil {
 					return
 				}
-				card.photon.OpenedArticle.TopImage = i
+				card.photon.OpenedArticle.TopImage = imgproc.NewImageResizer(i)
 				card.photon.cb.Redraw()
 			},
 		)

@@ -5,18 +5,16 @@ import (
 	"log"
 	"runtime"
 	"sync"
-
-	"golang.org/x/image/draw"
 )
 
 //Image Processing, scaling and sixel encoding
 
 type imageProcReq struct {
 	ident     interface{}
-	src       interface{}
+	src       ImageResizer
 	maxWidth  int
 	maxHeight int
-	callback  func(image.Rectangle, *Sixel)
+	callback  func(*Sixel)
 }
 
 const numColors = 255
@@ -39,7 +37,11 @@ func imageProcWorker() {
 		if _, ok := imageProcMap.LoadOrStore(req.ident, struct{}{}); ok {
 			continue
 		}
-		img := resize(req.ident, req.src, req.maxWidth, req.maxHeight)
+		img, err := req.src.ResizePaletted(numColors-1, uint(req.maxWidth), uint(req.maxHeight))
+		if err != nil {
+			log.Printf("ERROR: opencl image resizer error, falling back to CPU image scaling: %v", err)
+			gotError = true
+		}
 		if img == nil {
 			continue
 		}
@@ -47,60 +49,17 @@ func imageProcWorker() {
 		if !imageProcStillThere(req.ident) {
 			continue
 		}
-		req.callback(img.Bounds(), sixel)
-	}
-}
-
-func resize(ident, obj interface{}, maxWidth, maxHeight int) image.Image {
-	switch i := obj.(type) {
-	case image.Image:
-		origBounds := i.Bounds()
-		origWidth := origBounds.Dx()
-		origHeight := origBounds.Dy()
-		newWidth, newHeight := origWidth, origHeight
-		// Preserve aspect ratio
-		if origWidth >= origHeight {
-			newHeight = origHeight * maxWidth / origWidth
-			newWidth = maxWidth
-		} else {
-			newWidth = origWidth * maxHeight / origHeight
-			newHeight = maxHeight
-		}
-		if newHeight > maxHeight {
-			newHeight = maxHeight
-			newWidth = origWidth * maxHeight / origHeight
-		}
-		rect := image.Rect(0, 0, newWidth, newHeight)
-		dst := image.NewRGBA(rect)
-		if !imageProcStillThere(ident) {
-			return nil
-		}
-		draw.NearestNeighbor.Scale(dst, rect, i, origBounds, draw.Over, nil)
-		if !imageProcStillThere(ident) {
-			return nil
-		}
-		return dst
-	case ImageResizer:
-		img, err := i.ResizePaletted(numColors-1, uint(maxWidth), uint(maxHeight))
-		if err != nil {
-			log.Printf("ERROR: opencl image resizer error, falling back to CPU image scaling: %v", err)
-			gotError = true
-			return nil
-		}
-		return img
-	default:
-		log.Panicf("scale image got %T", i)
-		return nil
+		req.callback(sixel)
 	}
 }
 
 //sends a image processing request to the workers
 func Proc(
 	ident interface{},
-	src interface{},
+	src ImageResizer,
 	maxWidth,
 	maxHeight int,
-	callback func(image.Rectangle, *Sixel),
+	callback func(*Sixel),
 ) {
 	imageProcChan <- imageProcReq{
 		ident:     ident,
@@ -145,11 +104,11 @@ func (cc *Cache) Store(key interface{}, val interface{}) {
 			cc.m.Store(key, val)
 			break
 		}
-		v, err := NewImageResizer(i)
+		v, err := NewOpenCLImageResizer(i)
 		if err != nil {
 			log.Println("ERROR: opencl image resizer, falling back to CPU scaling: %w", err)
 			gotError = true
-			cc.m.Store(key, val)
+			cc.m.Store(key, CPUImageResizer{img: i})
 			break
 		}
 		cc.m.Store(key, v)
