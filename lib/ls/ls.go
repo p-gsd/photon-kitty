@@ -4,13 +4,13 @@ package ls
 import (
 	"log"
 
-	"github.com/dgraph-io/badger/v3"
+	"github.com/syndtr/goleveldb/leveldb"
 	lua "github.com/yuin/gopher-lua"
 )
 
 type LocalStorage struct {
 	path string
-	db   *badger.DB
+	db   *leveldb.DB
 }
 
 func New(path string) *LocalStorage {
@@ -36,13 +36,11 @@ func (ls *LocalStorage) makeAPI() map[string]lua.LGFunction {
 	return api
 }
 
-func (ls *LocalStorage) open() *badger.DB {
+func (ls *LocalStorage) open() *leveldb.DB {
 	if ls.db != nil {
 		return ls.db
 	}
-	db, err := badger.Open(
-		badger.DefaultOptions(ls.path).WithLogger(nil),
-	)
+	db, err := leveldb.OpenFile(ls.path, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -62,10 +60,7 @@ func (ls *LocalStorage) setItem(L *lua.LState) int {
 	key := L.CheckString(1)
 	value := L.CheckString(2)
 	db := ls.open()
-	err := db.Update(func(txn *badger.Txn) error {
-		err := txn.Set([]byte(key), []byte(value))
-		return err
-	})
+	err := db.Put([]byte(key), []byte(value), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -77,24 +72,14 @@ func (ls *LocalStorage) getItem(L *lua.LState) int {
 	key := L.CheckString(1)
 	db := ls.open()
 	var val lua.LValue = lua.LNil
-	err := db.View(func(txn *badger.Txn) error {
-		item, err := txn.Get([]byte(key))
-		if err == badger.ErrKeyNotFound {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		v, err := item.ValueCopy(nil)
-		if err != nil {
-			return err
-		}
-		val = lua.LString(v)
-		return nil
-	})
-	if err != nil {
-		log.Fatal(err)
+	v, err := db.Get([]byte(key), nil)
+	if err == leveldb.ErrNotFound {
+		return 0
 	}
+	if err != nil {
+		return 0
+	}
+	val = lua.LString(v)
 	L.Push(val)
 	return 1
 }
@@ -103,16 +88,12 @@ func (ls *LocalStorage) getItem(L *lua.LState) int {
 func (ls *LocalStorage) length(L *lua.LState) int {
 	db := ls.open()
 	var length int
-	err := db.View(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		opts.PrefetchSize = 10
-		it := txn.NewIterator(opts)
-		defer it.Close()
-		for it.Rewind(); it.Valid(); it.Next() {
-			length++
-		}
-		return nil
-	})
+	iter := db.NewIterator(nil, nil)
+	for iter.Next() {
+		length++
+	}
+	iter.Release()
+	err := iter.Error()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -124,10 +105,7 @@ func (ls *LocalStorage) length(L *lua.LState) int {
 func (ls *LocalStorage) removeItem(L *lua.LState) int {
 	key := L.CheckString(1)
 	db := ls.open()
-	err := db.Update(func(txn *badger.Txn) error {
-		err := txn.Delete([]byte(key))
-		return err
-	})
+	err := db.Delete([]byte(key), nil)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -138,19 +116,18 @@ func (ls *LocalStorage) removeItem(L *lua.LState) int {
 func (ls *LocalStorage) clear(L *lua.LState) int {
 	db := ls.open()
 	var length int
-	err := db.View(func(txn *badger.Txn) error {
-		opts := badger.DefaultIteratorOptions
-		opts.PrefetchSize = 10
-		it := txn.NewIterator(opts)
-		defer it.Close()
-		for it.Rewind(); it.Valid(); it.Next() {
-			if err := txn.Delete(it.Item().Key()); err != nil {
-				return err
-			}
-		}
-		return nil
-	})
+	iter := db.NewIterator(nil, nil)
+	batch := &leveldb.Batch{}
+	for iter.Next() {
+		length++
+		batch.Delete(iter.Key())
+	}
+	iter.Release()
+	err := iter.Error()
 	if err != nil {
+		log.Fatal(err)
+	}
+	if err := db.Write(batch, nil); err != nil {
 		log.Fatal(err)
 	}
 	L.Push(lua.LNumber(length))
