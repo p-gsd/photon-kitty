@@ -122,23 +122,17 @@ const luaSelectedCardTypeName = "photon.selectedCardType"
 func (p *Photon) registerTypeSelectedCard(L *lua.LState) {
 	var selectedCardMethods = map[string]lua.LGFunction{
 		"posX": func(L *lua.LState) int {
-			if L.GetTop() == 2 {
-				p.SelectedCardPos.X = L.CheckInt(2)
-				return 0
-			}
-			L.Push(lua.LNumber(p.SelectedCardPos.X))
+			scp := p.cb.SelectedCardPos()
+			L.Push(lua.LNumber(scp.X))
 			return 1
 		},
 		"posY": func(L *lua.LState) int {
-			if L.GetTop() == 2 {
-				p.SelectedCardPos.Y = L.CheckInt(2)
-				return 0
-			}
-			L.Push(lua.LNumber(p.SelectedCardPos.X))
+			scp := p.cb.SelectedCardPos()
+			L.Push(lua.LNumber(scp.Y))
 			return 1
 		},
 		"card": func(L *lua.LState) int {
-			L.Push(newCard(p.SelectedCard, L))
+			L.Push(newCard(p.cb.SelectedCard(), L))
 			return 1
 		},
 		"moveLeft": func(L *lua.LState) int {
@@ -165,7 +159,7 @@ func (p *Photon) registerTypeSelectedCard(L *lua.LState) {
 
 func (p *Photon) newSelectedCard(L *lua.LState) *lua.LUserData {
 	ud := L.NewUserData()
-	ud.Value = p.SelectedCard
+	ud.Value = p.cb.SelectedCard()
 	L.SetMetatable(ud, L.GetTypeMetatable(luaSelectedCardTypeName))
 	return ud
 }

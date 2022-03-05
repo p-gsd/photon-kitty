@@ -1,6 +1,8 @@
 package main
 
 import (
+	"image"
+
 	"git.sr.ht/~ghost08/photon/lib"
 	"git.sr.ht/~ghost08/photon/lib/states"
 )
@@ -11,6 +13,14 @@ type Callbacks struct {
 
 func (cb Callbacks) Redraw() {
 	redraw(false)
+}
+
+func (cb Callbacks) SelectedCard() *lib.Card {
+	return SelectedCard
+}
+
+func (cb Callbacks) SelectedCardPos() image.Point {
+	return SelectedCardPos
 }
 
 func (cb Callbacks) State() states.Enum {

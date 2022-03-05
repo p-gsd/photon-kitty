@@ -32,19 +32,17 @@ type Photon struct {
 	cb             Callbacks
 	luaState       *lua.LState
 
-	Cards           Cards
-	VisibleCards    Cards
-	SelectedCard    *Card
-	SelectedCardPos image.Point
-	searchQuery     string
-	OpenedArticle   *Article
-	status          string
-	statusCtx       context.Context
-	statusCancel    context.CancelFunc
+	Cards         Cards
+	VisibleCards  Cards
+	searchQuery   string
+	OpenedArticle *Article
+	status        Status
 }
 
 type Callbacks interface {
 	Redraw()
+	SelectedCard() *Card
+	SelectedCardPos() image.Point
 	State() states.Enum
 	ArticleChanged(*Article)
 	Move() Move
@@ -56,6 +54,13 @@ type Move interface {
 	Right()
 	Up()
 	Down()
+}
+
+//status line text and state
+type Status struct {
+	text   string
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func New(cb Callbacks, paths []string, options ...Option) (*Photon, error) {
@@ -262,9 +267,6 @@ func (p *Photon) DownloadFeeds() {
 	p.SetStatus("")
 	sort.Sort(p.Cards)
 	p.filterCards()
-	if len(p.VisibleCards) > 0 {
-		p.SelectedCard = p.VisibleCards[0]
-	}
 	events.Emit(&events.FeedsDownloaded{})
 }
 
@@ -286,37 +288,37 @@ func (p *Photon) filterCards() {
 }
 
 func (p *Photon) GetStatus() string {
-	return p.status
+	return p.status.text
 }
 
 func (p *Photon) SetStatus(text string) {
-	if p.statusCancel != nil {
-		p.statusCancel()
-		p.statusCtx = nil
-		p.statusCancel = nil
+	if p.status.cancel != nil {
+		p.status.cancel()
+		p.status.ctx = nil
+		p.status.cancel = nil
 	}
-	p.status = text
+	p.status.text = text
 	p.cb.Redraw()
 }
 
 var spinnerArray = []rune{'⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'}
 
 func (p *Photon) SetStatusWithSpinner(text string) {
-	if p.statusCancel != nil {
-		p.statusCancel()
+	if p.status.cancel != nil {
+		p.status.cancel()
 	}
-	p.statusCtx, p.statusCancel = context.WithCancel(context.Background())
+	p.status.ctx, p.status.cancel = context.WithCancel(context.Background())
 	go func() {
 		ticker := time.NewTicker(time.Millisecond * 150)
 		defer ticker.Stop()
 		var spinnerIndex int
 		for {
 			select {
-			case <-p.statusCtx.Done():
+			case <-p.status.ctx.Done():
 				return
 			case <-ticker.C:
 				spinnerIndex = (spinnerIndex + 1) % len(spinnerArray)
-				p.status = fmt.Sprintf("%c %s", spinnerArray[spinnerIndex], text)
+				p.status.text = fmt.Sprintf("%c %s", spinnerArray[spinnerIndex], text)
 				p.cb.Redraw()
 			}
 		}
@@ -325,10 +327,10 @@ func (p *Photon) SetStatusWithSpinner(text string) {
 
 func (p *Photon) StatusWithTimeout(text string, d time.Duration) {
 	p.SetStatus(text)
-	p.statusCtx, p.statusCancel = context.WithCancel(context.Background())
+	p.status.ctx, p.status.cancel = context.WithCancel(context.Background())
 	go func() {
 		select {
-		case <-p.statusCtx.Done():
+		case <-p.status.ctx.Done():
 			return
 		case <-time.After(d):
 			p.SetStatus("")

@@ -43,7 +43,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScree
 	}
 	imageMargin := (ctx.Width - imageWidthInCells) / 2
 	newImagePos := image.Point{ctx.X + 1 + imageMargin, ctx.Y + 1}
-	selected := c.Card == photon.SelectedCard
+	selected := c.Card == SelectedCard
 	if !full && c.previousImagePos.Eq(newImagePos) && selected == c.previousSelected {
 		return
 	}
@@ -110,7 +110,7 @@ func (c *Card) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScree
 }
 
 func (c *Card) swapImageRegion(ctx Context, s tcell.Screen) {
-	selected := c.Card == photon.SelectedCard
+	selected := c.Card == SelectedCard
 	style := tcell.StyleDefault
 	if selected {
 		style = tcell.StyleDefault.Background(selectedColor)

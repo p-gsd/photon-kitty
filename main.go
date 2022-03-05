@@ -37,11 +37,13 @@ var CLI struct {
 }
 
 var (
-	photon       *lib.Photon
-	cb           Callbacks
-	command      string
-	commandFocus bool
-	redrawCh     = make(chan bool, 1024)
+	photon          *lib.Photon
+	SelectedCard    *lib.Card
+	SelectedCardPos image.Point
+	cb              Callbacks
+	command         string
+	commandFocus    bool
+	redrawCh        = make(chan bool, 1024)
 )
 
 func main() {
@@ -287,7 +289,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<enter>", func() error {
-		photon.SelectedCard.OpenArticle()
+		SelectedCard.OpenArticle()
 		if openedArticle != nil {
 			openedArticle.Mode = articleModeFromString(CLI.ArticleMode)
 		}
@@ -295,11 +297,11 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "p", func() error {
-		photon.SelectedCard.RunMedia()
+		SelectedCard.RunMedia()
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "o", func() error {
-		photon.SelectedCard.OpenBrowser()
+		SelectedCard.OpenBrowser()
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<esc>", func() error {
@@ -313,7 +315,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		grid.FirstChildIndex = 0
 		grid.FirstChildOffset = 0
 		if len(photon.VisibleCards) > 0 {
-			photon.SelectedCard = photon.VisibleCards[0]
+			SelectedCard = photon.VisibleCards[0]
 		}
 		redraw(true)
 		return nil
@@ -350,26 +352,26 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	})
 	//copy item link
 	photon.KeyBindings.Add(states.Normal, "yy", func() error {
-		if photon.SelectedCard == nil {
+		if SelectedCard == nil {
 			return nil
 		}
-		osc52(photon.SelectedCard.Item.Link)
+		osc52(SelectedCard.Item.Link)
 		return nil
 	})
 	//copy item image
 	/*
 		photon.KeyBindings.Add(states.Normal, "yi", func() error {
-			if photon.SelectedCard == nil {
+			if SelectedCard == nil {
 				return nil
 			}
-			if photon.SelectedCard.ItemImage == nil {
+			if SelectedCard.ItemImage == nil {
 				return nil
 			}
 			if !clip {
 				return nil
 			}
 			var buf bytes.Buffer
-			if err := png.Encode(&buf, photon.SelectedCard.ItemImage.(image.Image)); err != nil {
+			if err := png.Encode(&buf, SelectedCard.ItemImage.(image.Image)); err != nil {
 				return fmt.Errorf("encoding image: %w", err)
 			}
 			clipboard.Write(clipboard.FmtImage, buf.Bytes())
@@ -378,17 +380,17 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	*/
 	//download media
 	photon.KeyBindings.Add(states.Normal, "dm", func() error {
-		photon.SelectedCard.DownloadMedia()
+		SelectedCard.DownloadMedia()
 		return nil
 	})
 	//download link
 	photon.KeyBindings.Add(states.Normal, "dl", func() error {
-		photon.SelectedCard.DownloadLink()
+		SelectedCard.DownloadLink()
 		return nil
 	})
 	//download image
 	photon.KeyBindings.Add(states.Normal, "di", func() error {
-		photon.SelectedCard.DownloadImage()
+		SelectedCard.DownloadImage()
 		return nil
 	})
 	//move selectedCard
@@ -442,20 +444,20 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		}
 		grid.FirstChildIndex = 0
 		grid.FirstChildOffset = 0
-		photon.SelectedCardPos.Y = 0
-		selectedCardIndex := photon.SelectedCardPos.Y*grid.Columns + photon.SelectedCardPos.X
+		SelectedCardPos.Y = 0
+		selectedCardIndex := SelectedCardPos.Y*grid.Columns + SelectedCardPos.X
 		if selectedCardIndex < len(photon.VisibleCards) {
-			photon.SelectedCard = photon.VisibleCards[selectedCardIndex]
+			SelectedCard = photon.VisibleCards[selectedCardIndex]
 		}
 		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<shift>g", func() error {
 		grid.FirstChildIndex = len(photon.VisibleCards) - grid.RowsCount
-		photon.SelectedCardPos.Y = len(photon.VisibleCards)/grid.Columns - 1
-		selectedCardIndex := photon.SelectedCardPos.Y*grid.Columns + photon.SelectedCardPos.X
+		SelectedCardPos.Y = len(photon.VisibleCards)/grid.Columns - 1
+		selectedCardIndex := SelectedCardPos.Y*grid.Columns + SelectedCardPos.X
 		if selectedCardIndex < len(photon.VisibleCards) {
-			photon.SelectedCard = photon.VisibleCards[selectedCardIndex]
+			SelectedCard = photon.VisibleCards[selectedCardIndex]
 		}
 		redraw(true)
 		return nil
@@ -475,8 +477,8 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		grid.FirstChildIndex = 0
 		grid.FirstChildOffset = 0
 		if len(photon.VisibleCards) > 0 {
-			photon.SelectedCard = photon.VisibleCards[0]
-			photon.SelectedCardPos = image.Point{}
+			SelectedCard = photon.VisibleCards[0]
+			SelectedCardPos = image.Point{}
 		}
 		redraw(true)
 		return nil
