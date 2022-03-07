@@ -41,8 +41,6 @@ const (
 	EventTypeLinkOpened      = EventType("LinkOpened")
 )
 
-var events = make(EventCallbacks)
-
 type Init struct{}
 
 func (e *Init) Type() EventType {

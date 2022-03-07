@@ -68,12 +68,12 @@ func newImgDownloader(client *http.Client) *ImgDownloader {
 					log.Println("ERROR: downloading image:", err)
 					continue
 				}
-				defer resp.Body.Close()
 				i, _, err := image.Decode(resp.Body)
 				if err != nil {
 					log.Println("ERROR: decoding image:", err, req.URL)
 					continue
 				}
+				resp.Body.Close()
 				d.imgCache.Store(req.URL, i)
 				if req.Callback != nil {
 					if img, ok := d.imgCache.Load(req.URL); ok {

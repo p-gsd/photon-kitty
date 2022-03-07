@@ -39,29 +39,25 @@ func (cb Callbacks) ArticleChanged(article *lib.Article) {
 }
 
 func (cb Callbacks) Move() lib.Move {
-	return Move{grid: cb.grid}
+	return cb
 }
 
-type Move struct {
-	grid *Grid
-}
-
-func (m Move) Left() {
-	m.grid.SelectedChildMoveLeft()
+func (cb Callbacks) Left() {
+	cb.grid.SelectedChildMoveLeft()
 	redraw(false)
 }
 
-func (m Move) Right() {
-	m.grid.SelectedChildMoveRight()
+func (cb Callbacks) Right() {
+	cb.grid.SelectedChildMoveRight()
 	redraw(false)
 }
 
-func (m Move) Up() {
-	m.grid.SelectedChildMoveUp()
+func (cb Callbacks) Up() {
+	cb.grid.SelectedChildMoveUp()
 	redraw(false)
 }
 
-func (m Move) Down() {
-	m.grid.SelectedChildMoveDown()
+func (cb Callbacks) Down() {
+	cb.grid.SelectedChildMoveDown()
 	redraw(false)
 }

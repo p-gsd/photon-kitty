@@ -25,6 +25,7 @@ func feedLoader(L *lua.LState) int {
 		"version":     feedFeedVersion,
 		"categories":  feedCategories,
 		"custom":      feedCustom,
+		"author":      feedAuthor,
 	}
 	mt := L.NewTypeMetatable(luaFeedTypeName)
 	L.SetField(mt, "__index", L.SetFuncs(L.NewTable(), feedMethods))

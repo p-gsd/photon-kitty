@@ -214,6 +214,9 @@ func (card *Card) downloadLinks(name string, links []string) error {
 		if contentType == "" {
 			contentType, bodyReader, err = recycleReader(resp.Body)
 		}
+		if err != nil {
+			return err
+		}
 		exts := extensionByType(contentType)
 		if len(exts) > 0 {
 			name += "." + exts[0]

@@ -45,10 +45,10 @@ type stateFn func(*lexer) stateFn
 
 // lexer holds the state of the scanner.
 type lexer struct {
-	input                     *bufio.Reader   // the data being scanned.
-	buf                       strings.Builder //the data already scanned
-	line, start, pos, prevpos int
-	items                     chan item // channel of scanned items.
+	input              *bufio.Reader   // the data being scanned.
+	buf                strings.Builder //the data already scanned
+	line, pos, prevpos int
+	items              chan item // channel of scanned items.
 }
 
 func lex(input io.Reader) *lexer {
@@ -128,26 +128,6 @@ func (l *lexer) accept(valid string) {
 func (l *lexer) acceptWhitespace() {
 	l.accept(" \t\n\r")
 	l.buf.Reset()
-}
-
-func (l *lexer) ignoreWhitespace() {
-	for {
-		ch, _, err := l.input.ReadRune()
-		if ch == '\n' {
-			l.line++
-			l.prevpos = l.pos
-			l.pos = 0
-		} else {
-			if !unicode.IsSpace(ch) {
-				l.input.UnreadRune()
-				return
-			}
-			l.pos++
-			if err != nil {
-				return
-			}
-		}
-	}
 }
 
 //acceptToLineBreak reads entire string to line break

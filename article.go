@@ -155,7 +155,6 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelSc
 		line := a.contentLines[i]
 		contentOffset := contentY + max(0, imageYCells-a.scrollOffset)
 		var lineOffset int
-		var texts []string
 		for _, to := range line {
 			if a.hints != nil && a.hint != nil {
 				if hint, ok := a.hints[to.Link]; ok && strings.HasPrefix(hint, *a.hint) {
@@ -172,7 +171,6 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelSc
 				}
 			}
 			lineOffset += drawString(s, x+lineOffset, contentOffset, to.Text, to.Style)
-			texts = append(texts, to.Text)
 		}
 		a.lastLine = i
 		contentY++
@@ -439,6 +437,9 @@ func richtextFromArticle(node *html.Node, textContent string, width int) []richt
 }
 
 func parseArticleContent(node *html.Node) (rt richtext, err error) {
+	if node == nil {
+		return
+	}
 	for node := node.FirstChild; node != nil; node = node.NextSibling {
 		switch node.Data {
 		case "html", "body", "header", "form":

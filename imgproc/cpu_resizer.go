@@ -27,13 +27,7 @@ func (cir *CPUImageResizer) Resize(maxWidth, maxHeight uint) (image.Image, error
 	)
 	rect := image.Rect(0, 0, int(newWidth), int(newHeight))
 	dst := image.NewRGBA(rect)
-	if !imageProcStillThere(cir.ident) {
-		return nil, nil
-	}
 	draw.NearestNeighbor.Scale(dst, rect, cir.img, origBounds, draw.Over, nil)
-	if !imageProcStillThere(cir.ident) {
-		return nil, nil
-	}
 	return dst, nil
 }
 

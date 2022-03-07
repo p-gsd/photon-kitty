@@ -22,6 +22,7 @@ import (
 func Init() error {
 	ret := C.init()
 	if ret != C.int(0) {
+		gotError = true
 		return fmt.Errorf("init error %d", ret)
 	}
 	return nil

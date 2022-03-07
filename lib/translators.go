@@ -105,7 +105,7 @@ func newCustomAtomTranslator() *customAtomTranslator {
 func (ct *customAtomTranslator) Translate(feed interface{}) (*gofeed.Feed, error) {
 	atom, found := feed.(*atom.Feed)
 	if !found {
-		return nil, fmt.Errorf("Feed did not match expected type of *atom.Feed")
+		return nil, fmt.Errorf("feed did not match expected type of *atom.Feed")
 	}
 
 	f, err := ct.defaultTranslator.Translate(atom)
@@ -158,7 +158,7 @@ func newCustomRSSTranslator() *customRSSTranslator {
 func (ct *customRSSTranslator) Translate(feed interface{}) (*gofeed.Feed, error) {
 	rss, found := feed.(*rss.Feed)
 	if !found {
-		return nil, fmt.Errorf("Feed did not match expected type of *rss.Feed")
+		return nil, fmt.Errorf("feed did not match expected type of *rss.Feed")
 	}
 
 	f, err := ct.defaultTranslator.Translate(rss)

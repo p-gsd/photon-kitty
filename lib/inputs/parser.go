@@ -31,10 +31,6 @@ func (s *scanner) next() item {
 	return i
 }
 
-func (s *scanner) backup() {
-	s.prevItem = &s.curItem
-}
-
 func parseConf(s *scanner) (Inputs, error) {
 	var urls Inputs
 	for i := s.next(); i.typ != itemEOF; i = s.next() {

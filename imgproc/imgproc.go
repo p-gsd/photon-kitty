@@ -45,11 +45,7 @@ func imageProcWorker() {
 		if img == nil {
 			continue
 		}
-		sixel := EncodeSixel(numColors, img)
-		if !imageProcStillThere(req.ident) {
-			continue
-		}
-		req.callback(sixel)
+		req.callback(EncodeSixel(numColors, img))
 	}
 }
 
@@ -80,13 +76,6 @@ func ProcClear() {
 		imageProcMap.Delete(k)
 		return true
 	})
-}
-
-//checks if image is still in map, server as checking if
-//the map wasn't cleared and all images must be rescaled
-func imageProcStillThere(ident interface{}) bool {
-	_, ok := imageProcMap.Load(ident)
-	return ok
 }
 
 type Cache struct {

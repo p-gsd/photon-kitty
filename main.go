@@ -97,7 +97,7 @@ func main() {
 		lib.WithDownloadPath(CLI.DownloadPath),
 	}
 	if err := imgproc.Init(); err != nil {
-		log.Println("INFO: error loading opencl image resizer, falling back to CPU scaling: %w", err)
+		log.Printf("INFO: error loading opencl image resizer, falling back to CPU scaling: %s", err)
 	} else {
 		options = append(options, lib.WithImageCache(&imgproc.Cache{}))
 	}
