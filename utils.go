@@ -9,16 +9,17 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
+	"golang.org/x/exp/constraints"
 )
 
-func min(a, b int) int {
+func min[T constraints.Ordered](a, b T) T {
 	if a < b {
 		return a
 	}
 	return b
 }
 
-func max(a, b int) int {
+func max[T constraints.Ordered](a, b T) T {
 	if a > b {
 		return a
 	}

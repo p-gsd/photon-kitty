@@ -10,7 +10,7 @@ import (
 //Image Processing, scaling and sixel encoding
 
 type imageProcReq struct {
-	ident     interface{}
+	ident     any
 	src       ImageResizer
 	maxWidth  int
 	maxHeight int
@@ -51,7 +51,7 @@ func imageProcWorker() {
 
 //sends a image processing request to the workers
 func Proc(
-	ident interface{},
+	ident any,
 	src ImageResizer,
 	maxWidth,
 	maxHeight int,

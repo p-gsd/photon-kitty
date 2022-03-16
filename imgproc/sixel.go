@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"image"
 	"io"
+
+	"golang.org/x/exp/constraints"
 )
 
 const (
@@ -221,7 +223,7 @@ func EncodeSixel(nc int, img *image.Paletted) *Sixel {
 	}
 }
 
-func max(a, b int) int {
+func max[T constraints.Ordered](a, b T) T {
 	if a > b {
 		return a
 	}

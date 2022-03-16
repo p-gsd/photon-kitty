@@ -17,6 +17,7 @@ require (
 	github.com/soniakeys/quant v1.0.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
+	golang.org/x/exp v0.0.0-20220314205449-43aec2f8a4e7
 	golang.org/x/image v0.0.0-20220302094943-723b81ca9867
 	golang.org/x/net v0.0.0-20220225172249-27dd8689420f
 )
