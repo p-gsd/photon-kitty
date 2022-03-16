@@ -1,9 +1,9 @@
 module git.sr.ht/~ghost08/photon
 
-go 1.17
+go 1.18
 
 require (
-	github.com/alecthomas/kong v0.4.1
+	github.com/alecthomas/kong v0.5.0
 	github.com/cjoudrey/gluahttp v0.0.0-20201111170219-25003d9adfa9
 	github.com/gabriel-vasile/mimetype v1.4.0
 	github.com/gdamore/tcell/v2 v2.4.0
@@ -36,7 +36,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.2.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	golang.org/x/sys v0.0.0-20220227234510-4e6760a101f9 // indirect
+	golang.org/x/sys v0.0.0-20220315194320-039c03cc5b86 // indirect
 	golang.org/x/term v0.0.0-20210927222741-03fcf44c2211 // indirect
 	golang.org/x/text v0.3.7 // indirect
 )
