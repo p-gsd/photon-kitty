@@ -86,6 +86,11 @@ load opencl for image scaling.
 *-t*, *--terminal-title*
 	set the terminal title
 
+*-r*, *--refresh=SECONDS*
+	refresh interval in seconds
+	env: PHOTON_REFRESH
+	Default: 0 (doesn't automatically refresh)
+
 # USAGE
 
 ## GENERAL
@@ -193,6 +198,8 @@ downloader/player (default _mpv_ with the _webtorrent-mpv-hook_ script).
 *ENTER*  will show the article view
 
 *p* will play the media link
+
+*r* refresh feeds
 
 *o* will open the card's link in the default web browser (or default application).
 

@@ -10,6 +10,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -31,9 +32,10 @@ var CLI struct {
 	ArticleMode     string       `optional:"" default:"ARTICLE" enum:"ARTICLE,DESCRIPTION,CONTENT" help:"the default article view mode" env:"PHOTON_ARTICLE_MODE"`
 	ArticleRenderer string       `optional:"" default:"w3m -T text/html -dump -cols 72" help:"command to render the item.Content/item.Description" env:"PHOTON_ARTICLE_RENDERER"`
 	HTTPSettings    HTTPSettings `embed:""`
-	Paths           []string     `arg:"" optional:"" help:"RSS/Atom urls, config path, or - for stdin"`
 	DownloadPath    string       `optional:"" default:"$HOME/Downloads" help:"the default download path"`
 	TerminalTitle   string       `short:"t" optional:"" help:"set the terminal title"`
+	Refresh         uint         `short:"r" optional:"" default:"0" help:"set refresh interval in seconds" env:"PHOTON_REFRESH"`
+	Paths           []string     `arg:"" optional:"" help:"RSS/Atom urls, config path, or - for stdin"`
 }
 
 var (
@@ -125,6 +127,18 @@ func main() {
 	go func() {
 		photon.DownloadFeeds()
 		redraw(true)
+		if CLI.Refresh > 0 {
+			for range time.Tick(time.Duration(CLI.Refresh) * time.Second) {
+				photon.DownloadFeeds()
+				grid.FirstChildIndex = 0
+				grid.FirstChildOffset = 0
+				if len(photon.VisibleCards) > 0 {
+					SelectedCard = photon.VisibleCards[0]
+					SelectedCardPos = image.Point{}
+				}
+				redraw(true)
+			}
+		}
 	}()
 
 	defaultKeyBindings(s, grid, &quit)
@@ -294,6 +308,17 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 			openedArticle.Mode = articleModeFromString(CLI.ArticleMode)
 		}
 		grid.ClearCardsPosition()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "r", func() error {
+		photon.DownloadFeeds()
+		grid.FirstChildIndex = 0
+		grid.FirstChildOffset = 0
+		if len(photon.VisibleCards) > 0 {
+			SelectedCard = photon.VisibleCards[0]
+			SelectedCardPos = image.Point{}
+		}
+		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "p", func() error {

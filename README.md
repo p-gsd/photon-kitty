@@ -14,7 +14,7 @@ It's extensible with lua plugins and can use opencl for image scaling and making
 
 You need a sixel supporting terminal emulator (Use [foot](https://codeberg.org/dnkl/foot) or try [alacritty-sixel](https://github.com/microo8/alacritty-sixel) also on [AUR](https://aur.archlinux.org/packages/alacritty-sixel-git/)).
 
-First install `go`, `git` and `scdoc`, then:
+First install `go` (min version 1.18), `git` and `scdoc`, then:
 
 ```
 git clone https://git.sr.ht/~ghost08/photon
@@ -75,11 +75,11 @@ So the feed management is up to the user with arguments, text files and creating
 
 Config files documentation: `man photon.5`.
 
-Because photon is a "viewer" (like an image viewer, video player, ...) it doesn't have a refresh feature, doesn't have a 'item read' feature. photon just shows the contents of the feed(s).
+Because photon is a "viewer" (like an image viewer, video player, ...) it doesn't have a 'manage feeds' feature, ora 'item read' feature. photon just shows the contents of the feed(s).
 
 ## Features
 
-### default keybindings
+### keybindings and options
 
 Can be found in the man pages
 
@@ -96,6 +96,8 @@ Always one card is highlighted, we call it `selectedCard`. To navigate to other 
 `o` will open the card's link in the default web browser (or default application).
 
 `yy` - copy card link to clipboard
+
+`r` - refresh feeds
 
 Card media/link/image can be downloaded. All downloads are saved automatically to the default downloads folder `$HOME/Downloads`. This can be changed with the `--download-dir` argument.
 
