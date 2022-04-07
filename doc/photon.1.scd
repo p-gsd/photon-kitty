@@ -229,6 +229,10 @@ downloader/player (default _mpv_ with the _webtorrent-mpv-hook_ script).
 
 *m* circle trough article view mode
 
+*yy* copy article link
+
+*o* open article in the browser
+
 *f* start link hints to open link in the browser
 
 *j* scroll the article down

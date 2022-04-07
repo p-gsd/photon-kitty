@@ -524,6 +524,18 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		redraw(true)
 		return nil
 	})
+	photon.KeyBindings.Add(states.Normal, "yy", func() error {
+		//copy article link
+		if openedArticle == nil {
+			return nil
+		}
+		osc52(openedArticle.Card.Item.Link)
+		return nil
+	})
+	photon.KeyBindings.Add(states.Normal, "o", func() error {
+		openedArticle.Card.OpenBrowser()
+		return nil
+	})
 	photon.KeyBindings.Add(states.Article, "f", func() error {
 		//start article link hints
 		if openedArticle == nil {
