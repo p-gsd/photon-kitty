@@ -166,10 +166,9 @@ render the text. By default *w3m* is used, but can be changed with the
 *--article-renderer* argument, or *PHOTON_ARTICLE_RENDERER* environment
 variable.
 
-Opening links in the article is done by link hints. Begin with pressing *f*,
-then press the keys shown in the link you want to open. By pressing these keys
-the link will open in the default web browser. You can press *Escape* to leave
-link hints mode.
+OSC8 links are supported, so every link in article can be opened with the
+terminal withouth needing to select the url and article view can show just the
+text of the link and not the url.
 
 ## MEDIA EXTRACTION
 
@@ -233,8 +232,6 @@ downloader/player (default _mpv_ with the _webtorrent-mpv-hook_ script).
 
 *o* open article in the browser
 
-*f* start link hints to open link in the browser
-
 *j* scroll the article down
 
 *k* scroll the article up
@@ -252,6 +249,8 @@ downloader/player (default _mpv_ with the _webtorrent-mpv-hook_ script).
 *G* scroll the article to the bottom.
 
 *q* or *Esc* close the article.
+
+The standard view of urls of your terminal can be also used (CTRL+SHIFT+U)
 
 ## SEARCH
 

@@ -8,8 +8,7 @@ import (
 )
 
 type CPUImageResizer struct {
-	img   image.Image
-	ident interface{}
+	img image.Image
 }
 
 func (cir *CPUImageResizer) Release() error { return nil }

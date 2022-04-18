@@ -154,9 +154,6 @@ func main() {
 					grid.ClearCardsPosition()
 					continue
 				}
-				if openedArticle.HintEvent(ev) {
-					continue
-				}
 				photon.KeyBindings.Run(newKeyEvent(ev))
 			case *tcell.EventResize:
 				s.Clear()
@@ -534,15 +531,6 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	})
 	photon.KeyBindings.Add(states.Normal, "o", func() error {
 		openedArticle.Card.OpenBrowser()
-		return nil
-	})
-	photon.KeyBindings.Add(states.Article, "f", func() error {
-		//start article link hints
-		if openedArticle == nil {
-			return nil
-		}
-		openedArticle.HintStart()
-		redraw(true)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Article, "m", func() error {

@@ -7,13 +7,11 @@ import (
 	"math"
 	"os/exec"
 	"strings"
-	"unicode/utf8"
 
 	"git.sr.ht/~ghost08/photon/imgproc"
 	"git.sr.ht/~ghost08/photon/lib"
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
-	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/net/html"
 )
 
@@ -72,8 +70,6 @@ type Article struct {
 
 	imgSixel       *imgproc.Sixel
 	underImageRune rune
-	hint           *string
-	hints          map[string]string
 }
 
 func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScreen) (statusBarText richtext) {
@@ -88,7 +84,6 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelSc
 		case CardContent:
 			a.contentLines = richtextFromText(renderArticleContent(a.Card.Item.Content), articleWidth)
 		}
-		a.HintsParse()
 	}
 	articleWidthPixels := articleWidth * ctx.XCellPixels
 	x := (ctx.Width - articleWidth) / 2
@@ -156,20 +151,6 @@ func (a *Article) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelSc
 		contentOffset := contentY + max(0, imageYCells-a.scrollOffset)
 		var lineOffset int
 		for _, to := range line {
-			if a.hints != nil && a.hint != nil {
-				if hint, ok := a.hints[to.Link]; ok && strings.HasPrefix(hint, *a.hint) {
-					s.SetContent(
-						x+lineOffset,
-						contentOffset,
-						[]rune(hint)[len(*a.hint)],
-						nil,
-						tcell.StyleDefault.Background(tcell.ColorYellow).Foreground(tcell.ColorBlack),
-					)
-					lineOffset++
-					_, s := utf8.DecodeRuneInString(to.Text)
-					to.Text = to.Text[s:]
-				}
-			}
 			lineOffset += drawString(s, x+lineOffset, contentOffset, to.Text, to.Style)
 		}
 		a.lastLine = i
@@ -212,189 +193,6 @@ func (a *Article) ToggleMode() {
 func (a *Article) Clear() {
 	a.contentLines = nil
 	a.imgSixel = nil
-}
-
-func (a *Article) HintStart() {
-	var tmp string
-	a.hint = &tmp
-}
-
-func (a *Article) HintEvent(ev *tcell.EventKey) bool {
-	if a == nil || a.hint == nil {
-		return false
-	}
-	switch ev.Key() {
-	case tcell.KeyEscape:
-		a.hint = nil
-		redraw(false)
-	case tcell.KeyRune:
-		hint := (*a.hint) + string(ev.Rune())
-		a.hint = &hint
-		if link := a.HintsFind(); link != "" {
-			//found exact hint, openning link and exiting hints mode
-			open.Start(link)
-			a.hint = nil
-		} else if !a.HintsPrefix() {
-			//no hints found with set prefix, exiting hints mode
-			a.hint = nil
-		}
-		redraw(false)
-	}
-	return true
-}
-
-func (a *Article) HintsFind() string {
-	for link, hint := range a.hints {
-		if *a.hint == hint {
-			return link
-		}
-	}
-	return ""
-}
-
-//returns true if there is a hint with the set prefix
-func (a *Article) HintsPrefix() bool {
-	for _, hint := range a.hints {
-		if strings.HasPrefix(hint, *a.hint) {
-			return true
-		}
-	}
-	return false
-}
-
-func (a *Article) HintsParse() {
-	a.hints = nil
-	var (
-		chars      = []rune("asdfghjkl")
-		minChars   = 1
-		shortCount = 0
-	)
-
-	var elems []string
-	for _, line := range a.contentLines {
-		for _, to := range line {
-			if to.Link != "" {
-				elems = append(elems, to.Link)
-			}
-		}
-	}
-	if len(elems) == 0 {
-		return
-	}
-	/*
-	   Determine how many digits the link hints will require in the worst
-	   case. Usually we do not need all of these digits for every link
-	   single hint, so we can show shorter hints for a few of the links.
-	*/
-	needed := max(minChars, ceilLog(len(elems), len(chars)))
-
-	/*
-	   Short hints are the number of hints we can possibly show which are
-	   (needed - 1) digits in length.
-	*/
-	if needed > minChars && needed > 1 {
-		totalSpace := int(math.Pow(float64(len(chars)), float64(needed)))
-		/*
-		 For each 1 short link being added, len(chars) long links are
-		 removed, therefore the space removed is len(chars) - 1.
-		*/
-		shortCount = (totalSpace - len(elems)) // (len(chars) - 1)
-	} else {
-		shortCount = 0
-	}
-
-	longCount := len(elems) - shortCount
-
-	var strings []string
-
-	if needed > 1 {
-		for i := 0; i < shortCount; i++ {
-			strings = append(strings, numberToHintStr(i, chars, needed-1))
-		}
-	}
-
-	start := shortCount * len(chars)
-	for i := start; i < start+longCount; i++ {
-		strings = append(strings, numberToHintStr(i, chars, needed))
-	}
-
-	a.hints = make(map[string]string)
-	for i, hint := range shuffleHints(strings, len(chars)) {
-		if i >= len(elems) {
-			break
-		}
-		a.hints[elems[i]] = hint
-	}
-}
-
-//Compute max(1, ceil(log(number, base))).  Use only integer arithmetic in order to avoid numerical error.
-func ceilLog(number, base int) int {
-	if number < 1 || base < 2 {
-		panic("math domain error")
-	}
-	result := 1
-	accum := base
-	for accum < number {
-		result += 1
-		accum *= base
-	}
-	return result
-}
-
-/*
-	Shuffle the given set of hints so that they're scattered.
-	Hints starting with the same character will be spread evenly throughout
-	the array.
-	Inspired by Vimium.
-	Args:
-		hints: A list of hint strings.
-		length: Length of the available charset.
-	Return:
-		A list of shuffled hint strings.
-*/
-func shuffleHints(hints []string, length int) []string {
-	buckets := make([][]string, length)
-	for i, hint := range hints {
-		buckets[i%len(buckets)] = append(buckets[i%len(buckets)], hint)
-	}
-	var result []string
-	for _, bucket := range buckets {
-		result = append(result, bucket...)
-	}
-	return result
-}
-
-/*
-   Convert a number like "8" into a hint string like "JK".
-   This is used to sequentially generate all of the hint text.
-   The hint string will be "padded with zeroes" to ensure its length is >=
-   digits.
-   Inspired by Vimium.
-   Args:
-       number: The hint number.
-       chars: The charset to use.
-       digits: The minimum output length.
-   Return:
-       A hint string.
-*/
-func numberToHintStr(number int, chars []rune, digits int) string {
-	base := len(chars)
-	var hintstr []rune
-	remainder := 0
-	for {
-		remainder = number % base
-		hintstr = append([]rune{chars[remainder]}, hintstr...)
-		number -= remainder
-		number = number / base
-		if number <= 0 {
-			break
-		}
-	}
-	//Pad the hint string we're returning so that it matches digits.
-	for i := 0; i < digits-len(hintstr); i++ {
-		hintstr = append([]rune{chars[0]}, hintstr...)
-	}
-	return string(hintstr)
 }
 
 type richtext []textobject
@@ -489,7 +287,7 @@ func parseArticleContent(node *html.Node) (rt richtext, err error) {
 			subrt = maprt(
 				subrt,
 				func(to textobject) textobject {
-					to.Style = to.Style.Foreground(tcell.ColorOrangeRed).Bold(true)
+					to.Style = to.Style.Foreground(tcell.ColorOrangeRed).Bold(true).Url(href)
 					to.Link = href
 					return to
 				},
