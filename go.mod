@@ -16,10 +16,10 @@ require (
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966
 	github.com/soniakeys/quant v1.0.0
 	github.com/syndtr/goleveldb v1.0.0
-	github.com/yuin/gopher-lua v0.0.0-20210529063254-f4c35e4016d9
-	golang.org/x/exp v0.0.0-20220328175248-053ad81199eb
-	golang.org/x/image v0.0.0-20220321031419-a8550c1d254a
-	golang.org/x/net v0.0.0-20220325170049-de3da57026de
+	github.com/yuin/gopher-lua v0.0.0-20220413183635-c841877397d8
+	golang.org/x/exp v0.0.0-20220414153411-bcd21879b8fd
+	golang.org/x/image v0.0.0-20220413100746-70e8d0d3baa9
+	golang.org/x/net v0.0.0-20220418201149-a630d4f3e7a2
 )
 
 require (
