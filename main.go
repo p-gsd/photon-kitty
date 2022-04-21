@@ -529,7 +529,7 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		osc52(openedArticle.Card.Item.Link)
 		return nil
 	})
-	photon.KeyBindings.Add(states.Normal, "o", func() error {
+	photon.KeyBindings.Add(states.Article, "o", func() error {
 		openedArticle.Card.OpenBrowser()
 		return nil
 	})
