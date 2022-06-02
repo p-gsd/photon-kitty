@@ -124,7 +124,9 @@ func (media *Media) Run() {
 			return
 		}
 		cmd := strings.Split(strings.ReplaceAll(command, "%", f.Name()), " ")
-		exec.Command(cmd[0], cmd[1:]...).Run()
+		if err := exec.Command(cmd[0], cmd[1:]...).Run(); err != nil {
+			log.Printf("ERROR: running media command (%s): %s", strings.Join(cmd, " "), err)
+		}
 		return
 	}
 
@@ -135,13 +137,17 @@ func (media *Media) Run() {
 			args = fmt.Sprintf("%s --audio-file=%s", media.Links[0], media.Links[1])
 		}
 		cmd := strings.Split(strings.ReplaceAll(command, "%", args), " ")
-		exec.Command(cmd[0], cmd[1:]...).Run()
+		if err := exec.Command(cmd[0], cmd[1:]...).Run(); err != nil {
+			log.Printf("ERROR: running media command (%s): %s", strings.Join(cmd, " "), err)
+		}
 		return
 	}
 	//run command with the direct item link
 	if strings.Contains(command, "$") {
 		cmd := strings.Split(strings.ReplaceAll(command, "$", media.OriginalLink), " ")
-		exec.Command(cmd[0], cmd[1:]...).Run()
+		if err := exec.Command(cmd[0], cmd[1:]...).Run(); err != nil {
+			log.Printf("ERROR: running media command (%s): %s", strings.Join(cmd, " "), err)
+		}
 		return
 	}
 	//run command and pipe the media data to it's stdin
@@ -168,6 +174,6 @@ func (media *Media) Run() {
 		io.Copy(stdin, resp.Body)
 	}()
 	if err := c.Run(); err != nil {
-		log.Println("ERROR: media command:", err)
+		log.Printf("ERROR: running media command (%s): %s", strings.Join(cmd, " "), err)
 	}
 }
