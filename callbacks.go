@@ -53,11 +53,13 @@ func (cb Callbacks) Right() {
 }
 
 func (cb Callbacks) Up() {
-	cb.grid.SelectedChildMoveUp()
+	value := cb.grid.SelectedChildMoveUp()
+	_ = value
 	redraw(false)
 }
 
 func (cb Callbacks) Down() {
-	cb.grid.SelectedChildMoveDown()
+	value := cb.grid.SelectedChildMoveDown()
+	_ = value
 	redraw(false)
 }

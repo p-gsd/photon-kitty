@@ -1,0 +1,23 @@
+2022/09/09 15:09:06 main.go:103: INFO: error loading opencl image resizer, falling back to CPU scaling: init error -1001
+2022/09/09 15:09:06 lib.go:210: ERROR: downloading feed (https://faif.us/feeds/cast-ogg/): Get "https://faif.us/feeds/cast-ogg/": dial tcp 173.255.226.163:443: connect: connection refused
+2022/09/09 15:09:06 lib.go:210: ERROR: downloading feed (https://www.itgovernance.co.uk/blog/pci-dss-which-pci-saq-is-right-for-my-business): Failed to detect feed type
+2022/09/09 15:09:11 lib.go:210: ERROR: downloading feed (https://haveibeenpwned.com/PwnedWebsites): Failed to detect feed type
+2022/09/09 15:09:28 main.go:444: 1
+2022/09/09 15:09:29 main.go:444: 2
+2022/09/09 15:09:29 main.go:444: 3
+2022/09/09 15:09:29 main.go:444: 4
+2022/09/09 15:09:29 main.go:444: 5
+2022/09/09 15:09:29 main.go:438: clear...
+2022/09/09 15:09:29 main.go:444: 6
+2022/09/09 15:09:30 main.go:459: 7
+2022/09/09 15:09:30 main.go:459: 6
+2022/09/09 15:09:31 main.go:444: 5
+2022/09/09 15:09:32 main.go:459: 6
+2022/09/09 15:09:33 main.go:459: 5
+2022/09/09 15:09:33 main.go:459: 4
+2022/09/09 15:09:33 main.go:459: 3
+2022/09/09 15:09:33 main.go:453: clear...
+2022/09/09 15:09:33 main.go:459: 2
+2022/09/09 15:09:33 main.go:459: 1
+2022/09/09 15:09:33 main.go:459: 1
+2022/09/09 15:09:33 main.go:459: 1

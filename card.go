@@ -38,6 +38,7 @@ type Card struct {
 
 func (c *Card) Draw(ctx Context, s tcell.Screen, sixelScreen *imgproc.SixelScreen, full bool) {
 	var imageWidthInCells int
+	//s.SetContent(ctx.X,ctx.Y,"<ESC>_Ga=d<ESC>\\",nil,tcell.StyleDefault)
 	if c.sixelData != nil {
 		imageWidthInCells = c.sixelData.Bounds.Dx() / ctx.XCellPixels
 	}
@@ -163,5 +164,5 @@ func (c *Card) makeSixel(ctx Context, s tcell.Screen) {
 }
 
 func (c *Card) ClearImage() {
-	c.sixelData = nil
+	c.sixelData.Clear()
 }

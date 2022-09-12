@@ -13,6 +13,7 @@ import (
 	"time"
 	"unicode"
 	"unicode/utf8"
+	"strconv"
 
 	"git.sr.ht/~ghost08/photon/imgproc"
 	"git.sr.ht/~ghost08/photon/lib"
@@ -87,7 +88,7 @@ func main() {
 	}
 
 	//photon
-	grid := &Grid{Columns: 5}
+	grid := &Grid{Columns: 5, LineOffset: 1}
 	cb = Callbacks{grid: grid}
 	var err error
 	options := []lib.Option{
@@ -326,6 +327,10 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		SelectedCard.OpenBrowser()
 		return nil
 	})
+	photon.KeyBindings.Add(states.Normal, "e", func() error {
+		SelectedCard.OpenBrowser()
+		return nil
+	})
 	photon.KeyBindings.Add(states.Normal, "<esc>", func() error {
 		if command == "" {
 			return nil
@@ -427,13 +432,36 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "j", func() error {
-		grid.SelectedChildMoveDown()
+		value:=grid.SelectedChildMoveDown()
+		if value > 0 {
+		//data := "\033_Ga=d,d=a,y=" + strconv.Itoa(grid.LineOffset) + "\033\\"
+		log.Printf("clear...")
+		data := "\033_Ga=d,d=A\033\\"
+		value := []rune(data)
+		s.SetContent(0,0,rune(' '), value, tcell.StyleDefault)
+		s.Sync()
+		}
+		log.Printf(strconv.Itoa(grid.LineOffset))
+		grid.LineOffset = grid.LineOffset + 1
 		redraw(false)
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "k", func() error {
-		grid.SelectedChildMoveUp()
+		value:=grid.SelectedChildMoveUp()
+		if value > 0 {
+		//data := "\033_Ga=d,d=a,y=" + strconv.Itoa(grid.LineOffset + grid.Columns) + "\033\\"
+		log.Printf("clear...")
+		data := "\033_Ga=d,d=A\033\\"
+		value := []rune(data)
+		s.SetContent(0,0,rune(' '), value, tcell.StyleDefault)
+		s.Sync()
+		}
+		log.Printf(strconv.Itoa(grid.LineOffset))
 		redraw(false)
+		grid.LineOffset = grid.LineOffset - 1
+		if grid.LineOffset == 0 {
+			grid.LineOffset = 1
+		}
 		return nil
 	})
 	photon.KeyBindings.Add(states.Normal, "<ctrl>d", func() error {
@@ -531,6 +559,10 @@ func defaultKeyBindings(s tcell.Screen, grid *Grid, quit *context.CancelFunc) {
 	})
 	photon.KeyBindings.Add(states.Article, "o", func() error {
 		openedArticle.Card.OpenBrowser()
+		return nil
+	})
+	photon.KeyBindings.Add(states.Article, "e", func() error {
+		openedArticle.Card.OpenEditor()
 		return nil
 	})
 	photon.KeyBindings.Add(states.Article, "m", func() error {

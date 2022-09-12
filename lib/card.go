@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"os/user"
 	"path/filepath"
 	"strings"
@@ -16,8 +17,8 @@ import (
 	"git.sr.ht/~ghost08/photon/lib/events"
 	"git.sr.ht/~ghost08/photon/lib/media"
 	"github.com/kennygrant/sanitize"
-	"github.com/mmcdole/gofeed"
 	"github.com/skratchdot/open-golang/open"
+	"github.com/mmcdole/gofeed"
 )
 
 type Card struct {
@@ -237,11 +238,27 @@ func (card *Card) downloadLinks(name string, links []string) error {
 	return nil
 }
 
-func (card *Card) OpenBrowser() {
+func (card *Card) OpenBrowser(){
 	if card == nil {
 		return
 	}
 	open.Start(card.Item.Link)
+	events.Emit(&events.LinkOpened{
+		Link : card.Item.Link,
+		Card : newCardFunc(card),
+	})
+}
+
+func (card *Card) OpenEditor() {
+	if card == nil {
+		return
+	}
+	cmd := exec.Command("photon-open", card.Article.TextContent)
+	err := cmd.Run()
+	if err != nil{
+		log.Fatal(err)
+	}
+	//open.RunWith(card.Article.TextContent, "photon-open")
 	events.Emit(&events.LinkOpened{
 		Link: card.Item.Link,
 		Card: newCardFunc(card),

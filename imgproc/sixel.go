@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"image"
 	"io"
-
+	"github.com/dolmen-go/kittyimg"
 	"golang.org/x/exp/constraints"
 )
 
@@ -18,6 +18,7 @@ var (
 	// DECSIXEL Introducer(\033P0;0;8q) + DECGRA ("1;1): Set Raster Attributes
 	sixelHeader = []byte{0x1b, 0x50, 0x30, 0x3b, 0x31, 0x3b, 0x38, 0x71, 0x22, 0x31, 0x3b, 0x31}
 	sixelFooter = []byte{0x1b, 0x5c}
+	//sixelFooter = []byte{0x3c,0x45,0x53,0x43,0x3e,0x5f,0x47,0x61,0x3d,0x64,0x3c,0x45,0x53,0x43,0x3e,0x5c}
 )
 
 //SixelScreen collects sixel data and it's positions then to be printed to the screen
@@ -38,6 +39,7 @@ func (ss *SixelScreen) Add(s *Sixel, x, y, from, to int) {
 	ss.append(sixelHeader)
 	//palette
 	ss.append(s.palette)
+	ss.append([]byte("\033_Ga=d;d=N;n=1\033\\"))
 	//sixel row data
 	for i := from; i < to; i++ {
 		ss.append(s.rows[i])
@@ -76,7 +78,16 @@ func (s *Sixel) Rows() int {
 	return len(s.rows)
 }
 
+func (s *Sixel) Clear() {
+	s.rows = append(s.rows, []byte("\033_Ga=d\033\\"))
+}
+
 func EncodeSixel(nc int, img *image.Paletted) *Sixel {
+	var kittybuf bytes.Buffer 
+	data  := make([][]byte, 2)
+	data[0] = nil
+	data[1] = kittybuf.Bytes()
+	kittyimg.Fprintln(&kittybuf, img)
 	width, height := img.Bounds().Dx(), img.Bounds().Dy()
 	if width == 0 || height == 0 {
 		return nil
@@ -218,8 +229,8 @@ func EncodeSixel(nc int, img *image.Paletted) *Sixel {
 
 	return &Sixel{
 		Bounds:  img.Bounds(),
-		palette: pw.Bytes(),
-		rows:    rws,
+		palette: kittybuf.Bytes(),
+		rows:    data,
 	}
 }
 

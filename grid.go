@@ -3,12 +3,12 @@ package main
 import (
 	"image"
 	"math"
-
 	"git.sr.ht/~ghost08/photon/imgproc"
 	"github.com/gdamore/tcell/v2"
 )
 
 type Grid struct {
+	LineOffset		 int
 	Columns          int
 	FirstChildIndex  int
 	FirstChildOffset int
@@ -195,14 +195,15 @@ func (g *Grid) SelectedChildMoveRight() {
 	SelectedCardPos.X++
 }
 
-func (g *Grid) SelectedChildMoveDown() {
+func (g *Grid) SelectedChildMoveDown()(int){
+	value := 0
 	if SelectedCard == nil {
-		return
+		return value
 	}
 	defer g.selectedChildRefresh()
 	maxRow := int(math.Ceil(float64(len(photon.VisibleCards))/float64(g.Columns))) - 1
 	if SelectedCardPos.Y == maxRow {
-		return
+		return value
 	}
 	SelectedCardPos.Y++
 	if SelectedCardPos.Y == maxRow {
@@ -213,25 +214,30 @@ func (g *Grid) SelectedChildMoveDown() {
 		g.LastChildOffset = 0
 	}
 	if g.LastChildIndex/g.Columns < SelectedCardPos.Y {
+		value =1
 		g.FirstChildIndex += g.Columns
 	}
+	return value
 }
 
-func (g *Grid) SelectedChildMoveUp() {
+func (g *Grid) SelectedChildMoveUp() (int){
+	value := 0
 	if SelectedCard == nil {
-		return
+		return value
 	}
 	defer g.selectedChildRefresh()
 	if SelectedCardPos.Y == 0 {
-		return
+		return value
 	}
 	SelectedCardPos.Y--
 	if g.FirstChildIndex/g.Columns == SelectedCardPos.Y {
 		g.FirstChildOffset = 0
 	}
 	if g.FirstChildIndex/g.Columns > SelectedCardPos.Y {
+		value = 1
 		g.FirstChildIndex = SelectedCardPos.Y * g.Columns
 	}
+	return value
 }
 
 func (g *Grid) selectedChildRefresh() {
