@@ -1,4 +1,9 @@
 This is coming form [here](https://sr.ht/~ghost08/photon/)
+
+---
+
+*I've tried to add image support for Kitty terminal. Although code is surely nightmare for anyone coding in Go, it works (for now) I will continue to fix some issues as sometime it crashes when loading pictures.*
+
 # photon
 
 ![photon logo](logo.png)
